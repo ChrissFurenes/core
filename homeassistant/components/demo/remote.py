@@ -1,7 +1,5 @@
 """Demo platform that has two fake remotes."""
 
-from __future__ import annotations
-
 from collections.abc import Iterable
 from typing import Any
 
@@ -9,13 +7,13 @@ from homeassistant.components.remote import RemoteEntity
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import DEVICE_DEFAULT_NAME
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
 
 async def async_setup_entry(
     hass: HomeAssistant,
     config_entry: ConfigEntry,
-    async_add_entities: AddEntitiesCallback,
+    async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up the Demo config entry."""
     async_add_entities(
@@ -44,18 +42,18 @@ class DemoRemote(RemoteEntity):
             return {"last_command_sent": self._last_command_sent}
         return None
 
-    def turn_on(self, **kwargs: Any) -> None:
+    async def async_turn_on(self, **kwargs: Any) -> None:
         """Turn the remote on."""
         self._attr_is_on = True
-        self.schedule_update_ha_state()
+        self.async_write_ha_state()
 
-    def turn_off(self, **kwargs: Any) -> None:
+    async def async_turn_off(self, **kwargs: Any) -> None:
         """Turn the remote off."""
         self._attr_is_on = False
-        self.schedule_update_ha_state()
+        self.async_write_ha_state()
 
-    def send_command(self, command: Iterable[str], **kwargs: Any) -> None:
+    async def async_send_command(self, command: Iterable[str], **kwargs: Any) -> None:
         """Send a command to a device."""
         for com in command:
             self._last_command_sent = com
-        self.schedule_update_ha_state()
+        self.async_write_ha_state()

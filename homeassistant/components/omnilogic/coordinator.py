@@ -15,24 +15,29 @@ from .const import ALL_ITEM_KINDS
 _LOGGER = logging.getLogger(__name__)
 
 
+type OmniLogicConfigEntry = ConfigEntry[OmniLogicUpdateCoordinator]
+
+
 class OmniLogicUpdateCoordinator(DataUpdateCoordinator[dict[tuple, dict[str, Any]]]):
     """Class to manage fetching update data from single endpoint."""
+
+    config_entry: OmniLogicConfigEntry
 
     def __init__(
         self,
         hass: HomeAssistant,
         api: OmniLogic,
         name: str,
-        config_entry: ConfigEntry,
+        config_entry: OmniLogicConfigEntry,
         polling_interval: int,
     ) -> None:
         """Initialize the global Omnilogic data updater."""
         self.api = api
-        self.config_entry = config_entry
 
         super().__init__(
             hass=hass,
             logger=_LOGGER,
+            config_entry=config_entry,
             name=name,
             update_interval=timedelta(seconds=polling_interval),
         )

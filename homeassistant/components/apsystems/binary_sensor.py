@@ -1,7 +1,5 @@
 """The read-only binary sensors for APsystems local API integration."""
 
-from __future__ import annotations
-
 from collections.abc import Callable
 from dataclasses import dataclass
 
@@ -14,11 +12,10 @@ from homeassistant.components.binary_sensor import (
 )
 from homeassistant.const import EntityCategory
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from . import ApSystemsConfigEntry, ApSystemsData
-from .coordinator import ApSystemsDataCoordinator
+from .coordinator import ApSystemsConfigEntry, ApSystemsData, ApSystemsDataCoordinator
 from .entity import ApSystemsEntity
 
 
@@ -64,7 +61,7 @@ BINARY_SENSORS: tuple[ApsystemsLocalApiBinarySensorDescription, ...] = (
 async def async_setup_entry(
     hass: HomeAssistant,
     config_entry: ApSystemsConfigEntry,
-    add_entities: AddEntitiesCallback,
+    add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up the binary sensor platform."""
     config = config_entry.runtime_data

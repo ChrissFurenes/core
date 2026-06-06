@@ -1,8 +1,8 @@
 """Platform for retrieving meteorological data from Environment Canada."""
 
-from __future__ import annotations
-
 from typing import Any
+
+from env_canada import ECWeather
 
 from homeassistant.components.weather import (
     ATTR_CONDITION_CLEAR_NIGHT,
@@ -27,19 +27,23 @@ from homeassistant.components.weather import (
     SingleCoordinatorWeatherEntity,
     WeatherEntityFeature,
 )
-from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
     UnitOfLength,
     UnitOfPressure,
     UnitOfSpeed,
     UnitOfTemperature,
 )
-from homeassistant.core import HomeAssistant, callback
-from homeassistant.helpers import entity_registry as er
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.core import (
+    HomeAssistant,
+    ServiceResponse,
+    SupportsResponse,
+    callback,
+)
+from homeassistant.helpers import entity_platform, entity_registry as er
+from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
-from . import device_info
-from .const import DOMAIN
+from .const import DOMAIN, SERVICE_ENVIRONMENT_CANADA_FORECASTS
+from .coordinator import ECConfigEntry, ECDataUpdateCoordinator
 
 # Icon codes from http://dd.weatheroffice.ec.gc.ca/citypage_weather/
 # docs/current_conditions_icon_code_descriptions_e.csv
@@ -61,11 +65,10 @@ ICON_CONDITION_MAP = {
 
 async def async_setup_entry(
     hass: HomeAssistant,
-    config_entry: ConfigEntry,
-    async_add_entities: AddEntitiesCallback,
+    config_entry: ECConfigEntry,
+    async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Add a weather entity from a config_entry."""
-    coordinator = hass.data[DOMAIN][config_entry.entry_id]["weather_coordinator"]
     entity_registry = er.async_get(hass)
 
     # Remove hourly entity from legacy config entries
@@ -76,7 +79,15 @@ async def async_setup_entry(
     ):
         entity_registry.async_remove(hourly_entity_id)
 
-    async_add_entities([ECWeather(coordinator)])
+    async_add_entities([ECWeatherEntity(config_entry.runtime_data.weather_coordinator)])
+
+    platform = entity_platform.async_get_current_platform()
+    platform.async_register_entity_service(
+        SERVICE_ENVIRONMENT_CANADA_FORECASTS,
+        None,
+        "_async_environment_canada_forecasts",
+        supports_response=SupportsResponse.ONLY,
+    )
 
 
 def _calculate_unique_id(config_entry_unique_id: str | None, hourly: bool) -> str:
@@ -84,7 +95,9 @@ def _calculate_unique_id(config_entry_unique_id: str | None, hourly: bool) -> st
     return f"{config_entry_unique_id}{'-hourly' if hourly else '-daily'}"
 
 
-class ECWeather(SingleCoordinatorWeatherEntity):
+class ECWeatherEntity(
+    SingleCoordinatorWeatherEntity[ECDataUpdateCoordinator[ECWeather]]
+):
     """Representation of a weather condition."""
 
     _attr_has_entity_name = True
@@ -96,19 +109,19 @@ class ECWeather(SingleCoordinatorWeatherEntity):
         WeatherEntityFeature.FORECAST_DAILY | WeatherEntityFeature.FORECAST_HOURLY
     )
 
-    def __init__(self, coordinator):
+    def __init__(self, coordinator: ECDataUpdateCoordinator[ECWeather]) -> None:
         """Initialize Environment Canada weather."""
         super().__init__(coordinator)
         self.ec_data = coordinator.ec_data
-        self._attr_attribution = self.ec_data.metadata["attribution"]
+        self._attr_attribution = self.ec_data.metadata.attribution
         self._attr_translation_key = "forecast"
         self._attr_unique_id = _calculate_unique_id(
             coordinator.config_entry.unique_id, False
         )
-        self._attr_device_info = device_info(coordinator.config_entry)
+        self._attr_device_info = coordinator.device_info
 
     @property
-    def native_temperature(self):
+    def native_temperature(self) -> float | None:
         """Return the temperature."""
         if (
             temperature := self.ec_data.conditions.get("temperature", {}).get("value")
@@ -123,42 +136,42 @@ class ECWeather(SingleCoordinatorWeatherEntity):
         return None
 
     @property
-    def humidity(self):
+    def humidity(self) -> float | None:
         """Return the humidity."""
         if self.ec_data.conditions.get("humidity", {}).get("value"):
             return float(self.ec_data.conditions["humidity"]["value"])
         return None
 
     @property
-    def native_wind_speed(self):
+    def native_wind_speed(self) -> float | None:
         """Return the wind speed."""
         if self.ec_data.conditions.get("wind_speed", {}).get("value"):
             return float(self.ec_data.conditions["wind_speed"]["value"])
         return None
 
     @property
-    def wind_bearing(self):
+    def wind_bearing(self) -> float | None:
         """Return the wind bearing."""
         if self.ec_data.conditions.get("wind_bearing", {}).get("value"):
             return float(self.ec_data.conditions["wind_bearing"]["value"])
         return None
 
     @property
-    def native_pressure(self):
+    def native_pressure(self) -> float | None:
         """Return the pressure."""
         if self.ec_data.conditions.get("pressure", {}).get("value"):
             return float(self.ec_data.conditions["pressure"]["value"])
         return None
 
     @property
-    def native_visibility(self):
+    def native_visibility(self) -> float | None:
         """Return the visibility."""
         if self.ec_data.conditions.get("visibility", {}).get("value"):
             return float(self.ec_data.conditions["visibility"]["value"])
         return None
 
     @property
-    def condition(self):
+    def condition(self) -> str | None:
         """Return the weather condition."""
         icon_code = None
 
@@ -171,7 +184,7 @@ class ECWeather(SingleCoordinatorWeatherEntity):
 
         if icon_code:
             return icon_code_to_condition(int(icon_code))
-        return ""
+        return None
 
     @callback
     def _async_forecast_daily(self) -> list[Forecast] | None:
@@ -182,6 +195,23 @@ class ECWeather(SingleCoordinatorWeatherEntity):
     def _async_forecast_hourly(self) -> list[Forecast] | None:
         """Return the hourly forecast in native units."""
         return get_forecast(self.ec_data, True)
+
+    def _async_environment_canada_forecasts(self) -> ServiceResponse:
+        """Return the native Environment Canada forecast."""
+        daily = []
+        for f in self.ec_data.daily_forecasts:
+            day = f.copy()
+            day["timestamp"] = day["timestamp"].isoformat()
+            daily.append(day)
+
+        hourly = []
+        for f in self.ec_data.hourly_forecasts:
+            hour = f.copy()
+            hour["timestamp"] = hour["period"].isoformat()
+            del hour["period"]
+            hourly.append(hour)
+
+        return {"daily_forecast": daily, "hourly_forecast": hourly}
 
 
 def get_forecast(ec_data, hourly) -> list[Forecast] | None:
@@ -208,9 +238,9 @@ def get_forecast(ec_data, hourly) -> list[Forecast] | None:
                 ),
             }
 
-        i = 2 if half_days[0]["temperature_class"] == "high" else 1
-        forecast_array.append(get_day_forecast(half_days[0:i]))
-        for i in range(i, len(half_days) - 1, 2):
+        start = 2 if half_days[0]["temperature_class"] == "high" else 1
+        forecast_array.append(get_day_forecast(half_days[0:start]))
+        for i in range(start, len(half_days) - 1, 2):
             forecast_array.append(get_day_forecast(half_days[i : i + 2]))  # noqa: PERF401
 
     else:
@@ -229,7 +259,7 @@ def get_forecast(ec_data, hourly) -> list[Forecast] | None:
     return forecast_array
 
 
-def icon_code_to_condition(icon_code):
+def icon_code_to_condition(icon_code: int) -> str | None:
     """Return the condition corresponding to an icon code."""
     for condition, codes in ICON_CONDITION_MAP.items():
         if icon_code in codes:

@@ -1,7 +1,5 @@
 """Config flow for Dremel 3D Printer (3D20, 3D40, 3D45)."""
 
-from __future__ import annotations
-
 from json.decoder import JSONDecodeError
 from typing import Any
 
@@ -11,7 +9,7 @@ import voluptuous as vol
 
 from homeassistant.config_entries import ConfigFlow, ConfigFlowResult
 from homeassistant.const import CONF_HOST
-import homeassistant.helpers.config_validation as cv
+from homeassistant.helpers import config_validation as cv
 
 from .const import DOMAIN, LOGGER
 
@@ -40,7 +38,7 @@ class Dremel3DPrinterConfigFlow(ConfigFlow, domain=DOMAIN):
 
         try:
             api = await self.hass.async_add_executor_job(Dremel3DPrinter, host)
-        except (ConnectTimeout, HTTPError, JSONDecodeError):
+        except ConnectTimeout, HTTPError, JSONDecodeError:
             errors = {"base": "cannot_connect"}
         except Exception:  # noqa: BLE001
             LOGGER.exception("An unknown error has occurred")

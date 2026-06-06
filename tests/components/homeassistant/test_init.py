@@ -6,11 +6,11 @@ import pytest
 import voluptuous as vol
 import yaml
 
-from homeassistant import config
-import homeassistant.components as comps
+from homeassistant import config, core as ha
 from homeassistant.components.homeassistant import (
     ATTR_ENTRY_ID,
     ATTR_SAFE_MODE,
+    DOMAIN,
     SERVICE_CHECK_CONFIG,
     SERVICE_HOMEASSISTANT_RESTART,
     SERVICE_HOMEASSISTANT_STOP,
@@ -24,6 +24,7 @@ from homeassistant.const import (
     ENTITY_MATCH_ALL,
     ENTITY_MATCH_NONE,
     EVENT_CORE_CONFIG_UPDATE,
+    EVENT_HOMEASSISTANT_STARTED,
     SERVICE_SAVE_PERSISTENT_STATES,
     SERVICE_TOGGLE,
     SERVICE_TURN_OFF,
@@ -31,28 +32,19 @@ from homeassistant.const import (
     STATE_OFF,
     STATE_ON,
 )
-import homeassistant.core as ha
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import HomeAssistantError, Unauthorized
-from homeassistant.helpers import entity, entity_registry as er
+from homeassistant.helpers import entity, entity_registry as er, issue_registry as ir
 from homeassistant.setup import async_setup_component
 
 from tests.common import (
     MockConfigEntry,
+    MockEntityPlatform,
     MockUser,
     async_capture_events,
     async_mock_service,
     patch_yaml_files,
 )
-
-
-async def test_is_on(hass: HomeAssistant) -> None:
-    """Test is_on method."""
-    with pytest.raises(
-        RuntimeError,
-        match="Detected code that uses homeassistant.components.is_on. This is deprecated and will stop working",
-    ):
-        assert comps.is_on(hass, "light.Bowl")
 
 
 async def test_turn_on_without_entities(hass: HomeAssistant) -> None:
@@ -100,6 +92,8 @@ async def test_reload_core_conf(hass: HomeAssistant) -> None:
     ent = entity.Entity()
     ent.entity_id = "test.entity"
     ent.hass = hass
+    platform = MockEntityPlatform(hass, domain="test", platform_name="test")
+    await platform.async_add_entities([ent])
     ent.async_write_ha_state()
 
     state = hass.states.get("test.entity")
@@ -137,19 +131,41 @@ async def test_reload_core_conf(hass: HomeAssistant) -> None:
 
 @patch("homeassistant.config.os.path.isfile", Mock(return_value=True))
 @patch("homeassistant.components.homeassistant._LOGGER.error")
-@patch("homeassistant.config.async_process_ha_core_config")
+@patch("homeassistant.core_config.async_process_ha_core_config")
+@pytest.mark.parametrize(
+    ("files_patch", "expected_error"),
+    [
+        (
+            {config.YAML_CONFIG_FILE: yaml.dump(["invalid", "config"])},
+            "YAML file .*configuration.yaml does not contain a dict",
+        ),
+        ({"not_existing": "blabla"}, "File not found: .*configuration.yaml"),
+    ],
+)
 async def test_reload_core_with_wrong_conf(
-    mock_process, mock_error, hass: HomeAssistant
+    mock_process,
+    mock_error,
+    hass: HomeAssistant,
+    files_patch: dict[str, str],
+    expected_error: str,
 ) -> None:
     """Test reload core conf service."""
-    files = {config.YAML_CONFIG_FILE: yaml.dump(["invalid", "config"])}
     await async_setup_component(hass, ha.DOMAIN, {})
-    with patch_yaml_files(files, True):
+    with (
+        patch_yaml_files(files_patch, True),
+        pytest.raises(
+            HomeAssistantError,
+            match=(
+                "Failed to reload the Home Assistant Core configuration - "
+                f"{expected_error}"
+            ),
+        ),
+    ):
         await hass.services.async_call(
             ha.DOMAIN, SERVICE_RELOAD_CORE_CONFIG, blocking=True
         )
 
-    assert mock_error.called
+    assert mock_error.called is False
     assert mock_process.called is False
 
 
@@ -194,6 +210,7 @@ async def test_turn_on_skips_domains_without_service(
     # because by mocking out the call service method, we mock out all
     # So we mimic how the service registry calls services
     service_call = ha.ServiceCall(
+        hass,
         "homeassistant",
         "turn_on",
         {"entity_id": ["light.test", "sensor.bla", "binary_sensor.blub", "light.bla"]},
@@ -217,8 +234,8 @@ async def test_turn_on_skips_domains_without_service(
         "context": service_call.context,
     }
     assert (
-        "The service homeassistant.turn_on does not support entities binary_sensor.blub, sensor.bla"
-        in caplog.text
+        "The service homeassistant.turn_on does not support"
+        " entities binary_sensor.blub, sensor.bla" in caplog.text
     )
 
 
@@ -252,7 +269,7 @@ async def test_setting_location(hass: HomeAssistant) -> None:
     assert elevation != 50
     await hass.services.async_call(
         "homeassistant",
-        "set_location",
+        SERVICE_SET_LOCATION,
         {"latitude": 30, "longitude": 40},
         blocking=True,
     )
@@ -263,11 +280,23 @@ async def test_setting_location(hass: HomeAssistant) -> None:
 
     await hass.services.async_call(
         "homeassistant",
-        "set_location",
+        SERVICE_SET_LOCATION,
         {"latitude": 30, "longitude": 40, "elevation": 50},
         blocking=True,
     )
+    assert hass.config.latitude == 30
+    assert hass.config.longitude == 40
     assert hass.config.elevation == 50
+
+    await hass.services.async_call(
+        "homeassistant",
+        SERVICE_SET_LOCATION,
+        {"latitude": 30, "longitude": 40, "elevation": 0},
+        blocking=True,
+    )
+    assert hass.config.latitude == 30
+    assert hass.config.longitude == 40
+    assert hass.config.elevation == 0
 
 
 async def test_require_admin(
@@ -333,8 +362,8 @@ async def test_not_allowing_recursion(
             blocking=True,
         )
         assert (
-            f"Called service homeassistant.{service} with invalid entities homeassistant.light"
-            in caplog.text
+            f"Called service homeassistant.{service} with"
+            " invalid entities homeassistant.light" in caplog.text
         ), service
 
 
@@ -605,7 +634,8 @@ async def test_reload_all(
         pytest.raises(
             HomeAssistantError,
             match=(
-                "Cannot quick reload all YAML configurations because the configuration is "
+                "Cannot quick reload all YAML configurations"
+                " because the configuration is "
                 "not valid: Oh no, drama!"
             ),
         ),
@@ -632,3 +662,146 @@ async def test_reload_all(
     assert len(core_config) == 1
     assert len(themes) == 1
     assert len(jinja) == 1
+
+
+@pytest.mark.parametrize(
+    ("arch", "bit_32", "installation_type", "venv", "expected_issues"),
+    [
+        ("i386", True, "Unknown", False, [("unsupported_local_deps", None)]),
+        ("armhf", True, "Unknown", False, [("unsupported_local_deps", None)]),
+        ("armv7", True, "Unknown", False, [("unsupported_local_deps", None)]),
+        ("aarch64", False, "Unknown", False, [("unsupported_local_deps", None)]),
+        ("generic-x86-64", False, "Unknown", False, [("unsupported_local_deps", None)]),
+        (
+            "i386",
+            True,
+            "Home Assistant Core",
+            True,
+            [
+                (
+                    "deprecated_method_architecture",
+                    {"installation_type": "Core", "arch": "i386"},
+                )
+            ],
+        ),
+        (
+            "armhf",
+            True,
+            "Home Assistant Core",
+            True,
+            [
+                (
+                    "deprecated_method_architecture",
+                    {"installation_type": "Core", "arch": "armhf"},
+                )
+            ],
+        ),
+        (
+            "armv7",
+            True,
+            "Home Assistant Core",
+            True,
+            [
+                (
+                    "deprecated_method_architecture",
+                    {"installation_type": "Core", "arch": "armv7"},
+                )
+            ],
+        ),
+        (
+            "aarch64",
+            False,
+            "Home Assistant Core",
+            True,
+            [("deprecated_method", {"installation_type": "Core", "arch": "aarch64"})],
+        ),
+        (
+            "generic-x86-64",
+            False,
+            "Home Assistant Core",
+            True,
+            [
+                (
+                    "deprecated_method",
+                    {"installation_type": "Core", "arch": "generic-x86-64"},
+                )
+            ],
+        ),
+    ],
+)
+async def test_deprecated_installation_issue_core(
+    hass: HomeAssistant,
+    issue_registry: ir.IssueRegistry,
+    arch: str,
+    bit_32: bool,
+    installation_type: str,
+    venv: bool,
+    expected_issues: list[tuple[str, dict[str, str | None]]],
+) -> None:
+    """Test deprecated installation issue."""
+    with (
+        patch(
+            "homeassistant.components.homeassistant.async_get_system_info",
+            return_value={
+                "installation_type": installation_type,
+                "arch": arch,
+                "docker": False,
+                "virtualenv": venv,
+            },
+        ),
+        patch(
+            "homeassistant.components.homeassistant._is_32_bit",
+            return_value=bit_32,
+        ),
+    ):
+        assert await async_setup_component(hass, DOMAIN, {})
+        hass.bus.async_fire(EVENT_HOMEASSISTANT_STARTED)
+        await hass.async_block_till_done()
+
+    assert len(issue_registry.issues) == len(expected_issues)
+    for expected_issue, expected_placeholders in expected_issues:
+        issue = issue_registry.async_get_issue(DOMAIN, expected_issue)
+        assert issue.domain == DOMAIN
+        assert issue.severity == ir.IssueSeverity.WARNING
+        assert issue.translation_placeholders == expected_placeholders
+
+
+@pytest.mark.parametrize(
+    "arch",
+    [
+        "i386",
+        "armv7",
+        "armhf",
+    ],
+)
+async def test_deprecated_installation_issue_container_32bit(
+    hass: HomeAssistant,
+    issue_registry: ir.IssueRegistry,
+    arch: str,
+) -> None:
+    """Test deprecated installation issue."""
+    with (
+        patch(
+            "homeassistant.components.homeassistant.async_get_system_info",
+            return_value={
+                "installation_type": "Home Assistant Container",
+                "container_arch": arch,
+                "arch": arch,
+                "docker": True,
+                "virtualenv": False,
+            },
+        ),
+        patch(
+            "homeassistant.components.homeassistant._is_32_bit",
+            return_value=True,
+        ),
+    ):
+        assert await async_setup_component(hass, DOMAIN, {})
+        hass.bus.async_fire(EVENT_HOMEASSISTANT_STARTED)
+        await hass.async_block_till_done()
+
+    assert len(issue_registry.issues) == 1
+    issue = issue_registry.async_get_issue(DOMAIN, "deprecated_container")
+    assert issue.domain == DOMAIN
+    assert issue.severity == ir.IssueSeverity.WARNING
+    assert issue.translation_placeholders == {"arch": arch}

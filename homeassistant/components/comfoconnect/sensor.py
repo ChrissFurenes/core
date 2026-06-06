@@ -1,7 +1,5 @@
 """Platform to control a Zehnder ComfoAir Q350/450/600 ventilation unit."""
 
-from __future__ import annotations
-
 from dataclasses import dataclass
 import logging
 
@@ -48,7 +46,7 @@ from homeassistant.const import (
     UnitOfVolumeFlowRate,
 )
 from homeassistant.core import HomeAssistant
-import homeassistant.helpers.config_validation as cv
+from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType

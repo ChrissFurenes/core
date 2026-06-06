@@ -1,9 +1,19 @@
 {
+  "conditions": {
+    "is_closed": {
+      "condition": "mdi:valve-closed"
+    },
+    "is_open": {
+      "condition": "mdi:valve-open"
+    }
+  },
   "entity_component": {
     "_": {
       "default": "mdi:valve-open",
       "state": {
-        "closed": "mdi:valve-closed"
+        "closed": "mdi:valve-closed",
+        "closing": "mdi:valve",
+        "opening": "mdi:valve"
       }
     },
     "gas": {
@@ -12,15 +22,35 @@
     "water": {
       "default": "mdi:valve-open",
       "state": {
-        "closed": "mdi:valve-closed"
+        "closed": "mdi:valve-closed",
+        "closing": "mdi:valve",
+        "opening": "mdi:valve"
       }
     }
   },
   "services": {
-    "close_valve": "mdi:valve-closed",
-    "open_valve": "mdi:valve-open",
-    "set_valve_position": "mdi:valve",
-    "stop_valve": "mdi:stop",
-    "toggle": "mdi:valve-open"
+    "close_valve": {
+      "service": "mdi:valve-closed"
+    },
+    "open_valve": {
+      "service": "mdi:valve-open"
+    },
+    "set_valve_position": {
+      "service": "mdi:valve"
+    },
+    "stop_valve": {
+      "service": "mdi:stop"
+    },
+    "toggle": {
+      "service": "mdi:valve-open"
+    }
+  },
+  "triggers": {
+    "closed": {
+      "trigger": "mdi:valve-closed"
+    },
+    "opened": {
+      "trigger": "mdi:valve-open"
+    }
   }
 }

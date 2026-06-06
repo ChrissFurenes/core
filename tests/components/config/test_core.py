@@ -10,7 +10,7 @@ from homeassistant.components.config import core
 from homeassistant.components.websocket_api import TYPE_RESULT
 from homeassistant.core import HomeAssistant
 from homeassistant.setup import async_setup_component
-from homeassistant.util import dt as dt_util, location
+from homeassistant.util import dt as dt_util, location as location_util
 from homeassistant.util.unit_system import US_CUSTOMARY_SYSTEM
 
 from tests.common import MockUser
@@ -220,6 +220,27 @@ async def test_websocket_bad_core_update(hass: HomeAssistant, client) -> None:
     assert msg["error"]["code"] == "invalid_format"
 
 
+async def test_websocket_core_update_invalid_time_zone(
+    hass: HomeAssistant, client: MockHAClientWebSocket
+) -> None:
+    """Test core config update rejects an invalid time zone."""
+    await client.send_json(
+        {
+            "id": 8,
+            "type": "config/core/update",
+            "time_zone": "not/a/zone",
+        }
+    )
+
+    msg = await client.receive_json()
+
+    assert msg["id"] == 8
+    assert msg["type"] == TYPE_RESULT
+    assert not msg["success"]
+    assert msg["error"]["code"] == "invalid_info"
+    assert hass.config.time_zone != "not/a/zone"
+
+
 async def test_detect_config(hass: HomeAssistant, client) -> None:
     """Test detect config."""
     with patch(
@@ -238,7 +259,7 @@ async def test_detect_config_fail(hass: HomeAssistant, client) -> None:
     """Test detect config."""
     with patch(
         "homeassistant.util.location.async_detect_location_info",
-        return_value=location.LocationInfo(
+        return_value=location_util.LocationInfo(
             ip=None,
             country_code=None,
             currency=None,

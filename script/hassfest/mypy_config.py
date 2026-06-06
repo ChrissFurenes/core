@@ -1,7 +1,5 @@
 """Generate mypy config."""
 
-from __future__ import annotations
-
 from collections.abc import Iterable
 import configparser
 import io
@@ -33,24 +31,29 @@ HEADER: Final = """
 GENERAL_SETTINGS: Final[dict[str, str]] = {
     "python_version": ".".join(str(x) for x in REQUIRED_PYTHON_VER[:2]),
     "platform": "linux",
-    "plugins": "pydantic.mypy",
-    "show_error_codes": "true",
-    "follow_imports": "normal",
-    "enable_incomplete_feature": ", ".join(  # noqa: FLY002
+    "plugins": ", ".join(  # noqa: FLY002
         [
-            "NewGenericSyntax",
+            "pydantic.mypy",
         ]
     ),
+    "show_error_codes": "true",
+    "follow_imports": "normal",
+    "native_parser": "true",
+    "num_workers": "2",  # Use a conservative value here
+    # "enable_incomplete_feature": ", ".join(
+    #     []
+    # ),
     # Enable some checks globally.
     "local_partial_types": "true",
     "strict_equality": "true",
+    "strict_bytes": "true",
     "no_implicit_optional": "true",
     "warn_incomplete_stub": "true",
     "warn_redundant_casts": "true",
-    "warn_unused_configs": "true",
     "warn_unused_ignores": "true",
     "enable_error_code": ", ".join(  # noqa: FLY002
         [
+            "deprecated",
             "ignore-without-code",
             "redundant-self",
             "truthy-iterable",

@@ -1,7 +1,5 @@
 """Support for Acmeda Roller Blinds."""
 
-from __future__ import annotations
-
 from typing import Any
 
 from homeassistant.components.cover import (
@@ -11,18 +9,18 @@ from homeassistant.components.cover import (
 )
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
 from . import AcmedaConfigEntry
-from .base import AcmedaBase
 from .const import ACMEDA_HUB_UPDATE
+from .entity import AcmedaEntity
 from .helpers import async_add_acmeda_entities
 
 
 async def async_setup_entry(
     hass: HomeAssistant,
     config_entry: AcmedaConfigEntry,
-    async_add_entities: AddEntitiesCallback,
+    async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up the Acmeda Rollers from a config entry."""
     hub = config_entry.runtime_data
@@ -44,7 +42,7 @@ async def async_setup_entry(
     )
 
 
-class AcmedaCover(AcmedaBase, CoverEntity):
+class AcmedaCover(AcmedaEntity, CoverEntity):
     """Representation of an Acmeda cover device."""
 
     _attr_name = None

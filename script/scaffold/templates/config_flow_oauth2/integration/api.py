@@ -27,7 +27,7 @@ class ConfigEntryAuth(my_pypi_package.AbstractAuth):
         super().__init__(self.session.token)
 
     def refresh_tokens(self) -> str:
-        """Refresh and return new NEW_NAME tokens using Home Assistant OAuth2 session."""
+        """Refresh and return new NEW_NAME tokens using HA OAuth2 session."""
         run_coroutine_threadsafe(
             self.session.async_ensure_token_valid(), self.hass.loop
         ).result()
@@ -49,7 +49,6 @@ class AsyncConfigEntryAuth(my_pypi_package.AbstractAuth):
 
     async def async_get_access_token(self) -> str:
         """Return a valid access token."""
-        if not self._oauth_session.valid_token:
-            await self._oauth_session.async_ensure_token_valid()
+        await self._oauth_session.async_ensure_token_valid()
 
         return self._oauth_session.token["access_token"]

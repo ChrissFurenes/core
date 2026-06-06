@@ -1,19 +1,17 @@
 """Helper to check the configuration file."""
 
-from __future__ import annotations
-
 from collections import OrderedDict
 import logging
 import os
 from pathlib import Path
 from typing import NamedTuple, Self
 
+from annotatedyaml import loader as yaml_loader
 import voluptuous as vol
 
 from homeassistant import loader
 from homeassistant.config import (  # type: ignore[attr-defined]
     CONF_PACKAGES,
-    CORE_CONFIG_SCHEMA,
     YAML_CONFIG_FILE,
     config_per_platform,
     extract_domain_configs,
@@ -23,15 +21,15 @@ from homeassistant.config import (  # type: ignore[attr-defined]
     merge_packages_config,
 )
 from homeassistant.core import DOMAIN as HOMEASSISTANT_DOMAIN, HomeAssistant
+from homeassistant.core_config import CORE_CONFIG_SCHEMA
 from homeassistant.exceptions import HomeAssistantError
 from homeassistant.requirements import (
     RequirementsNotFound,
     async_clear_install_history,
     async_get_integration_with_requirements,
 )
-import homeassistant.util.yaml.loader as yaml_loader
 
-from . import config_validation as cv
+from . import condition, config_validation as cv, trigger
 from .typing import ConfigType
 
 
@@ -93,6 +91,12 @@ async def async_check_ha_config_file(  # noqa: C901
     result = HomeAssistantConfig()
     async_clear_install_history(hass)
 
+    # Set up condition and trigger helpers needed for config validation.
+    if condition.CONDITIONS not in hass.data:
+        await condition.async_setup(hass)
+    if trigger.TRIGGERS not in hass.data:
+        await trigger.async_setup(hass)
+
     def _pack_error(
         hass: HomeAssistant,
         package: str,
@@ -102,7 +106,10 @@ async def async_check_ha_config_file(  # noqa: C901
     ) -> None:
         """Handle errors from packages."""
         message = f"Setup of package '{package}' failed: {message}"
-        domain = f"homeassistant.packages.{package}{'.' + component if component is not None else ''}"
+        domain = (
+            f"homeassistant.packages.{package}"
+            f"{'.' + component if component is not None else ''}"
+        )
         pack_config = core_config[CONF_PACKAGES].get(package, config)
         result.add_warning(message, domain, pack_config)
 
@@ -220,7 +227,7 @@ async def async_check_ha_config_file(  # noqa: C901
             except (vol.Invalid, HomeAssistantError) as ex:
                 _comp_error(ex, domain, config, config[domain])
                 continue
-            except Exception as err:  # noqa: BLE001
+            except Exception as err:
                 logging.getLogger(__name__).exception(
                     "Unexpected error validating config"
                 )

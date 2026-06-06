@@ -1,8 +1,14 @@
 """Todo platform for Mealie."""
 
-from __future__ import annotations
+from dataclasses import asdict
 
-from aiomealie import MealieError, MutateShoppingItem, ShoppingItem, ShoppingList
+from aiomealie import (
+    MealieConnectionError,
+    MealieError,
+    MutateShoppingItem,
+    ShoppingItem,
+    ShoppingList,
+)
 
 from homeassistant.components.todo import (
     DOMAIN as TODO_DOMAIN,
@@ -11,15 +17,16 @@ from homeassistant.components.todo import (
     TodoListEntity,
     TodoListEntityFeature,
 )
-from homeassistant.core import HomeAssistant
+from homeassistant.core import HomeAssistant, ServiceResponse
 from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers import entity_registry as er
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
 from .const import DOMAIN
 from .coordinator import MealieConfigEntry, MealieShoppingListCoordinator
 from .entity import MealieEntity
 
+PARALLEL_UPDATES = 0
 TODO_STATUS_MAP = {
     False: TodoItemStatus.NEEDS_ACTION,
     True: TodoItemStatus.COMPLETED,
@@ -45,7 +52,7 @@ def _convert_api_item(item: ShoppingItem) -> TodoItem:
 async def async_setup_entry(
     hass: HomeAssistant,
     entry: MealieConfigEntry,
-    async_add_entities: AddEntitiesCallback,
+    async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up the todo platform for entity."""
     coordinator = entry.runtime_data.shoppinglist_coordinator
@@ -129,6 +136,7 @@ class MealieShoppingListTodoListEntity(MealieEntity, TodoListEntity):
             list_id=self._shopping_list_id,
             note=item.summary.strip() if item.summary else item.summary,
             position=position,
+            quantity=0.0,
         )
         try:
             await self.coordinator.client.add_shopping_item(new_shopping_item)
@@ -147,29 +155,19 @@ class MealieShoppingListTodoListEntity(MealieEntity, TodoListEntity):
         """Update an item on the list."""
         list_items = self.shopping_items
 
-        for items in list_items:
-            if items.item_id == item.uid:
-                position = items.position
-                break
-
         list_item: ShoppingItem | None = next(
             (x for x in list_items if x.item_id == item.uid), None
         )
+        assert list_item is not None
+        position = list_item.position
 
-        if not list_item:
-            raise HomeAssistantError(
-                translation_domain=DOMAIN,
-                translation_key="item_not_found_error",
-                translation_placeholders={"shopping_list_item": item.uid or ""},
-            )
-
-        udpdate_shopping_item = MutateShoppingItem(
+        update_shopping_item = MutateShoppingItem(
             item_id=list_item.item_id,
             list_id=list_item.list_id,
             note=list_item.note,
             display=list_item.display,
             checked=item.status == TodoItemStatus.COMPLETED,
-            position=list_item.position,
+            position=position,
             is_food=list_item.is_food,
             disable_amount=list_item.disable_amount,
             quantity=list_item.quantity,
@@ -181,16 +179,17 @@ class MealieShoppingListTodoListEntity(MealieEntity, TodoListEntity):
         stripped_item_summary = item.summary.strip() if item.summary else item.summary
 
         if list_item.display.strip() != stripped_item_summary:
-            udpdate_shopping_item.note = stripped_item_summary
-            udpdate_shopping_item.position = position
-            udpdate_shopping_item.is_food = False
-            udpdate_shopping_item.food_id = None
-            udpdate_shopping_item.quantity = 0.0
-            udpdate_shopping_item.checked = item.status == TodoItemStatus.COMPLETED
+            update_shopping_item.note = stripped_item_summary
+            update_shopping_item.position = position
+            if update_shopping_item.is_food is not None:
+                update_shopping_item.is_food = False
+            update_shopping_item.food_id = None
+            update_shopping_item.quantity = 0.0
+            update_shopping_item.checked = item.status == TodoItemStatus.COMPLETED
 
         try:
             await self.coordinator.client.update_shopping_item(
-                list_item.item_id, udpdate_shopping_item
+                list_item.item_id, update_shopping_item
             )
         except MealieError as exception:
             raise HomeAssistantError(
@@ -258,7 +257,7 @@ class MealieShoppingListTodoListEntity(MealieEntity, TodoListEntity):
             mutate_shopping_item.note = item.note
             mutate_shopping_item.checked = item.checked
 
-            if item.is_food:
+            if item.is_food or item.food_id:
                 mutate_shopping_item.food_id = item.food_id
                 mutate_shopping_item.unit_id = item.unit_id
 
@@ -272,3 +271,18 @@ class MealieShoppingListTodoListEntity(MealieEntity, TodoListEntity):
     def available(self) -> bool:
         """Return False if shopping list no longer available."""
         return super().available and self._shopping_list_id in self.coordinator.data
+
+    async def async_get_shopping_list_items(self) -> ServiceResponse:
+        """Get structured shopping list items."""
+        client = self.coordinator.client
+        try:
+            shopping_items = await client.get_shopping_items(self._shopping_list_id)
+        except MealieConnectionError as err:
+            raise HomeAssistantError(
+                translation_domain=DOMAIN,
+                translation_key="connection_error",
+            ) from err
+        return {
+            "name": self.shopping_list.name,
+            "items": [asdict(item) for item in shopping_items.items],
+        }

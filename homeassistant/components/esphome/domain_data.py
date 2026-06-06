@@ -1,17 +1,12 @@
 """Support for esphome domain data."""
 
-from __future__ import annotations
-
 from dataclasses import dataclass, field
 from functools import cache
-from typing import Self
-
-from bleak_esphome.backend.cache import ESPHomeBluetoothCache
 
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.json import JSONEncoder
 
-from .const import DOMAIN
+from .const import ESPHOME_DATA
 from .entry_data import ESPHomeConfigEntry, ESPHomeStorage, RuntimeEntryData
 
 STORAGE_VERSION = 1
@@ -19,18 +14,12 @@ STORAGE_VERSION = 1
 
 @dataclass(slots=True)
 class DomainData:
-    """Define a class that stores global esphome data in hass.data[DOMAIN]."""
+    """Define a class that stores global esphome data."""
 
     _stores: dict[str, ESPHomeStorage] = field(default_factory=dict)
-    bluetooth_cache: ESPHomeBluetoothCache = field(
-        default_factory=ESPHomeBluetoothCache
-    )
 
     def get_entry_data(self, entry: ESPHomeConfigEntry) -> RuntimeEntryData:
-        """Return the runtime entry data associated with this config entry.
-
-        Raises KeyError if the entry isn't loaded yet.
-        """
+        """Return the runtime entry data associated with this config entry."""
         return entry.runtime_data
 
     def get_or_create_store(
@@ -44,9 +33,9 @@ class DomainData:
             ),
         )
 
-    @classmethod
+    @staticmethod
     @cache
-    def get(cls, hass: HomeAssistant) -> Self:
+    def get(hass: HomeAssistant) -> DomainData:
         """Get the global DomainData instance stored in hass.data."""
-        ret = hass.data[DOMAIN] = cls()
+        ret = hass.data[ESPHOME_DATA] = DomainData()
         return ret

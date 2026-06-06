@@ -1,11 +1,13 @@
 # serializer version: 1
 # name: test_all_switches[switch.zone_one_automatic_watering-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': None,
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -19,6 +21,7 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Automatic watering',
     'options': dict({
     }),
     'original_device_class': <SwitchDeviceClass.SWITCH: 'switch'>,
@@ -26,6 +29,7 @@
     'original_name': 'Automatic watering',
     'platform': 'hydrawise',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'auto_watering',
     'unique_id': '5965394_auto_watering',
@@ -49,11 +53,13 @@
 # ---
 # name: test_all_switches[switch.zone_one_manual_watering-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': None,
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -67,6 +73,7 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Manual watering',
     'options': dict({
     }),
     'original_device_class': <SwitchDeviceClass.SWITCH: 'switch'>,
@@ -74,6 +81,7 @@
     'original_name': 'Manual watering',
     'platform': 'hydrawise',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'manual_watering',
     'unique_id': '5965394_manual_watering',
@@ -97,11 +105,13 @@
 # ---
 # name: test_all_switches[switch.zone_two_automatic_watering-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': None,
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -115,6 +125,7 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Automatic watering',
     'options': dict({
     }),
     'original_device_class': <SwitchDeviceClass.SWITCH: 'switch'>,
@@ -122,6 +133,7 @@
     'original_name': 'Automatic watering',
     'platform': 'hydrawise',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'auto_watering',
     'unique_id': '5965395_auto_watering',
@@ -145,11 +157,13 @@
 # ---
 # name: test_all_switches[switch.zone_two_manual_watering-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': None,
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -163,6 +177,7 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Manual watering',
     'options': dict({
     }),
     'original_device_class': <SwitchDeviceClass.SWITCH: 'switch'>,
@@ -170,6 +185,7 @@
     'original_name': 'Manual watering',
     'platform': 'hydrawise',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'manual_watering',
     'unique_id': '5965395_manual_watering',

@@ -1,11 +1,12 @@
 """Data update coordinator for caldav."""
 
-from __future__ import annotations
-
 from datetime import date, datetime, time, timedelta
 from functools import partial
 import logging
 import re
+from typing import TYPE_CHECKING
+
+import caldav
 
 from homeassistant.components.calendar import CalendarEvent, extract_offset
 from homeassistant.core import HomeAssistant
@@ -13,6 +14,9 @@ from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 from homeassistant.util import dt as dt_util
 
 from .api import get_attr_value
+
+if TYPE_CHECKING:
+    from . import CalDavConfigEntry
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -23,11 +27,20 @@ OFFSET = "!!"
 class CalDavUpdateCoordinator(DataUpdateCoordinator[CalendarEvent | None]):
     """Class to utilize the calendar dav client object to get next event."""
 
-    def __init__(self, hass, calendar, days, include_all_day, search):
+    def __init__(
+        self,
+        hass: HomeAssistant,
+        entry: CalDavConfigEntry | None,
+        calendar: caldav.Calendar,
+        days: int,
+        include_all_day: bool,
+        search: str | None,
+    ) -> None:
         """Set up how we are going to search the WebDav calendar."""
         super().__init__(
             hass,
             _LOGGER,
+            config_entry=entry,
             name=f"CalDAV {calendar.name}",
             update_interval=MIN_TIME_BETWEEN_UPDATES,
         )
@@ -35,7 +48,7 @@ class CalDavUpdateCoordinator(DataUpdateCoordinator[CalendarEvent | None]):
         self.days = days
         self.include_all_day = include_all_day
         self.search = search
-        self.offset = None
+        self.offset: timedelta | None = None
 
     async def async_get_events(
         self, hass: HomeAssistant, start_date: datetime, end_date: datetime
@@ -66,6 +79,12 @@ class CalDavUpdateCoordinator(DataUpdateCoordinator[CalendarEvent | None]):
                     end=self.to_local(self.get_end_date(vevent)),
                     location=get_attr_value(vevent, "location"),
                     description=get_attr_value(vevent, "description"),
+                    uid=get_attr_value(vevent, "uid"),
+                    recurrence_id=(
+                        str(v)
+                        if (v := get_attr_value(vevent, "recurrence_id")) is not None
+                        else None
+                    ),
                 )
             )
 
@@ -89,7 +108,8 @@ class CalDavUpdateCoordinator(DataUpdateCoordinator[CalendarEvent | None]):
         )
 
         # Create new events for each recurrence of an event that happens today.
-        # For recurring events, some servers return the original event with recurrence rules
+        # For recurring events, some servers return the original
+        # event with recurrence rules
         # and they would not be properly parsed using their original start/end dates.
         new_events = []
         for event in results:
@@ -109,7 +129,7 @@ class CalDavUpdateCoordinator(DataUpdateCoordinator[CalendarEvent | None]):
                     _start_of_tomorrow = start_of_tomorrow
                 if _start_of_today <= start_dt < _start_of_tomorrow:
                     new_event = event.copy()
-                    new_vevent = new_event.instance.vevent
+                    new_vevent = new_event.instance.vevent  # type: ignore[attr-defined]
                     if hasattr(new_vevent, "dtend"):
                         dur = new_vevent.dtend.value - new_vevent.dtstart.value
                         new_vevent.dtend.value = start_dt + dur
@@ -161,6 +181,12 @@ class CalDavUpdateCoordinator(DataUpdateCoordinator[CalendarEvent | None]):
             end=self.to_local(self.get_end_date(vevent)),
             location=get_attr_value(vevent, "location"),
             description=get_attr_value(vevent, "description"),
+            uid=get_attr_value(vevent, "uid"),
+            recurrence_id=(
+                str(v)
+                if (v := get_attr_value(vevent, "recurrence_id")) is not None
+                else None
+            ),
         )
 
     @staticmethod
@@ -171,12 +197,12 @@ class CalDavUpdateCoordinator(DataUpdateCoordinator[CalendarEvent | None]):
 
         pattern = re.compile(search)
         return (
-            hasattr(vevent, "summary")
-            and pattern.match(vevent.summary.value)
-            or hasattr(vevent, "location")
-            and pattern.match(vevent.location.value)
-            or hasattr(vevent, "description")
-            and pattern.match(vevent.description.value)
+            (hasattr(vevent, "summary") and pattern.match(vevent.summary.value))
+            or (hasattr(vevent, "location") and pattern.match(vevent.location.value))
+            or (
+                hasattr(vevent, "description")
+                and pattern.match(vevent.description.value)
+            )
         )
 
     @staticmethod

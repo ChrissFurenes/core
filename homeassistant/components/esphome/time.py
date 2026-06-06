@@ -1,7 +1,5 @@
 """Support for esphome times."""
 
-from __future__ import annotations
-
 from datetime import time
 from functools import partial
 
@@ -10,6 +8,8 @@ from aioesphomeapi import TimeInfo, TimeState
 from homeassistant.components.time import TimeEntity
 
 from .entity import EsphomeEntity, esphome_state_property, platform_async_setup_entry
+
+PARALLEL_UPDATES = 0
 
 
 class EsphomeTime(EsphomeEntity[TimeInfo, TimeState], TimeEntity):
@@ -26,7 +26,13 @@ class EsphomeTime(EsphomeEntity[TimeInfo, TimeState], TimeEntity):
 
     async def async_set_value(self, value: time) -> None:
         """Update the current time."""
-        self._client.time_command(self._key, value.hour, value.minute, value.second)
+        self._client.time_command(
+            self._key,
+            value.hour,
+            value.minute,
+            value.second,
+            device_id=self._static_info.device_id,
+        )
 
 
 async_setup_entry = partial(

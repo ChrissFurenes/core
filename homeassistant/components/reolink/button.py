@@ -1,42 +1,30 @@
 """Component providing support for Reolink button entities."""
 
-from __future__ import annotations
-
 from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Any
 
 from reolink_aio.api import GuardEnum, Host, PtzEnum
-from reolink_aio.exceptions import ReolinkError
-import voluptuous as vol
 
 from homeassistant.components.button import (
     ButtonDeviceClass,
     ButtonEntity,
     ButtonEntityDescription,
 )
-from homeassistant.components.camera import CameraEntityFeature
-from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import EntityCategory
 from homeassistant.core import HomeAssistant
-from homeassistant.exceptions import HomeAssistantError
-from homeassistant.helpers import config_validation as cv
-from homeassistant.helpers.entity_platform import (
-    AddEntitiesCallback,
-    async_get_current_platform,
-)
+from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
-from . import ReolinkData
-from .const import DOMAIN
+from .const import SUPPORT_PTZ_SPEED
 from .entity import (
     ReolinkChannelCoordinatorEntity,
     ReolinkChannelEntityDescription,
     ReolinkHostCoordinatorEntity,
     ReolinkHostEntityDescription,
 )
+from .util import ReolinkConfigEntry, ReolinkData, raise_translated_error
 
-ATTR_SPEED = "speed"
-SUPPORT_PTZ_SPEED = CameraEntityFeature.STREAM
+PARALLEL_UPDATES = 0
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -116,6 +104,46 @@ BUTTON_ENTITIES = (
         ptz_cmd=PtzEnum.zoomout.value,
     ),
     ReolinkButtonEntityDescription(
+        key="ptz_left_up",
+        translation_key="ptz_left_up",
+        entity_registry_enabled_default=False,
+        supported=lambda api, ch: api.supported(ch, "ptz_diagonal"),
+        method=lambda api, ch: api.set_ptz_command(ch, command=PtzEnum.leftup.value),
+        ptz_cmd=PtzEnum.leftup.value,
+    ),
+    ReolinkButtonEntityDescription(
+        key="ptz_left_down",
+        translation_key="ptz_left_down",
+        entity_registry_enabled_default=False,
+        supported=lambda api, ch: api.supported(ch, "ptz_diagonal"),
+        method=lambda api, ch: api.set_ptz_command(ch, command=PtzEnum.leftdown.value),
+        ptz_cmd=PtzEnum.leftdown.value,
+    ),
+    ReolinkButtonEntityDescription(
+        key="ptz_right_up",
+        translation_key="ptz_right_up",
+        entity_registry_enabled_default=False,
+        supported=lambda api, ch: api.supported(ch, "ptz_diagonal"),
+        method=lambda api, ch: api.set_ptz_command(ch, command=PtzEnum.rightup.value),
+        ptz_cmd=PtzEnum.rightup.value,
+    ),
+    ReolinkButtonEntityDescription(
+        key="ptz_right_down",
+        translation_key="ptz_right_down",
+        entity_registry_enabled_default=False,
+        supported=lambda api, ch: api.supported(ch, "ptz_diagonal"),
+        method=lambda api, ch: api.set_ptz_command(ch, command=PtzEnum.rightdown.value),
+        ptz_cmd=PtzEnum.rightdown.value,
+    ),
+    ReolinkButtonEntityDescription(
+        key="ptz_auto",
+        translation_key="ptz_auto",
+        entity_registry_enabled_default=False,
+        supported=lambda api, ch: api.supported(ch, "ptz_auto"),
+        method=lambda api, ch: api.set_ptz_command(ch, command=PtzEnum.auto.value),
+        ptz_cmd=PtzEnum.auto.value,
+    ),
+    ReolinkButtonEntityDescription(
         key="ptz_calibrate",
         translation_key="ptz_calibrate",
         entity_category=EntityCategory.CONFIG,
@@ -135,11 +163,21 @@ BUTTON_ENTITIES = (
         supported=lambda api, ch: api.supported(ch, "ptz_guard"),
         method=lambda api, ch: api.set_ptz_guard(ch, command=GuardEnum.set.value),
     ),
+    ReolinkButtonEntityDescription(
+        key="reboot",
+        always_available=True,
+        device_class=ButtonDeviceClass.RESTART,
+        entity_category=EntityCategory.CONFIG,
+        entity_registry_enabled_default=False,
+        supported=lambda api, ch: api.supported(ch, "reboot"),
+        method=lambda api, ch: api.reboot(ch),
+    ),
 )
 
 HOST_BUTTON_ENTITIES = (
     ReolinkHostButtonEntityDescription(
         key="reboot",
+        always_available=True,
         device_class=ButtonDeviceClass.RESTART,
         entity_category=EntityCategory.CONFIG,
         entity_registry_enabled_default=False,
@@ -151,11 +189,11 @@ HOST_BUTTON_ENTITIES = (
 
 async def async_setup_entry(
     hass: HomeAssistant,
-    config_entry: ConfigEntry,
-    async_add_entities: AddEntitiesCallback,
+    config_entry: ReolinkConfigEntry,
+    async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up a Reolink button entities."""
-    reolink_data: ReolinkData = hass.data[DOMAIN][config_entry.entry_id]
+    reolink_data: ReolinkData = config_entry.runtime_data
 
     entities: list[ReolinkButtonEntity | ReolinkHostButtonEntity] = [
         ReolinkButtonEntity(reolink_data, channel, entity_description)
@@ -169,14 +207,6 @@ async def async_setup_entry(
         if entity_description.supported(reolink_data.host.api)
     )
     async_add_entities(entities)
-
-    platform = async_get_current_platform()
-    platform.async_register_entity_service(
-        "ptz_move",
-        {vol.Required(ATTR_SPEED): cv.positive_int},
-        "async_ptz_move",
-        [SUPPORT_PTZ_SPEED],
-    )
 
 
 class ReolinkButtonEntity(ReolinkChannelCoordinatorEntity, ButtonEntity):
@@ -205,26 +235,21 @@ class ReolinkButtonEntity(ReolinkChannelCoordinatorEntity, ButtonEntity):
         ):
             self._attr_supported_features = SUPPORT_PTZ_SPEED
 
+    @raise_translated_error
     async def async_press(self) -> None:
         """Execute the button action."""
-        try:
-            await self.entity_description.method(self._host.api, self._channel)
-        except ReolinkError as err:
-            raise HomeAssistantError(err) from err
+        await self.entity_description.method(self._host.api, self._channel)
 
-    async def async_ptz_move(self, **kwargs) -> None:
+    @raise_translated_error
+    async def async_ptz_move(self, speed: int) -> None:
         """PTZ move with speed."""
-        speed = kwargs[ATTR_SPEED]
-        try:
-            await self._host.api.set_ptz_command(
-                self._channel, command=self.entity_description.ptz_cmd, speed=speed
-            )
-        except ReolinkError as err:
-            raise HomeAssistantError(err) from err
+        await self._host.api.set_ptz_command(
+            self._channel, command=self.entity_description.ptz_cmd, speed=speed
+        )
 
 
 class ReolinkHostButtonEntity(ReolinkHostCoordinatorEntity, ButtonEntity):
-    """Base button entity class for Reolink IP cameras."""
+    """Base button entity class for Reolink hosts."""
 
     entity_description: ReolinkHostButtonEntityDescription
 
@@ -237,9 +262,7 @@ class ReolinkHostButtonEntity(ReolinkHostCoordinatorEntity, ButtonEntity):
         self.entity_description = entity_description
         super().__init__(reolink_data)
 
+    @raise_translated_error
     async def async_press(self) -> None:
         """Execute the button action."""
-        try:
-            await self.entity_description.method(self._host.api)
-        except ReolinkError as err:
-            raise HomeAssistantError(err) from err
+        await self.entity_description.method(self._host.api)

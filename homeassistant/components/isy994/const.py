@@ -15,6 +15,8 @@ from homeassistant.components.climate import (
     HVACAction,
     HVACMode,
 )
+from homeassistant.components.lock import LockState
+from homeassistant.components.sensor import SensorDeviceClass
 from homeassistant.const import (
     CONCENTRATION_MICROGRAMS_PER_CUBIC_METER,
     CONCENTRATION_PARTS_PER_MILLION,
@@ -29,14 +31,12 @@ from homeassistant.const import (
     SIGNAL_STRENGTH_DECIBELS_MILLIWATT,
     STATE_CLOSED,
     STATE_CLOSING,
-    STATE_LOCKED,
     STATE_OFF,
     STATE_ON,
     STATE_OPEN,
     STATE_OPENING,
     STATE_PROBLEM,
     STATE_UNKNOWN,
-    STATE_UNLOCKED,
     UV_INDEX,
     Platform,
     UnitOfApparentPower,
@@ -69,13 +69,12 @@ CONF_NETWORK = "network"
 CONF_IGNORE_STRING = "ignore_string"
 CONF_SENSOR_STRING = "sensor_string"
 CONF_VAR_SENSOR_STRING = "variable_sensor_string"
-CONF_TLS_VER = "tls"
 CONF_RESTORE_LIGHT_STATE = "restore_light_state"
 
 DEFAULT_IGNORE_STRING = "{IGNORE ME}"
 DEFAULT_SENSOR_STRING = "sensor"
 DEFAULT_RESTORE_LIGHT_STATE = False
-DEFAULT_TLS_VERSION = 1.1
+DEFAULT_VERIFY_SSL = False
 DEFAULT_PROGRAM_STRING = "HA."
 DEFAULT_VAR_SENSOR_STRING = "HA."
 
@@ -432,7 +431,7 @@ UOM_FRIENDLY_NAME = {
     "127": UnitOfPressure.MMHG,
     "128": "J",
     "129": "BMI",  # Body Mass Index
-    "130": f"{UnitOfVolume.LITERS}/{UnitOfTime.HOURS}",
+    "130": UnitOfVolumeFlowRate.LITERS_PER_HOUR,
     "131": SIGNAL_STRENGTH_DECIBELS_MILLIWATT,
     "132": "bpm",  # Breaths per minute
     "133": UnitOfFrequency.KILOHERTZ,
@@ -445,14 +444,14 @@ UOM_FRIENDLY_NAME = {
     "140": f"{UnitOfMass.MILLIGRAMS}/{UnitOfVolume.LITERS}",
     "141": "N",  # Netwon
     "142": f"{UnitOfVolume.GALLONS}/{UnitOfTime.SECONDS}",
-    "143": "gpm",  # Gallon per Minute
-    "144": "gph",  # Gallon per Hour
+    "143": UnitOfVolumeFlowRate.GALLONS_PER_MINUTE,
+    "144": UnitOfVolumeFlowRate.GALLONS_PER_HOUR,
 }
 
 UOM_TO_STATES = {
     "11": {  # Deadbolt Status
-        0: STATE_UNLOCKED,
-        100: STATE_LOCKED,
+        0: LockState.UNLOCKED,
+        100: LockState.LOCKED,
         101: STATE_UNKNOWN,
         102: STATE_PROBLEM,
     },
@@ -653,6 +652,13 @@ HA_HVAC_TO_ISY = {
 }
 
 HA_FAN_TO_ISY = {FAN_ON: "on", FAN_AUTO: "auto"}
+
+TOTAL_INCREASING_DEVICE_CLASSES = {
+    SensorDeviceClass.ENERGY,
+    SensorDeviceClass.WATER,
+    SensorDeviceClass.GAS,
+    SensorDeviceClass.PRECIPITATION,
+}
 
 BINARY_SENSOR_DEVICE_TYPES_ISY = {
     BinarySensorDeviceClass.MOISTURE: ["16.8.", "16.13.", "16.14."],

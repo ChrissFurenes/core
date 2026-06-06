@@ -1,7 +1,5 @@
 """Component providing support for Xiaomi Cameras."""
 
-from __future__ import annotations
-
 from ftplib import FTP, error_perm
 import logging
 
@@ -140,7 +138,7 @@ class XiaomiCamera(Camera):
 
         videos = [v for v in ftp.nlst() if ".tmp" not in v]
         if not videos:
-            _LOGGER.info('Video folder "%s" is empty; delaying', latest_dir)
+            _LOGGER.debug('Video folder "%s" is empty; delaying', latest_dir)
             return False
 
         if self._model == MODEL_XIAOFANG:
@@ -157,6 +155,7 @@ class XiaomiCamera(Camera):
 
         try:
             host = self.host.async_render(parse_result=False)
+        # pylint: disable-next=home-assistant-action-swallowed-exception
         except TemplateError as exc:
             _LOGGER.error("Error parsing template %s: %s", self.host, exc)
             return self._last_image

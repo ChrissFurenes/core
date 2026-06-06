@@ -9,25 +9,23 @@ from wyoming.client import AsyncTcpClient
 from wyoming.wake import Detect, Detection
 
 from homeassistant.components import wake_word
-from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
-from .const import DOMAIN
 from .data import WyomingService, load_wyoming_info
 from .error import WyomingError
-from .models import DomainDataItem
+from .models import WyomingConfigEntry
 
 _LOGGER = logging.getLogger(__name__)
 
 
 async def async_setup_entry(
     hass: HomeAssistant,
-    config_entry: ConfigEntry,
-    async_add_entities: AddEntitiesCallback,
+    config_entry: WyomingConfigEntry,
+    async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up Wyoming wake-word-detection."""
-    item: DomainDataItem = hass.data[DOMAIN][config_entry.entry_id]
+    item = config_entry.runtime_data
     async_add_entities(
         [
             WyomingWakeWordProvider(hass, config_entry, item.service),
@@ -41,7 +39,7 @@ class WyomingWakeWordProvider(wake_word.WakeWordDetectionEntity):
     def __init__(
         self,
         hass: HomeAssistant,
-        config_entry: ConfigEntry,
+        config_entry: WyomingConfigEntry,
         service: WyomingService,
     ) -> None:
         """Set up provider."""
@@ -147,8 +145,10 @@ class WyomingWakeWordProvider(wake_word.WakeWordDetectionEntity):
                                     queued_audio = [audio_task.result()]
 
                                 return wake_word.DetectionResult(
-                                    wake_word_id=detection.name,
-                                    wake_word_phrase=self._get_phrase(detection.name),
+                                    wake_word_id=detection.name or "",
+                                    wake_word_phrase=self._get_phrase(
+                                        detection.name or ""
+                                    ),
                                     timestamp=detection.timestamp,
                                     queued_audio=queued_audio,
                                 )
@@ -188,7 +188,7 @@ class WyomingWakeWordProvider(wake_word.WakeWordDetectionEntity):
                     for task in pending:
                         task.cancel()
 
-        except (OSError, WyomingError):
+        except OSError, WyomingError:
             _LOGGER.exception("Error processing audio stream")
 
         return None

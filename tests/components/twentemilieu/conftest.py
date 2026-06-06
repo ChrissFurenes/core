@@ -1,7 +1,5 @@
 """Fixtures for the Twente Milieu integration tests."""
 
-from __future__ import annotations
-
 from collections.abc import Generator
 from datetime import date
 from unittest.mock import MagicMock, patch
@@ -51,7 +49,8 @@ def mock_twentemilieu() -> Generator[MagicMock]:
     """Return a mocked Twente Milieu client."""
     with (
         patch(
-            "homeassistant.components.twentemilieu.TwenteMilieu", autospec=True
+            "homeassistant.components.twentemilieu.coordinator.TwenteMilieu",
+            autospec=True,
         ) as twentemilieu_mock,
         patch(
             "homeassistant.components.twentemilieu.config_flow.TwenteMilieu",

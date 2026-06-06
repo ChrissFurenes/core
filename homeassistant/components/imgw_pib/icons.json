@@ -1,25 +1,23 @@
 {
   "entity": {
-    "binary_sensor": {
-      "flood_warning": {
-        "default": "mdi:check-circle",
-        "state": {
-          "on": "mdi:home-flood"
-        }
-      },
-      "flood_alarm": {
-        "default": "mdi:check-circle",
-        "state": {
-          "on": "mdi:home-flood"
-        }
-      }
-    },
     "sensor": {
-      "flood_warning_level": {
-        "default": "mdi:alert-outline"
+      "emergent_vegetation_cover": {
+        "default": "mdi:leaf-circle-outline"
       },
-      "flood_alarm_level": {
-        "default": "mdi:alert"
+      "floating_vegetation_cover": {
+        "default": "mdi:leaf-circle-outline"
+      },
+      "hydrological_alert": {
+        "default": "mdi:alert-octagon-outline"
+      },
+      "ice_phenomena": {
+        "default": "mdi:snowflake"
+      },
+      "submerged_vegetation_cover": {
+        "default": "mdi:leaf-circle-outline"
+      },
+      "water_flow": {
+        "default": "mdi:waves-arrow-right"
       },
       "water_level": {
         "default": "mdi:waves"

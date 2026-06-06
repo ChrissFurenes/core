@@ -1,12 +1,11 @@
 """Coordinator for handling data fetching and updates."""
 
-from __future__ import annotations
-
 import logging
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
 from madvr.madvr import Madvr
 
+from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 
@@ -14,8 +13,7 @@ from .const import DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
 
-if TYPE_CHECKING:
-    from . import MadVRConfigEntry
+type MadVRConfigEntry = ConfigEntry[MadVRCoordinator]
 
 
 class MadVRCoordinator(DataUpdateCoordinator[dict[str, Any]]):
@@ -26,10 +24,11 @@ class MadVRCoordinator(DataUpdateCoordinator[dict[str, Any]]):
     def __init__(
         self,
         hass: HomeAssistant,
+        config_entry: MadVRConfigEntry,
         client: Madvr,
     ) -> None:
         """Initialize madvr coordinator."""
-        super().__init__(hass, _LOGGER, name=DOMAIN)
+        super().__init__(hass, _LOGGER, config_entry=config_entry, name=DOMAIN)
         assert self.config_entry.unique_id
         self.mac = self.config_entry.unique_id
         self.client = client

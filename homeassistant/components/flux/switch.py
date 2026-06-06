@@ -3,8 +3,6 @@
 The idea was taken from https://github.com/KpaBap/hue-flux/
 """
 
-from __future__ import annotations
-
 import datetime
 import logging
 from typing import Any
@@ -13,7 +11,7 @@ import voluptuous as vol
 
 from homeassistant.components.light import (
     ATTR_BRIGHTNESS,
-    ATTR_COLOR_TEMP,
+    ATTR_COLOR_TEMP_KELVIN,
     ATTR_RGB_COLOR,
     ATTR_TRANSITION,
     ATTR_XY_COLOR,
@@ -21,7 +19,7 @@ from homeassistant.components.light import (
     VALID_TRANSITION,
     is_on,
 )
-from homeassistant.components.switch import DOMAIN, SwitchEntity
+from homeassistant.components.switch import DOMAIN as SWITCH_DOMAIN, SwitchEntity
 from homeassistant.const import (
     ATTR_ENTITY_ID,
     CONF_BRIGHTNESS,
@@ -43,7 +41,6 @@ from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
 from homeassistant.util import slugify
 from homeassistant.util.color import (
     color_RGB_to_xy_brightness,
-    color_temperature_kelvin_to_mired,
     color_temperature_to_rgb,
 )
 from homeassistant.util.dt import as_local, utcnow as dt_utcnow
@@ -109,13 +106,13 @@ async def async_set_lights_xy(hass, lights, x_val, y_val, brightness, transition
             await hass.services.async_call(LIGHT_DOMAIN, SERVICE_TURN_ON, service_data)
 
 
-async def async_set_lights_temp(hass, lights, mired, brightness, transition):
+async def async_set_lights_temp(hass, lights, kelvin, brightness, transition):
     """Set color of array of lights."""
     for light in lights:
         if is_on(hass, light):
             service_data = {ATTR_ENTITY_ID: light}
-            if mired is not None:
-                service_data[ATTR_COLOR_TEMP] = int(mired)
+            if kelvin is not None:
+                service_data[ATTR_COLOR_TEMP_KELVIN] = kelvin
             if brightness is not None:
                 service_data[ATTR_BRIGHTNESS] = brightness
             if transition is not None:
@@ -178,7 +175,7 @@ async def async_setup_platform(
         await flux.async_flux_update()
 
     service_name = slugify(f"{name} update")
-    hass.services.async_register(DOMAIN, service_name, async_update)
+    hass.services.async_register(SWITCH_DOMAIN, service_name, async_update)
 
 
 class FluxSwitch(SwitchEntity, RestoreEntity):
@@ -224,7 +221,7 @@ class FluxSwitch(SwitchEntity, RestoreEntity):
         return self._name
 
     @property
-    def is_on(self):
+    def is_on(self) -> bool:
         """Return true if switch is on."""
         return self.unsub_tracker is not None
 
@@ -321,7 +318,7 @@ class FluxSwitch(SwitchEntity, RestoreEntity):
                 temp = self._sunset_colortemp + temp_offset
         rgb = color_temperature_to_rgb(temp)
         x_val, y_val, b_val = color_RGB_to_xy_brightness(*rgb)
-        brightness = self._brightness if self._brightness else b_val
+        brightness = self._brightness or b_val
         if self._disable_brightness_adjust:
             brightness = None
         if self._mode == MODE_XY:
@@ -350,17 +347,15 @@ class FluxSwitch(SwitchEntity, RestoreEntity):
                 now,
             )
         else:
-            # Convert to mired and clamp to allowed values
-            mired = color_temperature_kelvin_to_mired(temp)
             await async_set_lights_temp(
-                self.hass, self._lights, mired, brightness, self._transition
+                self.hass, self._lights, int(temp), brightness, self._transition
             )
             _LOGGER.debug(
                 (
-                    "Lights updated to mired:%s brightness:%s, %s%% "
+                    "Lights updated to kelvin:%s brightness:%s, %s%% "
                     "of %s cycle complete at %s"
                 ),
-                mired,
+                temp,
                 brightness,
                 round(percentage_complete * 100),
                 time_state,

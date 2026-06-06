@@ -1,7 +1,5 @@
 """Reproduce an Lock state."""
 
-from __future__ import annotations
-
 import asyncio
 from collections.abc import Iterable
 import logging
@@ -12,26 +10,20 @@ from homeassistant.const import (
     SERVICE_LOCK,
     SERVICE_OPEN,
     SERVICE_UNLOCK,
-    STATE_LOCKED,
-    STATE_LOCKING,
-    STATE_OPEN,
-    STATE_OPENING,
-    STATE_UNLOCKED,
-    STATE_UNLOCKING,
 )
 from homeassistant.core import Context, HomeAssistant, State
 
-from . import DOMAIN
+from . import DOMAIN, LockState
 
 _LOGGER = logging.getLogger(__name__)
 
 VALID_STATES = {
-    STATE_LOCKED,
-    STATE_LOCKING,
-    STATE_OPEN,
-    STATE_OPENING,
-    STATE_UNLOCKED,
-    STATE_UNLOCKING,
+    LockState.LOCKED,
+    LockState.LOCKING,
+    LockState.OPEN,
+    LockState.OPENING,
+    LockState.UNLOCKED,
+    LockState.UNLOCKING,
 }
 
 
@@ -59,11 +51,11 @@ async def _async_reproduce_state(
 
     service_data = {ATTR_ENTITY_ID: state.entity_id}
 
-    if state.state in {STATE_LOCKED, STATE_LOCKING}:
+    if state.state in {LockState.LOCKED, LockState.LOCKING}:
         service = SERVICE_LOCK
-    elif state.state in {STATE_UNLOCKED, STATE_UNLOCKING}:
+    elif state.state in {LockState.UNLOCKED, LockState.UNLOCKING}:
         service = SERVICE_UNLOCK
-    elif state.state in {STATE_OPEN, STATE_OPENING}:
+    elif state.state in {LockState.OPEN, LockState.OPENING}:
         service = SERVICE_OPEN
 
     await hass.services.async_call(

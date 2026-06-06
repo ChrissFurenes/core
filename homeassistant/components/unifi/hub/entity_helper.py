@@ -1,7 +1,5 @@
 """UniFi Network entity helper."""
 
-from __future__ import annotations
-
 from datetime import datetime, timedelta
 
 import aiounifi
@@ -10,7 +8,7 @@ from aiounifi.models.device import DeviceSetPoePortModeRequest
 from homeassistant.core import CALLBACK_TYPE, HomeAssistant, callback
 from homeassistant.helpers.dispatcher import async_dispatcher_send
 from homeassistant.helpers.event import async_call_later, async_track_time_interval
-import homeassistant.util.dt as dt_util
+from homeassistant.util import dt as dt_util
 
 
 class UnifiEntityHelper:

@@ -1,31 +1,30 @@
 """Support for Verisure binary sensors."""
 
-from __future__ import annotations
+from typing import Any
 
 from homeassistant.components.binary_sensor import (
     BinarySensorDeviceClass,
     BinarySensorEntity,
 )
-from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import ATTR_LAST_TRIP_TIME, EntityCategory
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity import Entity
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from homeassistant.util import dt as dt_util
 
 from .const import CONF_GIID, DOMAIN
-from .coordinator import VerisureDataUpdateCoordinator
+from .coordinator import VerisureConfigEntry, VerisureDataUpdateCoordinator
 
 
 async def async_setup_entry(
     hass: HomeAssistant,
-    entry: ConfigEntry,
-    async_add_entities: AddEntitiesCallback,
+    entry: VerisureConfigEntry,
+    async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up Verisure binary sensors based on a config entry."""
-    coordinator: VerisureDataUpdateCoordinator = hass.data[DOMAIN][entry.entry_id]
+    coordinator = entry.runtime_data
 
     sensors: list[Entity] = [VerisureEthernetStatus(coordinator)]
 
@@ -62,7 +61,7 @@ class VerisureDoorWindowSensor(
             manufacturer="Verisure",
             model="Shock Sensor Detector",
             identifiers={(DOMAIN, self.serial_number)},
-            via_device=(DOMAIN, self.coordinator.entry.data[CONF_GIID]),
+            via_device=(DOMAIN, self.coordinator.config_entry.data[CONF_GIID]),
             configuration_url="https://mypages.verisure.com",
         )
 
@@ -82,7 +81,7 @@ class VerisureDoorWindowSensor(
         )
 
     @property
-    def extra_state_attributes(self):
+    def extra_state_attributes(self) -> dict[str, Any]:
         """Return the state attributes of the sensor."""
         return {
             ATTR_LAST_TRIP_TIME: dt_util.parse_datetime(
@@ -104,7 +103,7 @@ class VerisureEthernetStatus(
     @property
     def unique_id(self) -> str:
         """Return the unique ID for this entity."""
-        return f"{self.coordinator.entry.data[CONF_GIID]}_ethernet"
+        return f"{self.coordinator.config_entry.data[CONF_GIID]}_ethernet"
 
     @property
     def device_info(self) -> DeviceInfo:
@@ -113,7 +112,7 @@ class VerisureEthernetStatus(
             name="Verisure Alarm",
             manufacturer="Verisure",
             model="VBox",
-            identifiers={(DOMAIN, self.coordinator.entry.data[CONF_GIID])},
+            identifiers={(DOMAIN, self.coordinator.config_entry.data[CONF_GIID])},
             configuration_url="https://mypages.verisure.com",
         )
 

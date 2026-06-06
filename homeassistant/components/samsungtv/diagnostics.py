@@ -1,15 +1,13 @@
 """Diagnostics support for SamsungTV."""
 
-from __future__ import annotations
-
 from typing import Any
 
 from homeassistant.components.diagnostics import async_redact_data
 from homeassistant.const import CONF_TOKEN
 from homeassistant.core import HomeAssistant
 
-from . import SamsungTVConfigEntry
 from .const import CONF_SESSION_ID
+from .coordinator import SamsungTVConfigEntry
 
 TO_REDACT = {CONF_TOKEN, CONF_SESSION_ID}
 

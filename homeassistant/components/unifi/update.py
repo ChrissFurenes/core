@@ -1,11 +1,9 @@
 """Update entities for Ubiquiti network devices."""
 
-from __future__ import annotations
-
 from collections.abc import Callable, Coroutine
 from dataclasses import dataclass
 import logging
-from typing import Any, TypeVar
+from typing import Any
 
 import aiounifi
 from aiounifi.interfaces.api_handlers import ItemEvent
@@ -19,9 +17,11 @@ from homeassistant.components.update import (
     UpdateEntityFeature,
 )
 from homeassistant.core import HomeAssistant, callback
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.exceptions import HomeAssistantError
+from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
 from . import UnifiConfigEntry
+from .const import DOMAIN
 from .entity import (
     UnifiEntity,
     UnifiEntityDescription,
@@ -30,9 +30,7 @@ from .entity import (
 )
 
 LOGGER = logging.getLogger(__name__)
-
-_DataT = TypeVar("_DataT", bound=Device)
-_HandlerT = TypeVar("_HandlerT", bound=Devices)
+PARALLEL_UPDATES = 1
 
 
 async def async_device_control_fn(api: aiounifi.Controller, obj_id: str) -> None:
@@ -41,7 +39,7 @@ async def async_device_control_fn(api: aiounifi.Controller, obj_id: str) -> None
 
 
 @dataclass(frozen=True, kw_only=True)
-class UnifiUpdateEntityDescription(
+class UnifiUpdateEntityDescription[_HandlerT: Devices, _DataT: Device](
     UpdateEntityDescription, UnifiEntityDescription[_HandlerT, _DataT]
 ):
     """Class describing UniFi update entity."""
@@ -68,7 +66,7 @@ ENTITY_DESCRIPTIONS: tuple[UnifiUpdateEntityDescription, ...] = (
 async def async_setup_entry(
     hass: HomeAssistant,
     config_entry: UnifiConfigEntry,
-    async_add_entities: AddEntitiesCallback,
+    async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up update entities for UniFi Network integration."""
     config_entry.runtime_data.entity_loader.register_platform(
@@ -78,7 +76,9 @@ async def async_setup_entry(
     )
 
 
-class UnifiDeviceUpdateEntity(UnifiEntity[_HandlerT, _DataT], UpdateEntity):
+class UnifiDeviceUpdateEntity[_HandlerT: Devices, _DataT: Device](
+    UnifiEntity[_HandlerT, _DataT], UpdateEntity
+):
     """Representation of a UniFi device update entity."""
 
     entity_description: UnifiUpdateEntityDescription[_HandlerT, _DataT]
@@ -96,7 +96,13 @@ class UnifiDeviceUpdateEntity(UnifiEntity[_HandlerT, _DataT], UpdateEntity):
         self, version: str | None, backup: bool, **kwargs: Any
     ) -> None:
         """Install an update."""
-        await self.entity_description.control_fn(self.api, self._obj_id)
+        try:
+            await self.entity_description.control_fn(self.api, self._obj_id)
+        except aiounifi.AiounifiException as err:
+            raise HomeAssistantError(
+                translation_domain=DOMAIN,
+                translation_key="action_request_failed",
+            ) from err
 
     @callback
     def async_update_state(self, event: ItemEvent, obj_id: str) -> None:

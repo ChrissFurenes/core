@@ -37,7 +37,7 @@ from homeassistant.components.climate import (
 from homeassistant.const import ATTR_TEMPERATURE, UnitOfTemperature
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.device_registry import DeviceInfo
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
 from . import Airtouch5ConfigEntry
 from .const import DOMAIN, FAN_INTELLIGENT_AUTO, FAN_TURBO
@@ -93,7 +93,7 @@ FAN_MODE_TO_SET_AC_FAN_SPEED = {
 async def async_setup_entry(
     hass: HomeAssistant,
     config_entry: Airtouch5ConfigEntry,
-    async_add_entities: AddEntitiesCallback,
+    async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up the Airtouch 5 Climate entities."""
     client = config_entry.runtime_data
@@ -124,7 +124,6 @@ class Airtouch5ClimateEntity(ClimateEntity, Airtouch5Entity):
     _attr_translation_key = DOMAIN
     _attr_target_temperature_step = 1
     _attr_name = None
-    _enable_turn_on_off_backwards_compatibility = False
 
 
 class Airtouch5AC(Airtouch5ClimateEntity):
@@ -179,7 +178,8 @@ class Airtouch5AC(Airtouch5ClimateEntity):
         if ability.supports_fan_speed_intelligent_auto:
             self._attr_fan_modes.append(FAN_INTELLIGENT_AUTO)
 
-        # We can have different setpoints for heat cool, we expose the lowest low and highest high
+        # We can have different setpoints for heat cool,
+        # we expose the lowest low and highest high
         self._attr_min_temp = min(
             ability.min_cool_set_point, ability.min_heat_set_point
         )
@@ -262,7 +262,7 @@ class Airtouch5AC(Airtouch5ClimateEntity):
             _LOGGER.debug("Argument `temperature` is missing in set_temperature")
             return
 
-        await self._control(temp=temp)
+        await self._control(setpoint=SetpointControl.CHANGE_SETPOINT, temp=temp)
 
 
 class Airtouch5Zone(Airtouch5ClimateEntity):
@@ -291,7 +291,8 @@ class Airtouch5Zone(Airtouch5ClimateEntity):
             manufacturer="Polyaire",
             model="AirTouch 5",
         )
-        # We can have different setpoints for heat and cool, we expose the lowest low and highest high
+        # We can have different setpoints for heat and cool,
+        # we expose the lowest low and highest high
         self._attr_min_temp = min(ac.min_cool_set_point, ac.min_heat_set_point)
         self._attr_max_temp = max(ac.max_cool_set_point, ac.max_heat_set_point)
 

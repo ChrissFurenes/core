@@ -1,5 +1,10 @@
 {
   "services": {
-    "turn_on": "mdi:lightbulb-on"
+    "get_color": {
+      "service": "mdi:select-color"
+    },
+    "turn_on": {
+      "service": "mdi:lightbulb-on"
+    }
   }
 }

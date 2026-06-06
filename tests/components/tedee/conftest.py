@@ -1,18 +1,17 @@
 """Fixtures for Tedee integration tests."""
 
-from __future__ import annotations
-
 from collections.abc import Generator
 import json
 from unittest.mock import AsyncMock, MagicMock, patch
 
-from pytedee_async.bridge import TedeeBridge
-from pytedee_async.lock import TedeeLock
+from aiotedee.models import TedeeBridge, TedeeLock
 import pytest
 
 from homeassistant.components.tedee.const import CONF_LOCAL_ACCESS_TOKEN, DOMAIN
 from homeassistant.const import CONF_HOST, CONF_WEBHOOK_ID
 from homeassistant.core import HomeAssistant
+
+from . import setup_integration
 
 from tests.common import MockConfigEntry, load_fixture
 
@@ -50,10 +49,10 @@ def mock_tedee() -> Generator[MagicMock]:
     """Return a mocked Tedee client."""
     with (
         patch(
-            "homeassistant.components.tedee.coordinator.TedeeClient", autospec=True
+            "homeassistant.components.tedee.coordinator.TedeeLocalClient", autospec=True
         ) as tedee_mock,
         patch(
-            "homeassistant.components.tedee.config_flow.TedeeClient",
+            "homeassistant.components.tedee.config_flow.TedeeLocalClient",
             new=tedee_mock,
         ),
     ):
@@ -61,10 +60,6 @@ def mock_tedee() -> Generator[MagicMock]:
 
         tedee.get_locks.return_value = None
         tedee.sync.return_value = None
-        tedee.get_bridges.return_value = [
-            TedeeBridge(1234, "0000-0000", "Bridge-AB1C"),
-            TedeeBridge(5678, "9999-9999", "Bridge-CD2E"),
-        ]
         tedee.get_local_bridge.return_value = TedeeBridge(0, "0000-0000", "Bridge-AB1C")
 
         tedee.parse_webhook_message.return_value = None
@@ -73,8 +68,8 @@ def mock_tedee() -> Generator[MagicMock]:
 
         locks_json = json.loads(load_fixture("locks.json", DOMAIN))
 
-        lock_list = [TedeeLock(**lock) for lock in locks_json]
-        tedee.locks_dict = {lock.lock_id: lock for lock in lock_list}
+        lock_list = [TedeeLock.from_dict(lock) for lock in locks_json]
+        tedee.locks_dict = {lock.id: lock for lock in lock_list}
 
         yield tedee
 
@@ -84,8 +79,6 @@ async def init_integration(
     hass: HomeAssistant, mock_config_entry: MockConfigEntry, mock_tedee: MagicMock
 ) -> MockConfigEntry:
     """Set up the Tedee integration for testing."""
-    mock_config_entry.add_to_hass(hass)
-    await hass.config_entries.async_setup(mock_config_entry.entry_id)
-    await hass.async_block_till_done()
+    await setup_integration(hass, mock_config_entry)
 
     return mock_config_entry

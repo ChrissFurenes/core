@@ -8,10 +8,10 @@ from homeassistant.components.switch import SwitchDeviceClass, SwitchEntity
 from homeassistant.const import EntityCategory
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import HomeAssistantError
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
+from .coordinator import PowerwallConfigEntry, PowerwallRuntimeData
 from .entity import PowerWallEntity
-from .models import PowerwallConfigEntry, PowerwallRuntimeData
 
 OFF_GRID_STATUSES = {
     GridStatus.TRANSITION_TO_ISLAND,
@@ -22,7 +22,7 @@ OFF_GRID_STATUSES = {
 async def async_setup_entry(
     hass: HomeAssistant,
     entry: PowerwallConfigEntry,
-    async_add_entities: AddEntitiesCallback,
+    async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up Powerwall switch platform from Powerwall resources."""
     async_add_entities([PowerwallOffGridEnabledEntity(entry.runtime_data)])
@@ -62,7 +62,7 @@ class PowerwallOffGridEnabledEntity(PowerWallEntity, SwitchEntity):
                 f"Setting off-grid operation to {island_mode} failed: {ex}"
             ) from ex
 
-        self._attr_is_on = island_mode == IslandMode.OFFGRID
+        self._attr_is_on = island_mode is IslandMode.OFFGRID
         self.async_write_ha_state()
 
         await self.coordinator.async_request_refresh()

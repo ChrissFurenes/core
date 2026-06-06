@@ -1,7 +1,5 @@
 """Support for Proximity sensors."""
 
-from __future__ import annotations
-
 from typing import NamedTuple
 
 from homeassistant.components.sensor import (
@@ -13,7 +11,7 @@ from homeassistant.const import UnitOfLength
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers.device_registry import DeviceEntryType, DeviceInfo
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .const import (
@@ -82,7 +80,7 @@ def _device_info(coordinator: ProximityDataUpdateCoordinator) -> DeviceInfo:
 async def async_setup_entry(
     hass: HomeAssistant,
     entry: ProximityConfigEntry,
-    async_add_entities: AddEntitiesCallback,
+    async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up the proximity sensors."""
 
@@ -175,7 +173,11 @@ class ProximityTrackedEntitySensor(
         self.entity_description = description
         self.tracked_entity_id = tracked_entity_descriptor.entity_id
 
-        self._attr_unique_id = f"{coordinator.config_entry.entry_id}_{tracked_entity_descriptor.identifier}_{description.key}"
+        self._attr_unique_id = (
+            f"{coordinator.config_entry.entry_id}"
+            f"_{tracked_entity_descriptor.identifier}"
+            f"_{description.key}"
+        )
         self._attr_device_info = _device_info(coordinator)
         self._attr_translation_placeholders = {
             "tracked_entity": tracked_entity_descriptor.name

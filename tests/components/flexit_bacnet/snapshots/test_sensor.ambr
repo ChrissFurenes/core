@@ -1,13 +1,15 @@
 # serializer version: 1
 # name: test_sensors[sensor.device_name_air_filter_operating_time-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': dict({
       'state_class': <SensorStateClass.TOTAL_INCREASING: 'total_increasing'>,
     }),
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -21,6 +23,7 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Air filter operating time',
     'options': dict({
       'sensor': dict({
         'suggested_display_precision': 0,
@@ -31,6 +34,7 @@
     'original_name': 'Air filter operating time',
     'platform': 'flexit_bacnet',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'air_filter_operating_time',
     'unique_id': '0000-0001-air_filter_operating_time',
@@ -54,11 +58,13 @@
 # ---
 # name: test_sensors[sensor.device_name_electric_heater_power-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': None,
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -72,6 +78,7 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Electric heater power',
     'options': dict({
       'sensor': dict({
         'suggested_display_precision': 3,
@@ -82,6 +89,7 @@
     'original_name': 'Electric heater power',
     'platform': 'flexit_bacnet',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'electric_heater_power',
     'unique_id': '0000-0001-electric_heater_power',
@@ -105,13 +113,15 @@
 # ---
 # name: test_sensors[sensor.device_name_exhaust_air_fan-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': dict({
       'state_class': <SensorStateClass.MEASUREMENT: 'measurement'>,
     }),
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -125,6 +135,7 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Exhaust air fan',
     'options': dict({
     }),
     'original_device_class': None,
@@ -132,6 +143,7 @@
     'original_name': 'Exhaust air fan',
     'platform': 'flexit_bacnet',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'exhaust_air_fan_rpm',
     'unique_id': '0000-0001-exhaust_air_fan_rpm',
@@ -155,13 +167,15 @@
 # ---
 # name: test_sensors[sensor.device_name_exhaust_air_fan_control_signal-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': dict({
       'state_class': <SensorStateClass.MEASUREMENT: 'measurement'>,
     }),
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -175,6 +189,7 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Exhaust air fan control signal',
     'options': dict({
     }),
     'original_device_class': None,
@@ -182,6 +197,7 @@
     'original_name': 'Exhaust air fan control signal',
     'platform': 'flexit_bacnet',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'exhaust_air_fan_control_signal',
     'unique_id': '0000-0001-exhaust_air_fan_control_signal',
@@ -205,11 +221,15 @@
 # ---
 # name: test_sensors[sensor.device_name_exhaust_air_temperature-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
-    'capabilities': None,
+    'capabilities': dict({
+      'state_class': <SensorStateClass.MEASUREMENT: 'measurement'>,
+    }),
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -223,13 +243,18 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Exhaust air temperature',
     'options': dict({
+      'sensor': dict({
+        'suggested_display_precision': 1,
+      }),
     }),
     'original_device_class': <SensorDeviceClass.TEMPERATURE: 'temperature'>,
     'original_icon': None,
     'original_name': 'Exhaust air temperature',
     'platform': 'flexit_bacnet',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'exhaust_air_temperature',
     'unique_id': '0000-0001-exhaust_air_temperature',
@@ -241,6 +266,7 @@
     'attributes': ReadOnlyDict({
       'device_class': 'temperature',
       'friendly_name': 'Device Name Exhaust air temperature',
+      'state_class': <SensorStateClass.MEASUREMENT: 'measurement'>,
       'unit_of_measurement': <UnitOfTemperature.CELSIUS: '°C'>,
     }),
     'context': <ANY>,
@@ -253,11 +279,15 @@
 # ---
 # name: test_sensors[sensor.device_name_extract_air_temperature-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
-    'capabilities': None,
+    'capabilities': dict({
+      'state_class': <SensorStateClass.MEASUREMENT: 'measurement'>,
+    }),
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -271,13 +301,18 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Extract air temperature',
     'options': dict({
+      'sensor': dict({
+        'suggested_display_precision': 1,
+      }),
     }),
     'original_device_class': <SensorDeviceClass.TEMPERATURE: 'temperature'>,
     'original_icon': None,
     'original_name': 'Extract air temperature',
     'platform': 'flexit_bacnet',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'extract_air_temperature',
     'unique_id': '0000-0001-extract_air_temperature',
@@ -289,6 +324,7 @@
     'attributes': ReadOnlyDict({
       'device_class': 'temperature',
       'friendly_name': 'Device Name Extract air temperature',
+      'state_class': <SensorStateClass.MEASUREMENT: 'measurement'>,
       'unit_of_measurement': <UnitOfTemperature.CELSIUS: '°C'>,
     }),
     'context': <ANY>,
@@ -301,13 +337,15 @@
 # ---
 # name: test_sensors[sensor.device_name_fireplace_ventilation_remaining_duration-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': dict({
       'state_class': <SensorStateClass.MEASUREMENT: 'measurement'>,
     }),
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -321,6 +359,7 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Fireplace ventilation remaining duration',
     'options': dict({
       'sensor': dict({
         'suggested_display_precision': 0,
@@ -331,6 +370,7 @@
     'original_name': 'Fireplace ventilation remaining duration',
     'platform': 'flexit_bacnet',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'fireplace_ventilation_remaining_duration',
     'unique_id': '0000-0001-fireplace_ventilation_remaining_duration',
@@ -355,13 +395,15 @@
 # ---
 # name: test_sensors[sensor.device_name_heat_exchanger_efficiency-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': dict({
       'state_class': <SensorStateClass.MEASUREMENT: 'measurement'>,
     }),
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -375,6 +417,7 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Heat exchanger efficiency',
     'options': dict({
     }),
     'original_device_class': None,
@@ -382,6 +425,7 @@
     'original_name': 'Heat exchanger efficiency',
     'platform': 'flexit_bacnet',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'heat_exchanger_efficiency',
     'unique_id': '0000-0001-heat_exchanger_efficiency',
@@ -405,13 +449,15 @@
 # ---
 # name: test_sensors[sensor.device_name_heat_exchanger_speed-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': dict({
       'state_class': <SensorStateClass.MEASUREMENT: 'measurement'>,
     }),
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -425,6 +471,7 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Heat exchanger speed',
     'options': dict({
     }),
     'original_device_class': None,
@@ -432,6 +479,7 @@
     'original_name': 'Heat exchanger speed',
     'platform': 'flexit_bacnet',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'heat_exchanger_speed',
     'unique_id': '0000-0001-heat_exchanger_speed',
@@ -455,11 +503,15 @@
 # ---
 # name: test_sensors[sensor.device_name_outside_air_temperature-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
-    'capabilities': None,
+    'capabilities': dict({
+      'state_class': <SensorStateClass.MEASUREMENT: 'measurement'>,
+    }),
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -473,13 +525,18 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Outside air temperature',
     'options': dict({
+      'sensor': dict({
+        'suggested_display_precision': 1,
+      }),
     }),
     'original_device_class': <SensorDeviceClass.TEMPERATURE: 'temperature'>,
     'original_icon': None,
     'original_name': 'Outside air temperature',
     'platform': 'flexit_bacnet',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'outside_air_temperature',
     'unique_id': '0000-0001-outside_air_temperature',
@@ -491,6 +548,7 @@
     'attributes': ReadOnlyDict({
       'device_class': 'temperature',
       'friendly_name': 'Device Name Outside air temperature',
+      'state_class': <SensorStateClass.MEASUREMENT: 'measurement'>,
       'unit_of_measurement': <UnitOfTemperature.CELSIUS: '°C'>,
     }),
     'context': <ANY>,
@@ -503,13 +561,15 @@
 # ---
 # name: test_sensors[sensor.device_name_rapid_ventilation_remaining_duration-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': dict({
       'state_class': <SensorStateClass.MEASUREMENT: 'measurement'>,
     }),
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -523,6 +583,7 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Rapid ventilation remaining duration',
     'options': dict({
       'sensor': dict({
         'suggested_display_precision': 0,
@@ -533,6 +594,7 @@
     'original_name': 'Rapid ventilation remaining duration',
     'platform': 'flexit_bacnet',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'rapid_ventilation_remaining_duration',
     'unique_id': '0000-0001-rapid_ventilation_remaining_duration',
@@ -557,11 +619,15 @@
 # ---
 # name: test_sensors[sensor.device_name_room_temperature-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
-    'capabilities': None,
+    'capabilities': dict({
+      'state_class': <SensorStateClass.MEASUREMENT: 'measurement'>,
+    }),
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -575,13 +641,18 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Room temperature',
     'options': dict({
+      'sensor': dict({
+        'suggested_display_precision': 1,
+      }),
     }),
     'original_device_class': <SensorDeviceClass.TEMPERATURE: 'temperature'>,
     'original_icon': None,
     'original_name': 'Room temperature',
     'platform': 'flexit_bacnet',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'room_temperature',
     'unique_id': '0000-0001-room_temperature',
@@ -593,6 +664,7 @@
     'attributes': ReadOnlyDict({
       'device_class': 'temperature',
       'friendly_name': 'Device Name Room temperature',
+      'state_class': <SensorStateClass.MEASUREMENT: 'measurement'>,
       'unit_of_measurement': <UnitOfTemperature.CELSIUS: '°C'>,
     }),
     'context': <ANY>,
@@ -605,13 +677,15 @@
 # ---
 # name: test_sensors[sensor.device_name_supply_air_fan-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': dict({
       'state_class': <SensorStateClass.MEASUREMENT: 'measurement'>,
     }),
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -625,6 +699,7 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Supply air fan',
     'options': dict({
     }),
     'original_device_class': None,
@@ -632,6 +707,7 @@
     'original_name': 'Supply air fan',
     'platform': 'flexit_bacnet',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'supply_air_fan_rpm',
     'unique_id': '0000-0001-supply_air_fan_rpm',
@@ -655,13 +731,15 @@
 # ---
 # name: test_sensors[sensor.device_name_supply_air_fan_control_signal-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': dict({
       'state_class': <SensorStateClass.MEASUREMENT: 'measurement'>,
     }),
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -675,6 +753,7 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Supply air fan control signal',
     'options': dict({
     }),
     'original_device_class': None,
@@ -682,6 +761,7 @@
     'original_name': 'Supply air fan control signal',
     'platform': 'flexit_bacnet',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'supply_air_fan_control_signal',
     'unique_id': '0000-0001-supply_air_fan_control_signal',
@@ -705,11 +785,15 @@
 # ---
 # name: test_sensors[sensor.device_name_supply_air_temperature-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
-    'capabilities': None,
+    'capabilities': dict({
+      'state_class': <SensorStateClass.MEASUREMENT: 'measurement'>,
+    }),
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -723,13 +807,18 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Supply air temperature',
     'options': dict({
+      'sensor': dict({
+        'suggested_display_precision': 1,
+      }),
     }),
     'original_device_class': <SensorDeviceClass.TEMPERATURE: 'temperature'>,
     'original_icon': None,
     'original_name': 'Supply air temperature',
     'platform': 'flexit_bacnet',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'supply_air_temperature',
     'unique_id': '0000-0001-supply_air_temperature',
@@ -741,6 +830,7 @@
     'attributes': ReadOnlyDict({
       'device_class': 'temperature',
       'friendly_name': 'Device Name Supply air temperature',
+      'state_class': <SensorStateClass.MEASUREMENT: 'measurement'>,
       'unit_of_measurement': <UnitOfTemperature.CELSIUS: '°C'>,
     }),
     'context': <ANY>,

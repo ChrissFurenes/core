@@ -1,8 +1,9 @@
 # serializer version: 1
 # name: test_setup_integration_success[climate.system_1_zone_1-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': dict({
       'fan_modes': list([
@@ -21,6 +22,7 @@
       'min_temp': 45,
     }),
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -34,6 +36,7 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': None,
     'options': dict({
     }),
     'original_device_class': None,
@@ -41,6 +44,7 @@
     'original_name': None,
     'platform': 'bryant_evolution',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': <ClimateEntityFeature: 395>,
     'translation_key': None,
     'unique_id': '01J3XJZSTEF6G5V0QJX6HBC94T-S1-Z1',

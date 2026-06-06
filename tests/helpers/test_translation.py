@@ -64,11 +64,17 @@ def test_load_translations_files_by_language(
             "test": {
                 "entity": {
                     "switch": {
-                        "other1": {"name": "Other 1"},
+                        "other1": {
+                            "name": "Other 1",
+                            "unit_of_measurement": "units",
+                        },
                         "other2": {"name": "Other 2"},
                         "other3": {"name": "Other 3"},
-                        "other4": {"name": "Other 4"},
-                        "outlet": {"name": "Outlet " "{placeholder}"},
+                        "other4": {
+                            "name": "Other 4",
+                            "unit_of_measurement": "quantities",
+                        },
+                        "outlet": {"name": "Outlet {placeholder}"},
                     }
                 },
                 "something": "else",
@@ -87,9 +93,11 @@ def test_load_translations_files_by_language(
             "en",
             {
                 "component.test.entity.switch.other1.name": "Other 1",
+                "component.test.entity.switch.other1.unit_of_measurement": "units",
                 "component.test.entity.switch.other2.name": "Other 2",
                 "component.test.entity.switch.other3.name": "Other 3",
                 "component.test.entity.switch.other4.name": "Other 4",
+                "component.test.entity.switch.other4.unit_of_measurement": "quantities",
                 "component.test.entity.switch.outlet.name": "Outlet {placeholder}",
             },
             [],
@@ -98,9 +106,11 @@ def test_load_translations_files_by_language(
             "es",
             {
                 "component.test.entity.switch.other1.name": "Otra 1",
+                "component.test.entity.switch.other1.unit_of_measurement": "units",
                 "component.test.entity.switch.other2.name": "Otra 2",
                 "component.test.entity.switch.other3.name": "Otra 3",
                 "component.test.entity.switch.other4.name": "Otra 4",
+                "component.test.entity.switch.other4.unit_of_measurement": "quantities",
                 "component.test.entity.switch.outlet.name": "Enchufe {placeholder}",
             },
             [],
@@ -110,12 +120,14 @@ def test_load_translations_files_by_language(
             {
                 # Correct
                 "component.test.entity.switch.other1.name": "Anderes 1",
+                "component.test.entity.switch.other1.unit_of_measurement": "einheiten",
                 # Translation has placeholder missing in English
                 "component.test.entity.switch.other2.name": "Other 2",
                 # Correct (empty translation)
                 "component.test.entity.switch.other3.name": "",
                 # Translation missing
                 "component.test.entity.switch.other4.name": "Other 4",
+                "component.test.entity.switch.other4.unit_of_measurement": "quantities",
                 # Mismatch in placeholders
                 "component.test.entity.switch.outlet.name": "Outlet {placeholder}",
             },
@@ -146,8 +158,9 @@ async def test_load_translations_files_invalid_localized_placeholders(
     )
     for expected_error in expected_errors:
         assert (
-            f"Validation of translation placeholders for localized ({language}) string {expected_error} failed"
-            in caplog.text
+            f"Validation of translation placeholders for"
+            f" localized ({language}) string"
+            f" {expected_error} failed" in caplog.text
         )
 
 
@@ -166,9 +179,11 @@ async def test_get_translations(hass: HomeAssistant, mock_config_flows) -> None:
 
     assert translations == {
         "component.test.entity.switch.other1.name": "Other 1",
+        "component.test.entity.switch.other1.unit_of_measurement": "units",
         "component.test.entity.switch.other2.name": "Other 2",
         "component.test.entity.switch.other3.name": "Other 3",
         "component.test.entity.switch.other4.name": "Other 4",
+        "component.test.entity.switch.other4.unit_of_measurement": "quantities",
         "component.test.entity.switch.outlet.name": "Outlet {placeholder}",
     }
 
@@ -176,24 +191,33 @@ async def test_get_translations(hass: HomeAssistant, mock_config_flows) -> None:
         hass, "de", "entity", {"test"}
     )
 
+    # Test a partial translation
     assert translations == {
+        # Correct
         "component.test.entity.switch.other1.name": "Anderes 1",
+        "component.test.entity.switch.other1.unit_of_measurement": "einheiten",
+        # Translation has placeholder missing in English
         "component.test.entity.switch.other2.name": "Other 2",
+        # Correct (empty translation)
         "component.test.entity.switch.other3.name": "",
+        # Translation missing
         "component.test.entity.switch.other4.name": "Other 4",
+        "component.test.entity.switch.other4.unit_of_measurement": "quantities",
+        # Mismatch in placeholders
         "component.test.entity.switch.outlet.name": "Outlet {placeholder}",
     }
 
-    # Test a partial translation
     translations = await translation.async_get_translations(
         hass, "es", "entity", {"test"}
     )
 
     assert translations == {
         "component.test.entity.switch.other1.name": "Otra 1",
+        "component.test.entity.switch.other1.unit_of_measurement": "units",
         "component.test.entity.switch.other2.name": "Otra 2",
         "component.test.entity.switch.other3.name": "Otra 3",
         "component.test.entity.switch.other4.name": "Otra 4",
+        "component.test.entity.switch.other4.unit_of_measurement": "quantities",
         "component.test.entity.switch.outlet.name": "Enchufe {placeholder}",
     }
 
@@ -204,9 +228,11 @@ async def test_get_translations(hass: HomeAssistant, mock_config_flows) -> None:
 
     assert translations == {
         "component.test.entity.switch.other1.name": "Other 1",
+        "component.test.entity.switch.other1.unit_of_measurement": "units",
         "component.test.entity.switch.other2.name": "Other 2",
         "component.test.entity.switch.other3.name": "Other 3",
         "component.test.entity.switch.other4.name": "Other 4",
+        "component.test.entity.switch.other4.unit_of_measurement": "quantities",
         "component.test.entity.switch.outlet.name": "Outlet {placeholder}",
     }
 
@@ -336,7 +362,7 @@ async def test_get_translation_categories(hass: HomeAssistant) -> None:
 async def test_translation_merging_loaded_together(
     hass: HomeAssistant, caplog: pytest.LogCaptureFixture
 ) -> None:
-    """Test we merge translations of two integrations when they are loaded at the same time."""
+    """Test we merge translations of two integrations loaded at the same time."""
     hass.config.components.add("hue")
     hass.config.components.add("homekit")
     hue_translations = await translation.async_get_translations(
@@ -425,10 +451,10 @@ async def test_caching(hass: HomeAssistant) -> None:
         side_effect=translation.build_resources,
     ) as mock_build_resources:
         load1 = await translation.async_get_translations(hass, "en", "entity_component")
-        assert len(mock_build_resources.mock_calls) == 6
+        assert len(mock_build_resources.mock_calls) == 9
 
         load2 = await translation.async_get_translations(hass, "en", "entity_component")
-        assert len(mock_build_resources.mock_calls) == 6
+        assert len(mock_build_resources.mock_calls) == 9
 
         assert load1 == load2
 
@@ -507,9 +533,11 @@ async def test_get_cached_translations(hass: HomeAssistant, mock_config_flows) -
     )
     assert translations == {
         "component.test.entity.switch.other1.name": "Other 1",
+        "component.test.entity.switch.other1.unit_of_measurement": "units",
         "component.test.entity.switch.other2.name": "Other 2",
         "component.test.entity.switch.other3.name": "Other 3",
         "component.test.entity.switch.other4.name": "Other 4",
+        "component.test.entity.switch.other4.unit_of_measurement": "quantities",
         "component.test.entity.switch.outlet.name": "Outlet {placeholder}",
     }
 
@@ -522,9 +550,11 @@ async def test_get_cached_translations(hass: HomeAssistant, mock_config_flows) -
 
     assert translations == {
         "component.test.entity.switch.other1.name": "Otra 1",
+        "component.test.entity.switch.other1.unit_of_measurement": "units",
         "component.test.entity.switch.other2.name": "Otra 2",
         "component.test.entity.switch.other3.name": "Otra 3",
         "component.test.entity.switch.other4.name": "Otra 4",
+        "component.test.entity.switch.other4.unit_of_measurement": "quantities",
         "component.test.entity.switch.outlet.name": "Enchufe {placeholder}",
     }
 
@@ -539,9 +569,11 @@ async def test_get_cached_translations(hass: HomeAssistant, mock_config_flows) -
 
     assert translations == {
         "component.test.entity.switch.other1.name": "Other 1",
+        "component.test.entity.switch.other1.unit_of_measurement": "units",
         "component.test.entity.switch.other2.name": "Other 2",
         "component.test.entity.switch.other3.name": "Other 3",
         "component.test.entity.switch.other4.name": "Other 4",
+        "component.test.entity.switch.other4.unit_of_measurement": "quantities",
         "component.test.entity.switch.outlet.name": "Outlet {placeholder}",
     }
 
@@ -589,7 +621,8 @@ async def test_translate_state(hass: HomeAssistant) -> None:
     with patch(
         "homeassistant.helpers.translation.async_get_cached_translations",
         return_value={
-            "component.platform.entity.binary_sensor.translation_key.state.on": "TRANSLATED"
+            "component.platform.entity.binary_sensor"
+            ".translation_key.state.on": "TRANSLATED"
         },
     ) as mock:
         result = translation.async_translate_state(
@@ -601,7 +634,8 @@ async def test_translate_state(hass: HomeAssistant) -> None:
     with patch(
         "homeassistant.helpers.translation.async_get_cached_translations",
         return_value={
-            "component.binary_sensor.entity_component.device_class.state.on": "TRANSLATED"
+            "component.binary_sensor.entity_component"
+            ".device_class.state.on": "TRANSLATED"
         },
     ) as mock:
         result = translation.async_translate_state(
@@ -652,6 +686,98 @@ async def test_translate_state(hass: HomeAssistant) -> None:
         assert result == "on"
 
 
+async def test_translate_state_attr(hass: HomeAssistant) -> None:
+    """Test the state attribute translation helper."""
+    with patch(
+        "homeassistant.helpers.translation.async_get_cached_translations",
+        return_value={
+            "component.platform.entity.climate"
+            ".translation_key.state_attributes"
+            ".fan_mode.state.auto": "TRANSLATED"
+        },
+    ) as mock:
+        result = translation.async_translate_state_attr(
+            hass,
+            "auto",
+            "climate",
+            "platform",
+            "translation_key",
+            None,
+            "fan_mode",
+        )
+        mock.assert_called_once_with(hass, hass.config.language, "entity")
+        assert result == "TRANSLATED"
+
+    with patch(
+        "homeassistant.helpers.translation.async_get_cached_translations",
+        return_value={
+            "component.climate.entity_component"
+            ".device_class.state_attributes"
+            ".fan_mode.state.auto": "TRANSLATED"
+        },
+    ) as mock:
+        result = translation.async_translate_state_attr(
+            hass,
+            "auto",
+            "climate",
+            "platform",
+            None,
+            "device_class",
+            "fan_mode",
+        )
+        mock.assert_called_once_with(hass, hass.config.language, "entity_component")
+        assert result == "TRANSLATED"
+
+    with patch(
+        "homeassistant.helpers.translation.async_get_cached_translations",
+        return_value={
+            "component.climate.entity_component"
+            "._.state_attributes"
+            ".fan_mode.state.auto": "TRANSLATED"
+        },
+    ) as mock:
+        result = translation.async_translate_state_attr(
+            hass, "auto", "climate", "platform", None, None, "fan_mode"
+        )
+        mock.assert_called_once_with(hass, hass.config.language, "entity_component")
+        assert result == "TRANSLATED"
+
+    with patch(
+        "homeassistant.helpers.translation.async_get_cached_translations",
+        return_value={},
+    ) as mock:
+        result = translation.async_translate_state_attr(
+            hass, "auto", "climate", "platform", None, None, "fan_mode"
+        )
+        mock.assert_has_calls(
+            [
+                call(hass, hass.config.language, "entity_component"),
+            ]
+        )
+        assert result == "auto"
+
+    with patch(
+        "homeassistant.helpers.translation.async_get_cached_translations",
+        return_value={},
+    ) as mock:
+        result = translation.async_translate_state_attr(
+            hass,
+            "auto",
+            "climate",
+            "platform",
+            "translation_key",
+            "device_class",
+            "fan_mode",
+        )
+        mock.assert_has_calls(
+            [
+                call(hass, hass.config.language, "entity"),
+                call(hass, hass.config.language, "entity_component"),
+            ]
+        )
+        assert result == "auto"
+
+
 async def test_get_translations_still_has_title_without_translations_files(
     hass: HomeAssistant, mock_config_flows
 ) -> None:
@@ -678,7 +804,6 @@ async def test_get_translations_still_has_title_without_translations_files(
         )
 
         assert translations == translations_again
-
     assert translations == {
         "component.component1.title": "Component 1",
     }

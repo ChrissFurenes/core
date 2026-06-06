@@ -1,14 +1,12 @@
 """Diagnostics support for devolo Home Network."""
 
-from __future__ import annotations
-
 from typing import Any
 
 from homeassistant.components.diagnostics import async_redact_data
 from homeassistant.const import CONF_PASSWORD
 from homeassistant.core import HomeAssistant
 
-from . import DevoloHomeNetworkConfigEntry
+from .coordinator import DevoloHomeNetworkConfigEntry
 
 TO_REDACT = {CONF_PASSWORD}
 

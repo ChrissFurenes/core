@@ -1,9 +1,7 @@
 """The File Upload integration."""
 
-from __future__ import annotations
-
 import asyncio
-from collections.abc import Iterator
+from collections.abc import Generator
 from contextlib import contextmanager
 from dataclasses import dataclass
 from pathlib import Path
@@ -21,9 +19,11 @@ from homeassistant.core import Event, HomeAssistant, callback
 from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.typing import ConfigType
 from homeassistant.util import raise_if_invalid_filename
+from homeassistant.util.hass_dict import HassKey
 from homeassistant.util.ulid import ulid_hex
 
 DOMAIN = "file_upload"
+_DATA: HassKey[FileUploadData] = HassKey(DOMAIN)
 
 ONE_MEGABYTE = 1024 * 1024
 MAX_SIZE = 100 * ONE_MEGABYTE
@@ -33,7 +33,7 @@ CONFIG_SCHEMA = cv.empty_config_schema(DOMAIN)
 
 
 @contextmanager
-def process_uploaded_file(hass: HomeAssistant, file_id: str) -> Iterator[Path]:
+def process_uploaded_file(hass: HomeAssistant, file_id: str) -> Generator[Path]:
     """Get an uploaded file.
 
     File is removed at the end of the context.
@@ -41,7 +41,7 @@ def process_uploaded_file(hass: HomeAssistant, file_id: str) -> Iterator[Path]:
     if DOMAIN not in hass.data:
         raise ValueError("File does not exist")
 
-    file_upload_data: FileUploadData = hass.data[DOMAIN]
+    file_upload_data = hass.data[_DATA]
 
     if not file_upload_data.has_file(file_id):
         raise ValueError("File does not exist")
@@ -74,7 +74,8 @@ class FileUploadData:
             """Create temporary directory."""
             temp_dir = Path(tempfile.gettempdir()) / TEMP_DIR_NAME
 
-            # If it exists, it's an old one and Home Assistant didn't shut down correctly.
+            # If it exists, it's an old one and Home Assistant
+            # didn't shut down correctly.
             if temp_dir.exists():
                 shutil.rmtree(temp_dir)
 
@@ -149,10 +150,10 @@ class FileUploadView(HomeAssistantView):
         hass = request.app[KEY_HASS]
         file_id = ulid_hex()
 
-        if DOMAIN not in hass.data:
-            hass.data[DOMAIN] = await FileUploadData.create(hass)
+        if _DATA not in hass.data:
+            hass.data[_DATA] = await FileUploadData.create(hass)
 
-        file_upload_data: FileUploadData = hass.data[DOMAIN]
+        file_upload_data = hass.data[_DATA]
         file_dir = file_upload_data.file_dir(file_id)
         queue: SimpleQueue[tuple[bytes, asyncio.Future[None] | None] | None] = (
             SimpleQueue()
@@ -206,7 +207,7 @@ class FileUploadView(HomeAssistantView):
             raise web.HTTPNotFound
 
         file_id = data["file_id"]
-        file_upload_data: FileUploadData = hass.data[DOMAIN]
+        file_upload_data = hass.data[_DATA]
 
         if file_upload_data.files.pop(file_id, None) is None:
             raise web.HTTPNotFound

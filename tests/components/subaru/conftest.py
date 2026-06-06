@@ -33,7 +33,7 @@ from homeassistant.const import (
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.typing import UNDEFINED, UndefinedType
 from homeassistant.setup import async_setup_component
-import homeassistant.util.dt as dt_util
+from homeassistant.util import dt as dt_util
 
 from .api_responses import TEST_VIN_2_EV, VEHICLE_DATA, VEHICLE_STATUS_EV
 
@@ -193,7 +193,7 @@ async def subaru_config_entry(hass: HomeAssistant) -> MockConfigEntry:
 async def ev_entry(
     hass: HomeAssistant, subaru_config_entry: MockConfigEntry
 ) -> MockConfigEntry:
-    """Create a Subaru entry representing an EV vehicle with full STARLINK subscription."""
+    """Create a Subaru entry for an EV with full STARLINK subscription."""
     await setup_subaru_config_entry(hass, subaru_config_entry)
     assert DOMAIN in hass.config_entries.async_domains()
     assert len(hass.config_entries.async_entries(DOMAIN)) == 1

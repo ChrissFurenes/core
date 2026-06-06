@@ -17,7 +17,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.data_entry_flow import FlowResultType
 from homeassistant.helpers import config_entry_oauth2_flow
 
-from tests.common import MockConfigEntry, load_fixture
+from tests.common import MockConfigEntry, async_load_fixture
 from tests.test_util.aiohttp import AiohttpClientMocker
 from tests.typing import ClientSessionGenerator
 
@@ -35,7 +35,8 @@ def user_identifier() -> str:
 def setup_userinfo(user_identifier: str) -> Generator[Mock]:
     """Set up userinfo."""
     with patch("homeassistant.components.google_tasks.config_flow.build") as mock:
-        mock.return_value.userinfo.return_value.get.return_value.execute.return_value = {
+        userinfo = mock.return_value.userinfo.return_value.get
+        userinfo.return_value.execute.return_value = {
             "id": user_identifier,
             "name": "Test Name",
         }
@@ -145,16 +146,23 @@ async def test_api_not_enabled(
         "homeassistant.components.google_tasks.config_flow.build",
         side_effect=HttpError(
             Response({"status": "403"}),
-            bytes(load_fixture("google_tasks/api_not_enabled_response.json"), "utf-8"),
+            bytes(
+                await async_load_fixture(hass, "api_not_enabled_response.json", DOMAIN),
+                "utf-8",
+            ),
         ),
     ):
         result = await hass.config_entries.flow.async_configure(result["flow_id"])
 
     assert result["type"] is FlowResultType.ABORT
     assert result["reason"] == "access_not_configured"
-    assert (
-        result["description_placeholders"]["message"]
-        == "Google Tasks API has not been used in project 0 before or it is disabled. Enable it by visiting https://console.developers.google.com/apis/api/tasks.googleapis.com/overview?project=0 then retry. If you enabled this API recently, wait a few minutes for the action to propagate to our systems and retry."
+    assert result["description_placeholders"]["message"] == (
+        "Google Tasks API has not been used in project 0 before or it"
+        " is disabled. Enable it by visiting"
+        " https://console.developers.google.com/apis/api/"
+        "tasks.googleapis.com/overview?project=0 then retry."
+        " If you enabled this API recently, wait a few minutes for"
+        " the action to propagate to our systems and retry."
     )
 
 

@@ -1,7 +1,5 @@
 """Support for switch platform for Hue resources (V2 only)."""
 
-from __future__ import annotations
-
 from typing import Any
 
 from aiohue.v2 import HueBridgeV2
@@ -19,23 +17,21 @@ from homeassistant.components.switch import (
     SwitchEntity,
     SwitchEntityDescription,
 )
-from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import EntityCategory
 from homeassistant.core import HomeAssistant, callback
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
-from .bridge import HueBridge
-from .const import DOMAIN
+from .bridge import HueConfigEntry
 from .v2.entity import HueBaseEntity
 
 
 async def async_setup_entry(
     hass: HomeAssistant,
-    config_entry: ConfigEntry,
-    async_add_entities: AddEntitiesCallback,
+    config_entry: HueConfigEntry,
+    async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up Hue switch platform from Hue resources."""
-    bridge: HueBridge = hass.data[DOMAIN][config_entry.entry_id]
+    bridge = config_entry.runtime_data
     api: HueBridgeV2 = bridge.api
 
     if bridge.api_version == 1:
@@ -78,7 +74,7 @@ async def async_setup_entry(
 
 
 class HueResourceEnabledEntity(HueBaseEntity, SwitchEntity):
-    """Representation of a Switch entity from a Hue resource that can be toggled enabled."""
+    """Represent a Switch entity from a Hue resource that toggles."""
 
     controller: BehaviorInstanceController | LightLevelController | MotionController
     resource: BehaviorInstance | LightLevel | Motion
@@ -117,7 +113,6 @@ class HueBehaviorInstanceEnabledEntity(HueResourceEnabledEntity):
         key="behavior_instance",
         device_class=SwitchDeviceClass.SWITCH,
         entity_category=EntityCategory.CONFIG,
-        has_entity_name=False,
     )
 
     @property

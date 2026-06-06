@@ -1,7 +1,5 @@
 """Support notifications through TTS service."""
 
-from __future__ import annotations
-
 import logging
 from typing import Any
 
@@ -13,7 +11,7 @@ from homeassistant.components.notify import (
 )
 from homeassistant.const import ATTR_ENTITY_ID, CONF_ENTITY_ID, CONF_NAME
 from homeassistant.core import HomeAssistant, split_entity_id
-import homeassistant.helpers.config_validation as cv
+from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
 
 from . import ATTR_LANGUAGE, ATTR_MEDIA_PLAYER_ENTITY_ID, ATTR_MESSAGE, DOMAIN

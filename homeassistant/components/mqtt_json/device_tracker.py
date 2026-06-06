@@ -1,7 +1,5 @@
 """Support for GPS tracking MQTT enabled devices."""
 
-from __future__ import annotations
-
 import json
 import logging
 
@@ -21,7 +19,7 @@ from homeassistant.const import (
     CONF_DEVICES,
 )
 from homeassistant.core import HomeAssistant, callback
-import homeassistant.helpers.config_validation as cv
+from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
 
 _LOGGER = logging.getLogger(__name__)

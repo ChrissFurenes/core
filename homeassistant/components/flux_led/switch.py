@@ -1,42 +1,38 @@
 """Support for Magic Home switches."""
 
-from __future__ import annotations
-
 from typing import Any
 
 from flux_led import DeviceType
 from flux_led.aio import AIOWifiLedBulb
 from flux_led.const import MODE_MUSIC
 
-from homeassistant import config_entries
 from homeassistant.components.switch import SwitchEntity
 from homeassistant.const import EntityCategory
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .const import (
     CONF_REMOTE_ACCESS_ENABLED,
     CONF_REMOTE_ACCESS_HOST,
     CONF_REMOTE_ACCESS_PORT,
-    DOMAIN,
 )
-from .coordinator import FluxLedUpdateCoordinator
+from .coordinator import FluxLedConfigEntry, FluxLedUpdateCoordinator
 from .discovery import async_clear_discovery_cache
 from .entity import FluxBaseEntity, FluxEntity, FluxOnOffEntity
 
 
 async def async_setup_entry(
     hass: HomeAssistant,
-    entry: config_entries.ConfigEntry,
-    async_add_entities: AddEntitiesCallback,
+    entry: FluxLedConfigEntry,
+    async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up the Flux lights."""
-    coordinator: FluxLedUpdateCoordinator = hass.data[DOMAIN][entry.entry_id]
+    coordinator = entry.runtime_data
     entities: list[FluxSwitch | FluxRemoteAccessSwitch | FluxMusicSwitch] = []
     base_unique_id = entry.unique_id or entry.entry_id
 
-    if coordinator.device.device_type == DeviceType.Switch:
+    if coordinator.device.device_type is DeviceType.Switch:
         entities.append(FluxSwitch(coordinator, base_unique_id, None))
 
     if entry.data.get(CONF_REMOTE_ACCESS_HOST):
@@ -70,7 +66,7 @@ class FluxRemoteAccessSwitch(FluxBaseEntity, SwitchEntity):
     def __init__(
         self,
         device: AIOWifiLedBulb,
-        entry: config_entries.ConfigEntry,
+        entry: FluxLedConfigEntry,
     ) -> None:
         """Initialize the light."""
         super().__init__(device, entry)

@@ -10,8 +10,6 @@ allow the recorder to startup successfully.
 It is used to test the schema migration logic.
 """
 
-from __future__ import annotations
-
 from datetime import datetime, timedelta
 import json
 import logging
@@ -49,7 +47,7 @@ from homeassistant.const import (
 )
 from homeassistant.core import Context, Event, EventOrigin, State, split_entity_id
 from homeassistant.helpers.json import JSONEncoder
-import homeassistant.util.dt as dt_util
+from homeassistant.util import dt as dt_util
 
 # SQLAlchemy Schema
 Base = declarative_base()
@@ -279,10 +277,12 @@ class States(Base):  # type: ignore[valid-type,misc]
         """Return string representation of instance for debugging."""
         return (
             f"<recorder.States("
-            f"id={self.state_id}, domain='{self.domain}', entity_id='{self.entity_id}', "
+            f"id={self.state_id}, domain='{self.domain}', "
+            f"entity_id='{self.entity_id}', "
             f"state='{self.state}', event_id='{self.event_id}', "
-            f"last_updated='{self.last_updated.isoformat(sep=' ', timespec='seconds')}', "
-            f"old_state_id={self.old_state_id}"
+            f"last_updated="
+            f"'{self.last_updated.isoformat(sep=' ', timespec='seconds')}'"
+            f", old_state_id={self.old_state_id}"
             f")>"
         )
 
@@ -486,9 +486,11 @@ class RecorderRuns(Base):  # type: ignore[valid-type,misc]
         )
         return (
             f"<recorder.RecorderRuns("
-            f"id={self.run_id}, start='{self.start.isoformat(sep=' ', timespec='seconds')}', "
+            f"id={self.run_id}, start="
+            f"'{self.start.isoformat(sep=' ', timespec='seconds')}', "
             f"end={end}, closed_incorrect={self.closed_incorrect}, "
-            f"created='{self.created.isoformat(sep=' ', timespec='seconds')}'"
+            f"created="
+            f"'{self.created.isoformat(sep=' ', timespec='seconds')}'"
             f")>"
         )
 
@@ -547,8 +549,9 @@ class StatisticsRuns(Base):  # type: ignore[valid-type,misc]
         """Return string representation of instance for debugging."""
         return (
             f"<recorder.StatisticsRuns("
-            f"id={self.run_id}, start='{self.start.isoformat(sep=' ', timespec='seconds')}', "
-            f")>"
+            f"id={self.run_id}, start="
+            f"'{self.start.isoformat(sep=' ', timespec='seconds')}'"
+            f", )>"
         )
 
 
@@ -593,13 +596,11 @@ class LazyState(State):
     """A lazy version of core State."""
 
     __slots__ = [
-        "_row",
-        "entity_id",
-        "state",
         "_attributes",
+        "_context",
         "_last_changed",
         "_last_updated",
-        "_context",
+        "_row",
     ]
 
     def __init__(self, row) -> None:  # pylint: disable=super-init-not-called

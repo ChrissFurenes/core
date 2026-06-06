@@ -1,7 +1,5 @@
 """The Fronius integration."""
 
-from __future__ import annotations
-
 import asyncio
 from datetime import datetime, timedelta
 import logging
@@ -45,7 +43,15 @@ type FroniusConfigEntry = ConfigEntry[FroniusSolarNet]
 async def async_setup_entry(hass: HomeAssistant, entry: FroniusConfigEntry) -> bool:
     """Set up fronius from a config entry."""
     host = entry.data[CONF_HOST]
-    fronius = Fronius(async_get_clientsession(hass), host)
+    fronius = Fronius(
+        async_get_clientsession(
+            hass,
+            # Fronius Gen24 firmware 1.35.4-1 redirects to HTTPS with self-signed
+            # certificate. See https://github.com/home-assistant/core/issues/138881
+            verify_ssl=False,
+        ),
+        host,
+    )
     solar_net = FroniusSolarNet(hass, entry, fronius)
     await solar_net.init_devices()
 
@@ -60,7 +66,7 @@ async def async_unload_entry(hass: HomeAssistant, entry: FroniusConfigEntry) -> 
 
 
 async def async_remove_config_entry_device(
-    hass: HomeAssistant, config_entry: ConfigEntry, device_entry: dr.DeviceEntry
+    hass: HomeAssistant, config_entry: FroniusConfigEntry, device_entry: dr.DeviceEntry
 ) -> bool:
     """Remove a config entry from a device."""
     return True
@@ -78,8 +84,9 @@ class FroniusSolarNet:
         self.coordinator_lock = asyncio.Lock()
         self.fronius = fronius
         self.host: str = entry.data[CONF_HOST]
-        # entry.unique_id is either logger uid or first inverter uid if no logger available
-        # prepended by "solar_net_" to have individual device for whole system (power_flow)
+        # entry.unique_id is either logger uid or first inverter
+        # uid if no logger available prepended by "solar_net_"
+        # to have individual device for whole system (power_flow)
         self.solar_net_device_id = f"solar_net_{entry.unique_id}"
         self.system_device_info: DeviceInfo | None = None
 
@@ -98,6 +105,7 @@ class FroniusSolarNet:
                 solar_net=self,
                 logger=_LOGGER,
                 name=f"{DOMAIN}_logger_{self.host}",
+                config_entry=self.config_entry,
             )
             await self.logger_coordinator.async_config_entry_first_refresh()
 
@@ -112,6 +120,7 @@ class FroniusSolarNet:
                 solar_net=self,
                 logger=_LOGGER,
                 name=f"{DOMAIN}_meters_{self.host}",
+                config_entry=self.config_entry,
             )
         )
 
@@ -121,6 +130,7 @@ class FroniusSolarNet:
                 solar_net=self,
                 logger=_LOGGER,
                 name=f"{DOMAIN}_ohmpilot_{self.host}",
+                config_entry=self.config_entry,
             )
         )
 
@@ -130,6 +140,7 @@ class FroniusSolarNet:
                 solar_net=self,
                 logger=_LOGGER,
                 name=f"{DOMAIN}_power_flow_{self.host}",
+                config_entry=self.config_entry,
             )
         )
 
@@ -139,6 +150,7 @@ class FroniusSolarNet:
                 solar_net=self,
                 logger=_LOGGER,
                 name=f"{DOMAIN}_storages_{self.host}",
+                config_entry=self.config_entry,
             )
         )
 
@@ -198,12 +210,17 @@ class FroniusSolarNet:
                 logger=_LOGGER,
                 name=_inverter_name,
                 inverter_info=_inverter_info,
+                config_entry=self.config_entry,
             )
-            await _coordinator.async_config_entry_first_refresh()
+            if self.config_entry.state is ConfigEntryState.LOADED:
+                await _coordinator.async_refresh()
+            else:
+                await _coordinator.async_config_entry_first_refresh()
             self.inverter_coordinators.append(_coordinator)
 
-            # Only for re-scans. Initial setup adds entities through sensor.async_setup_entry
-            if self.config_entry.state == ConfigEntryState.LOADED:
+            # Only for re-scans. Initial setup adds entities
+            # through sensor.async_setup_entry
+            if self.config_entry.state is ConfigEntryState.LOADED:
                 async_dispatcher_send(self.hass, SOLAR_NET_DISCOVERY_NEW, _coordinator)
 
             _LOGGER.debug(
@@ -218,12 +235,19 @@ class FroniusSolarNet:
         try:
             _inverter_info = await self.fronius.inverter_info()
         except FroniusError as err:
-            if self.config_entry.state == ConfigEntryState.LOADED:
+            if self.config_entry.state is ConfigEntryState.LOADED:
                 # During a re-scan we will attempt again as per schedule.
                 _LOGGER.debug("Re-scan failed for %s", self.host)
                 return inverter_infos
 
-            raise ConfigEntryNotReady from err
+            raise ConfigEntryNotReady(
+                translation_domain=DOMAIN,
+                translation_key="entry_cannot_connect",
+                translation_placeholders={
+                    "host": self.host,
+                    "fronius_error": str(err),
+                },
+            ) from err
 
         for inverter in _inverter_info["inverters"]:
             solar_net_id = inverter["device_id"]["value"]

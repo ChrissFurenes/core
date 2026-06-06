@@ -1,7 +1,5 @@
 """Config flow for Matter integration."""
 
-from __future__ import annotations
-
 import asyncio
 from typing import Any
 
@@ -14,17 +12,17 @@ from homeassistant.components.hassio import (
     AddonInfo,
     AddonManager,
     AddonState,
-    HassioServiceInfo,
-    is_hassio,
 )
 from homeassistant.components.onboarding import async_is_onboarded
-from homeassistant.components.zeroconf import ZeroconfServiceInfo
 from homeassistant.config_entries import ConfigFlow, ConfigFlowResult
 from homeassistant.const import CONF_URL
 from homeassistant.core import HomeAssistant
 from homeassistant.data_entry_flow import AbortFlow
 from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers import aiohttp_client
+from homeassistant.helpers.hassio import is_hassio
+from homeassistant.helpers.service_info.hassio import HassioServiceInfo
+from homeassistant.helpers.service_info.zeroconf import ZeroconfServiceInfo
 
 from .addon import get_addon_manager
 from .const import (
@@ -290,10 +288,10 @@ class MatterConfigFlow(ConfigFlow, domain=DOMAIN):
 
         addon_info = await self._async_get_addon_info()
 
-        if addon_info.state == AddonState.RUNNING:
+        if addon_info.state is AddonState.RUNNING:
             return await self.async_step_finish_addon_setup()
 
-        if addon_info.state == AddonState.NOT_RUNNING:
+        if addon_info.state is AddonState.NOT_RUNNING:
             return await self.async_step_start_addon()
 
         return await self.async_step_install_addon()

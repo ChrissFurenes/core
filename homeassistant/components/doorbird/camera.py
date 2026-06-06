@@ -1,7 +1,5 @@
 """Support for viewing the camera feed from a DoorBird video doorbell."""
 
-from __future__ import annotations
-
 import datetime
 import logging
 
@@ -9,8 +7,8 @@ import aiohttp
 
 from homeassistant.components.camera import Camera, CameraEntityFeature
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
-import homeassistant.util.dt as dt_util
+from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
+from homeassistant.util import dt as dt_util
 
 from .entity import DoorBirdEntity
 from .models import DoorBirdConfigEntry, DoorBirdData
@@ -25,7 +23,7 @@ _TIMEOUT = 15  # seconds
 async def async_setup_entry(
     hass: HomeAssistant,
     config_entry: DoorBirdConfigEntry,
-    async_add_entities: AddEntitiesCallback,
+    async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up the DoorBird camera platform."""
     door_bird_data = config_entry.runtime_data
@@ -96,6 +94,7 @@ class DoorBirdCamera(DoorBirdEntity, Camera):
             self._last_image = await self._door_station.device.get_image(
                 self._url, timeout=_TIMEOUT
             )
+        # pylint: disable-next=home-assistant-action-swallowed-exception
         except TimeoutError:
             _LOGGER.error("DoorBird %s: Camera image timed out", self.name)
             return self._last_image

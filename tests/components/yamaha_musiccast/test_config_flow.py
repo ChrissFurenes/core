@@ -7,12 +7,16 @@ from aiomusiccast import MusicCastConnectionException
 import pytest
 
 from homeassistant import config_entries
-from homeassistant.components import ssdp
 from homeassistant.components.yamaha_musiccast.const import DOMAIN
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_HOST
 from homeassistant.core import HomeAssistant
 from homeassistant.data_entry_flow import FlowResultType
+from homeassistant.helpers.service_info.ssdp import (
+    ATTR_UPNP_MODEL_NAME,
+    ATTR_UPNP_SERIAL,
+    SsdpServiceInfo,
+)
 
 from tests.common import MockConfigEntry
 
@@ -103,7 +107,7 @@ def mock_valid_discovery_information():
     with patch(
         "homeassistant.components.ssdp.async_get_discovery_info_by_st",
         return_value=[
-            ssdp.SsdpServiceInfo(
+            SsdpServiceInfo(
                 ssdp_usn="mock_usn",
                 ssdp_st="mock_st",
                 ssdp_location="http://127.0.0.1:9000/MediaRenderer/desc.xml",
@@ -150,7 +154,7 @@ async def test_user_input_device_not_found(
 async def test_user_input_non_yamaha_device_found(
     hass: HomeAssistant, mock_get_device_info_invalid
 ) -> None:
-    """Test when user specifies an existing device, which does not provide the musiccast API."""
+    """Test when device does not provide the musiccast API."""
     result = await hass.config_entries.flow.async_init(
         DOMAIN, context={"source": config_entries.SOURCE_USER}
     )
@@ -192,7 +196,7 @@ async def test_user_input_device_already_existing(
 async def test_user_input_unknown_error(
     hass: HomeAssistant, mock_get_device_info_exception
 ) -> None:
-    """Test when user specifies an existing device, which does not provide the musiccast API."""
+    """Test when device info raises an unknown error."""
     result = await hass.config_entries.flow.async_init(
         DOMAIN, context={"source": config_entries.SOURCE_USER}
     )
@@ -237,7 +241,7 @@ async def test_user_input_device_found_no_ssdp(
     mock_get_device_info_valid,
     mock_empty_discovery_information,
 ) -> None:
-    """Test when user specifies an existing device, which no discovery data are present for."""
+    """Test when no discovery data are present for the device."""
     result = await hass.config_entries.flow.async_init(
         DOMAIN, context={"source": config_entries.SOURCE_USER}
     )
@@ -265,13 +269,13 @@ async def test_ssdp_discovery_failed(hass: HomeAssistant, mock_ssdp_no_yamaha) -
     result = await hass.config_entries.flow.async_init(
         DOMAIN,
         context={"source": config_entries.SOURCE_SSDP},
-        data=ssdp.SsdpServiceInfo(
+        data=SsdpServiceInfo(
             ssdp_usn="mock_usn",
             ssdp_st="mock_st",
             ssdp_location="http://127.0.0.1/desc.xml",
             upnp={
-                ssdp.ATTR_UPNP_MODEL_NAME: "MC20",
-                ssdp.ATTR_UPNP_SERIAL: "123456789",
+                ATTR_UPNP_MODEL_NAME: "MC20",
+                ATTR_UPNP_SERIAL: "123456789",
             },
         ),
     )
@@ -283,17 +287,17 @@ async def test_ssdp_discovery_failed(hass: HomeAssistant, mock_ssdp_no_yamaha) -
 async def test_ssdp_discovery_successful_add_device(
     hass: HomeAssistant, mock_ssdp_yamaha
 ) -> None:
-    """Test when the SSDP discovered device is a musiccast device and the user confirms it."""
+    """Test SSDP discovered musiccast device is confirmed by user."""
     result = await hass.config_entries.flow.async_init(
         DOMAIN,
         context={"source": config_entries.SOURCE_SSDP},
-        data=ssdp.SsdpServiceInfo(
+        data=SsdpServiceInfo(
             ssdp_usn="mock_usn",
             ssdp_st="mock_st",
             ssdp_location="http://127.0.0.1/desc.xml",
             upnp={
-                ssdp.ATTR_UPNP_MODEL_NAME: "MC20",
-                ssdp.ATTR_UPNP_SERIAL: "1234567890",
+                ATTR_UPNP_MODEL_NAME: "MC20",
+                ATTR_UPNP_SERIAL: "1234567890",
             },
         ),
     )
@@ -319,7 +323,7 @@ async def test_ssdp_discovery_successful_add_device(
 async def test_ssdp_discovery_existing_device_update(
     hass: HomeAssistant, mock_ssdp_yamaha
 ) -> None:
-    """Test when the SSDP discovered device is a musiccast device, but it already exists with another IP."""
+    """Test SSDP discovered device already exists with another IP."""
     mock_entry = MockConfigEntry(
         domain=DOMAIN,
         unique_id="1234567890",
@@ -329,13 +333,13 @@ async def test_ssdp_discovery_existing_device_update(
     result = await hass.config_entries.flow.async_init(
         DOMAIN,
         context={"source": config_entries.SOURCE_SSDP},
-        data=ssdp.SsdpServiceInfo(
+        data=SsdpServiceInfo(
             ssdp_usn="mock_usn",
             ssdp_st="mock_st",
             ssdp_location="http://127.0.0.1/desc.xml",
             upnp={
-                ssdp.ATTR_UPNP_MODEL_NAME: "MC20",
-                ssdp.ATTR_UPNP_SERIAL: "1234567890",
+                ATTR_UPNP_MODEL_NAME: "MC20",
+                ATTR_UPNP_SERIAL: "1234567890",
             },
         ),
     )

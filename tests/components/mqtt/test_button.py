@@ -10,7 +10,7 @@ from homeassistant.components import button, mqtt
 from homeassistant.const import ATTR_ENTITY_ID, ATTR_FRIENDLY_NAME, STATE_UNKNOWN
 from homeassistant.core import HomeAssistant
 
-from .test_common import (
+from .common import (
     help_test_availability_when_connection_lost,
     help_test_availability_without_topic,
     help_test_custom_availability_payload,
@@ -25,6 +25,7 @@ from .test_common import (
     help_test_entity_device_info_update,
     help_test_entity_device_info_with_connection,
     help_test_entity_device_info_with_identifier,
+    help_test_entity_icon_and_entity_picture,
     help_test_entity_id_update_discovery_update,
     help_test_entity_name,
     help_test_publishing_with_custom_encoding,
@@ -54,7 +55,7 @@ DEFAULT_CONFIG = {
                 button.DOMAIN: {
                     "command_topic": "command-topic",
                     "name": "test",
-                    "object_id": "test_button",
+                    "default_entity_id": "button.test_button",
                     "payload_press": "beer press",
                     "qos": "2",
                 }
@@ -80,7 +81,67 @@ async def test_sending_mqtt_commands(
     )
 
     mqtt_mock.async_publish.assert_called_once_with(
-        "command-topic", "beer press", 2, False
+        "command-topic", "beer press", 2, False, message_expiry_interval=None
+    )
+    mqtt_mock.async_publish.reset_mock()
+    state = hass.states.get("button.test_button")
+    assert state.state == "2021-11-08T13:31:44+00:00"
+
+
+@pytest.mark.freeze_time("2021-11-08 13:31:44+00:00")
+@pytest.mark.parametrize(
+    "hass_config",
+    [
+        {
+            mqtt.DOMAIN: {
+                button.DOMAIN: {
+                    "command_topic": "command-topic",
+                    "name": "test",
+                    "default_entity_id": "button.test_button",
+                    "payload_press": "beer press",
+                    "qos": "2",
+                    "message_expiry_interval": {
+                        "days": 0,
+                        "hours": 0,
+                        "minutes": 1,
+                        "seconds": 30,
+                    },
+                }
+            }
+        },
+        {
+            mqtt.DOMAIN: {
+                button.DOMAIN: {
+                    "command_topic": "command-topic",
+                    "name": "test",
+                    "default_entity_id": "button.test_button",
+                    "payload_press": "beer press",
+                    "qos": "2",
+                    "message_expiry_interval": 90,
+                }
+            }
+        },
+    ],
+)
+async def test_sending_mqtt_commands_with_message_expiry_interval(
+    hass: HomeAssistant, mqtt_mock_entry: MqttMockHAClientGenerator
+) -> None:
+    """Test the sending MQTT command with message expiry interval."""
+    mqtt_mock = await mqtt_mock_entry()
+
+    state = hass.states.get("button.test_button")
+    assert state.state == STATE_UNKNOWN
+    assert state.attributes.get(ATTR_FRIENDLY_NAME) == "test"
+
+    await hass.services.async_call(
+        button.DOMAIN,
+        button.SERVICE_PRESS,
+        {ATTR_ENTITY_ID: "button.test_button"},
+        blocking=True,
+    )
+
+    mqtt_mock.async_publish.assert_called_once_with(
+        "command-topic", "beer press", 2, False, message_expiry_interval=90
     )
     mqtt_mock.async_publish.reset_mock()
     state = hass.states.get("button.test_button")
@@ -120,7 +181,11 @@ async def test_command_template(
     )
 
     mqtt_mock.async_publish.assert_called_once_with(
-        "command-topic", '{ "milky_way_press": "button.test" }', 0, False
+        "command-topic",
+        '{ "milky_way_press": "button.test" }',
+        0,
+        False,
+        message_expiry_interval=None,
     )
     mqtt_mock.async_publish.reset_mock()
 
@@ -533,4 +598,16 @@ async def test_entity_name(
     config = DEFAULT_CONFIG
     await help_test_entity_name(
         hass, mqtt_mock_entry, domain, config, expected_friendly_name, device_class
+    )
+
+
+async def test_entity_icon_and_entity_picture(
+    hass: HomeAssistant,
+    mqtt_mock_entry: MqttMockHAClientGenerator,
+) -> None:
+    """Test the entity icon or picture setup."""
+    domain = button.DOMAIN
+    config = DEFAULT_CONFIG
+    await help_test_entity_icon_and_entity_picture(
+        hass, mqtt_mock_entry, domain, config
     )

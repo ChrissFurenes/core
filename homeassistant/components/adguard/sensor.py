@@ -1,7 +1,5 @@
 """Support for AdGuard Home sensors."""
 
-from __future__ import annotations
-
 from collections.abc import Callable, Coroutine
 from dataclasses import dataclass
 from datetime import timedelta
@@ -12,7 +10,7 @@ from adguardhome import AdGuardHome
 from homeassistant.components.sensor import SensorEntity, SensorEntityDescription
 from homeassistant.const import PERCENTAGE, UnitOfTime
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
 from . import AdGuardConfigEntry, AdGuardData
 from .const import DOMAIN
@@ -85,7 +83,7 @@ SENSORS: tuple[AdGuardHomeEntityDescription, ...] = (
 async def async_setup_entry(
     hass: HomeAssistant,
     entry: AdGuardConfigEntry,
-    async_add_entities: AddEntitiesCallback,
+    async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up AdGuard Home sensor based on a config entry."""
     data = entry.runtime_data

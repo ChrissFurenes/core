@@ -1,7 +1,5 @@
 """Provides a binary sensor which is a collection of ffmpeg tools."""
 
-from __future__ import annotations
-
 from typing import Any
 
 from haffmpeg.core import HAFFmpeg
@@ -23,7 +21,7 @@ from homeassistant.components.ffmpeg import (
 )
 from homeassistant.const import CONF_NAME, CONF_REPEAT
 from homeassistant.core import HomeAssistant, callback
-import homeassistant.helpers.config_validation as cv
+from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
 

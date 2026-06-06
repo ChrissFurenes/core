@@ -1,7 +1,5 @@
 """Config flow to configure the Android Debug Bridge integration."""
 
-from __future__ import annotations
-
 import logging
 import os
 from typing import Any
@@ -13,10 +11,11 @@ from homeassistant.config_entries import (
     ConfigEntry,
     ConfigFlow,
     ConfigFlowResult,
-    OptionsFlowWithConfigEntry,
+    OptionsFlow,
 )
 from homeassistant.const import CONF_DEVICE_CLASS, CONF_HOST, CONF_PORT
 from homeassistant.core import callback
+from homeassistant.data_entry_flow import SectionConfig, section
 from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.selector import (
     ObjectSelector,
@@ -34,16 +33,17 @@ from .const import (
     CONF_APPS,
     CONF_EXCLUDE_UNNAMED_APPS,
     CONF_GET_SOURCES,
-    CONF_SCREENCAP,
+    CONF_MORE_OPTIONS,
+    CONF_SCREENCAP_INTERVAL,
     CONF_STATE_DETECTION_RULES,
     CONF_TURN_OFF_COMMAND,
     CONF_TURN_ON_COMMAND,
     DEFAULT_ADB_SERVER_PORT,
-    DEFAULT_DEVICE_CLASS,
     DEFAULT_EXCLUDE_UNNAMED_APPS,
     DEFAULT_GET_SOURCES,
     DEFAULT_PORT,
-    DEFAULT_SCREENCAP,
+    DEFAULT_SCREENCAP_INTERVAL,
+    DEVICE_AUTO,
     DEVICE_CLASSES,
     DOMAIN,
     PROP_ETHMAC,
@@ -76,6 +76,7 @@ class AndroidTVFlowHandler(ConfigFlow, domain=DOMAIN):
     """Handle a config flow."""
 
     VERSION = 1
+    MINOR_VERSION = 2
 
     @callback
     def _show_setup_form(
@@ -88,23 +89,31 @@ class AndroidTVFlowHandler(ConfigFlow, domain=DOMAIN):
         data_schema = vol.Schema(
             {
                 vol.Required(CONF_HOST, default=host): str,
-                vol.Required(CONF_DEVICE_CLASS, default=DEFAULT_DEVICE_CLASS): vol.In(
-                    DEVICE_CLASSES
+                vol.Required(CONF_DEVICE_CLASS, default=DEVICE_AUTO): SelectSelector(
+                    SelectSelectorConfig(
+                        options=[
+                            SelectOptionDict(value=k, label=v)
+                            for k, v in DEVICE_CLASSES.items()
+                        ],
+                        translation_key="device_class",
+                    )
                 ),
                 vol.Required(CONF_PORT, default=DEFAULT_PORT): cv.port,
+                vol.Required(CONF_MORE_OPTIONS): section(
+                    vol.Schema(
+                        {
+                            vol.Optional(CONF_ADBKEY): str,
+                            vol.Optional(CONF_ADB_SERVER_IP): str,
+                            vol.Optional(
+                                CONF_ADB_SERVER_PORT,
+                                default=DEFAULT_ADB_SERVER_PORT,
+                            ): cv.port,
+                        }
+                    ),
+                    SectionConfig(collapsed=True),
+                ),
             },
         )
-
-        if self.show_advanced_options:
-            data_schema = data_schema.extend(
-                {
-                    vol.Optional(CONF_ADBKEY): str,
-                    vol.Optional(CONF_ADB_SERVER_IP): str,
-                    vol.Required(
-                        CONF_ADB_SERVER_PORT, default=DEFAULT_ADB_SERVER_PORT
-                    ): cv.port,
-                }
-            )
 
         return self.async_show_form(
             step_id="user",
@@ -131,7 +140,7 @@ class AndroidTVFlowHandler(ConfigFlow, domain=DOMAIN):
             return RESULT_CONN_ERROR, None
 
         dev_prop = aftv.device_properties
-        _LOGGER.info(
+        _LOGGER.debug(
             "Android device at %s: %s = %r, %s = %r",
             user_input[CONF_HOST],
             PROP_ETHMAC,
@@ -150,6 +159,10 @@ class AndroidTVFlowHandler(ConfigFlow, domain=DOMAIN):
         error = None
 
         if user_input is not None:
+            user_input = user_input.copy()
+            more_options = user_input.pop(CONF_MORE_OPTIONS, {})
+            user_input.update(more_options)
+
             host = user_input[CONF_HOST]
             adb_key = user_input.get(CONF_ADBKEY)
             if CONF_ADB_SERVER_IP in user_input:
@@ -185,16 +198,14 @@ class AndroidTVFlowHandler(ConfigFlow, domain=DOMAIN):
         return OptionsFlowHandler(config_entry)
 
 
-class OptionsFlowHandler(OptionsFlowWithConfigEntry):
+class OptionsFlowHandler(OptionsFlow):
     """Handle an option flow for Android Debug Bridge."""
 
     def __init__(self, config_entry: ConfigEntry) -> None:
         """Initialize options flow."""
-        super().__init__(config_entry)
-
-        self._apps: dict[str, Any] = self.options.setdefault(CONF_APPS, {})
-        self._state_det_rules: dict[str, Any] = self.options.setdefault(
-            CONF_STATE_DETECTION_RULES, {}
+        self._apps: dict[str, Any] = dict(config_entry.options.get(CONF_APPS, {}))
+        self._state_det_rules: dict[str, Any] = dict(
+            config_entry.options.get(CONF_STATE_DETECTION_RULES, {})
         )
         self._conf_app_id: str | None = None
         self._conf_rule_id: str | None = None
@@ -236,7 +247,7 @@ class OptionsFlowHandler(OptionsFlowWithConfigEntry):
             SelectOptionDict(value=k, label=v) for k, v in apps_list.items()
         ]
         rules = [RULES_NEW_ID, *self._state_det_rules]
-        options = self.options
+        options = self.config_entry.options
 
         data_schema = vol.Schema(
             {
@@ -253,10 +264,12 @@ class OptionsFlowHandler(OptionsFlowWithConfigEntry):
                         CONF_EXCLUDE_UNNAMED_APPS, DEFAULT_EXCLUDE_UNNAMED_APPS
                     ),
                 ): bool,
-                vol.Optional(
-                    CONF_SCREENCAP,
-                    default=options.get(CONF_SCREENCAP, DEFAULT_SCREENCAP),
-                ): bool,
+                vol.Required(
+                    CONF_SCREENCAP_INTERVAL,
+                    default=options.get(
+                        CONF_SCREENCAP_INTERVAL, DEFAULT_SCREENCAP_INTERVAL
+                    ),
+                ): vol.All(vol.Coerce(int), vol.Clamp(min=0, max=15)),
                 vol.Optional(
                     CONF_TURN_OFF_COMMAND,
                     description={
@@ -386,4 +399,4 @@ def _validate_state_det_rules(state_det_rules: Any) -> list[Any] | None:
     except ValueError as exc:
         _LOGGER.warning("Invalid state detection rules: %s", exc)
         return None
-    return json_rules  # type: ignore[no-any-return]
+    return json_rules

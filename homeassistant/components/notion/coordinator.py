@@ -28,10 +28,12 @@ DATA_USER_PREFERENCES = "user_preferences"
 
 DEFAULT_SCAN_INTERVAL = timedelta(minutes=1)
 
+type NotionConfigEntry = ConfigEntry[NotionDataUpdateCoordinator]
+
 
 @callback
 def _async_register_new_bridge(
-    hass: HomeAssistant, entry: ConfigEntry, bridge: Bridge
+    hass: HomeAssistant, entry: NotionConfigEntry, bridge: Bridge
 ) -> None:
     """Register a new bridge."""
     if name := bridge.name:
@@ -55,7 +57,7 @@ class NotionData:
     """Define a manager class for Notion data."""
 
     hass: HomeAssistant
-    entry: ConfigEntry
+    entry: NotionConfigEntry
 
     # Define a dict of bridges, indexed by bridge ID (an integer):
     bridges: dict[int, Bridge] = field(default_factory=dict)
@@ -104,29 +106,29 @@ class NotionData:
 class NotionDataUpdateCoordinator(DataUpdateCoordinator[NotionData]):
     """Define a Notion data coordinator."""
 
-    config_entry: ConfigEntry
+    config_entry: NotionConfigEntry
 
     def __init__(
         self,
         hass: HomeAssistant,
         *,
-        entry: ConfigEntry,
+        entry: NotionConfigEntry,
         client: Client,
     ) -> None:
         """Initialize."""
         super().__init__(
             hass,
             LOGGER,
+            config_entry=entry,
             name=entry.data[CONF_USERNAME],
             update_interval=DEFAULT_SCAN_INTERVAL,
         )
 
         self._client = client
-        self._entry = entry
 
     async def _async_update_data(self) -> NotionData:
         """Fetch data from Notion."""
-        data = NotionData(hass=self.hass, entry=self._entry)
+        data = NotionData(hass=self.hass, entry=self.config_entry)
 
         try:
             async with asyncio.TaskGroup() as tg:

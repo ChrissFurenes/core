@@ -1,7 +1,5 @@
 """Diagnostics support for UniFi Network."""
 
-from __future__ import annotations
-
 from collections.abc import Mapping
 from itertools import chain
 from typing import Any
@@ -27,7 +25,7 @@ REDACT_DEVICES = {
     "x_ssh_hostkey_fingerprint",
     "x_vwirekey",
 }
-REDACT_WLANS = {"bc_filter_list", "x_passphrase"}
+REDACT_WLANS = {"bc_filter_list", "password", "x_passphrase"}
 
 
 @callback

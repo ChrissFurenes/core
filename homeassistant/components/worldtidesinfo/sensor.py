@@ -1,10 +1,9 @@
 """Support for the worldtides.info API."""
 
-from __future__ import annotations
-
 from datetime import timedelta
 import logging
 import time
+from typing import Any
 
 import requests
 import voluptuous as vol
@@ -15,7 +14,7 @@ from homeassistant.components.sensor import (
 )
 from homeassistant.const import CONF_API_KEY, CONF_LATITUDE, CONF_LONGITUDE, CONF_NAME
 from homeassistant.core import HomeAssistant
-import homeassistant.helpers.config_validation as cv
+from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
 
@@ -81,7 +80,7 @@ class WorldTidesInfoSensor(SensorEntity):
         return self._name
 
     @property
-    def extra_state_attributes(self):
+    def extra_state_attributes(self) -> dict[str, Any]:
         """Return the state attributes of this device."""
         attr = {}
 

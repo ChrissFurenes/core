@@ -1,21 +1,15 @@
 """The madvr-envy integration."""
 
-from __future__ import annotations
-
 import logging
 
 from madvr.madvr import Madvr
 
-from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_HOST, CONF_PORT, EVENT_HOMEASSISTANT_STOP, Platform
-from homeassistant.core import Event, HomeAssistant, callback
+from homeassistant.core import Event, HomeAssistant
 
-from .coordinator import MadVRCoordinator
+from .coordinator import MadVRConfigEntry, MadVRCoordinator
 
 PLATFORMS: list[Platform] = [Platform.BINARY_SENSOR, Platform.REMOTE, Platform.SENSOR]
-
-
-type MadVRConfigEntry = ConfigEntry[MadVRCoordinator]
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -33,7 +27,7 @@ async def async_handle_unload(coordinator: MadVRCoordinator) -> None:
 async def async_setup_entry(hass: HomeAssistant, entry: MadVRConfigEntry) -> bool:
     """Set up the integration from a config entry."""
     assert entry.unique_id
-    madVRClient = Madvr(
+    mad_vr_client = Madvr(
         host=entry.data[CONF_HOST],
         logger=_LOGGER,
         port=entry.data[CONF_PORT],
@@ -41,13 +35,12 @@ async def async_setup_entry(hass: HomeAssistant, entry: MadVRConfigEntry) -> boo
         connect_timeout=10,
         loop=hass.loop,
     )
-    coordinator = MadVRCoordinator(hass, madVRClient)
+    coordinator = MadVRCoordinator(hass, entry, mad_vr_client)
 
     entry.runtime_data = coordinator
 
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
 
-    @callback
     async def handle_unload(event: Event) -> None:
         """Handle unload."""
         await async_handle_unload(coordinator=coordinator)

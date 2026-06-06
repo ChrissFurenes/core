@@ -1,11 +1,12 @@
 """Support for the myStrom buttons."""
 
-from __future__ import annotations
-
 from http import HTTPStatus
 import logging
 
-from homeassistant.components.binary_sensor import DOMAIN, BinarySensorEntity
+from homeassistant.components.binary_sensor import (
+    DOMAIN as BINARY_SENSOR_DOMAIN,
+    BinarySensorEntity,
+)
 from homeassistant.components.http import KEY_HASS, HomeAssistantView
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
@@ -33,7 +34,7 @@ class MyStromView(HomeAssistantView):
 
     def __init__(self, add_entities):
         """Initialize the myStrom URL endpoint."""
-        self.buttons = {}
+        self.buttons: dict[str, MyStromBinarySensor] = {}
         self.add_entities = add_entities
 
     async def get(self, request):
@@ -55,9 +56,9 @@ class MyStromView(HomeAssistantView):
             )
 
         button_id = data[button_action]
-        entity_id = f"{DOMAIN}.{button_id}_{button_action}"
+        entity_id = f"{BINARY_SENSOR_DOMAIN}.{button_id}_{button_action}"
         if entity_id not in self.buttons:
-            _LOGGER.info(
+            _LOGGER.debug(
                 "New myStrom button/action detected: %s/%s", button_id, button_action
             )
             self.buttons[entity_id] = MyStromBinarySensor(
@@ -77,21 +78,10 @@ class MyStromBinarySensor(BinarySensorEntity):
 
     def __init__(self, button_id):
         """Initialize the myStrom Binary sensor."""
-        self._button_id = button_id
-        self._state = None
-
-    @property
-    def name(self):
-        """Return the name of the sensor."""
-        return self._button_id
-
-    @property
-    def is_on(self):
-        """Return true if the binary sensor is on."""
-        return self._state
+        self._attr_name = button_id
 
     @callback
     def async_on_update(self, value):
         """Receive an update."""
-        self._state = value
+        self._attr_is_on = value
         self.async_write_ha_state()

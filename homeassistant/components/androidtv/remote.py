@@ -1,7 +1,5 @@
 """Support for the AndroidTV remote."""
 
-from __future__ import annotations
-
 from collections.abc import Iterable
 import logging
 from typing import Any
@@ -12,7 +10,7 @@ from homeassistant.components.remote import ATTR_NUM_REPEATS, RemoteEntity
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ServiceValidationError
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
 from .const import CONF_TURN_OFF_COMMAND, CONF_TURN_ON_COMMAND, DOMAIN
 from .entity import AndroidTVEntity, adb_decorator
@@ -21,7 +19,9 @@ _LOGGER = logging.getLogger(__name__)
 
 
 async def async_setup_entry(
-    hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback
+    hass: HomeAssistant,
+    entry: ConfigEntry,
+    async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up the AndroidTV remote from a config entry."""
     async_add_entities([AndroidTVRemote(entry)])

@@ -3,6 +3,7 @@
 from unittest.mock import DEFAULT, AsyncMock, patch
 
 from evolutionhttp import BryantEvolutionLocalClient, ZoneInfo
+import pytest
 
 from homeassistant import config_entries
 from homeassistant.components.bryant_evolution.const import CONF_SYSTEM_ZONE, DOMAIN
@@ -104,10 +105,9 @@ async def test_form_cannot_connect(
     assert len(mock_setup_entry.mock_calls) == 1
 
 
+@pytest.mark.usefixtures("mock_setup_entry")
 async def test_form_cannot_connect_bad_file(
-    hass: HomeAssistant,
-    mock_setup_entry: AsyncMock,
-    mock_evolution_client_factory: AsyncMock,
+    hass: HomeAssistant, mock_evolution_client_factory: AsyncMock
 ) -> None:
     """Test we handle cannot connect error from a missing file."""
     mock_evolution_client_factory.side_effect = FileNotFoundError("test error")
@@ -126,21 +126,14 @@ async def test_form_cannot_connect_bad_file(
     assert result["errors"] == {"base": "cannot_connect"}
 
 
+@pytest.mark.usefixtures("mock_setup_entry")
 async def test_reconfigure(
-    hass: HomeAssistant,
-    mock_setup_entry: AsyncMock,
-    mock_evolution_entry: MockConfigEntry,
+    hass: HomeAssistant, mock_evolution_entry: MockConfigEntry
 ) -> None:
     """Test that reconfigure discovers additional systems and zones."""
 
     # Reconfigure with additional systems and zones.
-    result = await hass.config_entries.flow.async_init(
-        DOMAIN,
-        context={
-            "source": config_entries.SOURCE_RECONFIGURE,
-            "entry_id": mock_evolution_entry.entry_id,
-        },
-    )
+    result = await mock_evolution_entry.start_reconfigure_flow(hass)
     with (
         patch.object(
             BryantEvolutionLocalClient,
@@ -160,7 +153,7 @@ async def test_reconfigure(
         )
     await hass.async_block_till_done()
     assert result["type"] is FlowResultType.ABORT, result
-    assert result["reason"] == "reconfigured"
+    assert result["reason"] == "reconfigure_successful"
     config_entry = hass.config_entries.async_entries()[0]
     assert config_entry.data[CONF_SYSTEM_ZONE] == [
         (1, 1),

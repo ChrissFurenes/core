@@ -1,7 +1,5 @@
 """Support for Litter-Robot time."""
 
-from __future__ import annotations
-
 from collections.abc import Callable, Coroutine
 from dataclasses import dataclass
 from datetime import datetime, time
@@ -12,24 +10,21 @@ from pylitterbot import LitterRobot3
 from homeassistant.components.time import TimeEntity, TimeEntityDescription
 from homeassistant.const import EntityCategory
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
-import homeassistant.util.dt as dt_util
+from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
+from homeassistant.util import dt as dt_util
 
-from . import LitterRobotConfigEntry
-from .entity import LitterRobotEntity, _RobotT
+from .coordinator import LitterRobotConfigEntry
+from .entity import LitterRobotEntity, _WhiskerEntityT, whisker_command
 
-
-@dataclass(frozen=True)
-class RequiredKeysMixin(Generic[_RobotT]):
-    """A class that describes robot time entity required keys."""
-
-    value_fn: Callable[[_RobotT], time | None]
-    set_fn: Callable[[_RobotT, time], Coroutine[Any, Any, bool]]
+PARALLEL_UPDATES = 1
 
 
-@dataclass(frozen=True)
-class RobotTimeEntityDescription(TimeEntityDescription, RequiredKeysMixin[_RobotT]):
+@dataclass(frozen=True, kw_only=True)
+class RobotTimeEntityDescription(TimeEntityDescription, Generic[_WhiskerEntityT]):  # noqa: UP046
     """A class that describes robot time entities."""
+
+    value_fn: Callable[[_WhiskerEntityT], time | None]
+    set_fn: Callable[[_WhiskerEntityT, time], Coroutine[Any, Any, bool]]
 
 
 def _as_local_time(start: datetime | None) -> time | None:
@@ -42,8 +37,11 @@ LITTER_ROBOT_3_SLEEP_START = RobotTimeEntityDescription[LitterRobot3](
     translation_key="sleep_mode_start_time",
     entity_category=EntityCategory.CONFIG,
     value_fn=lambda robot: _as_local_time(robot.sleep_mode_start_time),
-    set_fn=lambda robot, value: robot.set_sleep_mode(
-        robot.sleep_mode_enabled, value.replace(tzinfo=dt_util.get_default_time_zone())
+    set_fn=(
+        lambda robot, value: robot.set_sleep_mode(
+            robot.sleep_mode_enabled,
+            value.replace(tzinfo=dt_util.get_default_time_zone()),
+        )
     ),
 )
 
@@ -51,31 +49,44 @@ LITTER_ROBOT_3_SLEEP_START = RobotTimeEntityDescription[LitterRobot3](
 async def async_setup_entry(
     hass: HomeAssistant,
     entry: LitterRobotConfigEntry,
-    async_add_entities: AddEntitiesCallback,
+    async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up Litter-Robot cleaner using config entry."""
-    hub = entry.runtime_data
-    async_add_entities(
-        [
-            LitterRobotTimeEntity(
-                robot=robot, hub=hub, description=LITTER_ROBOT_3_SLEEP_START
+    coordinator = entry.runtime_data
+    known_robots: set[str] = set()
+
+    def _check_robots() -> None:
+        all_robots = list(coordinator.litter_robots())
+        current_robots = {robot.serial for robot in all_robots}
+        new_robots = current_robots - known_robots
+        if new_robots:
+            known_robots.update(new_robots)
+            async_add_entities(
+                LitterRobotTimeEntity(
+                    robot=robot,
+                    coordinator=coordinator,
+                    description=LITTER_ROBOT_3_SLEEP_START,
+                )
+                for robot in all_robots
+                if robot.serial in new_robots
+                if isinstance(robot, LitterRobot3)
             )
-            for robot in hub.litter_robots()
-            if isinstance(robot, LitterRobot3)
-        ]
-    )
+
+    _check_robots()
+    entry.async_on_unload(coordinator.async_add_listener(_check_robots))
 
 
-class LitterRobotTimeEntity(LitterRobotEntity[_RobotT], TimeEntity):
+class LitterRobotTimeEntity(LitterRobotEntity[_WhiskerEntityT], TimeEntity):
     """Litter-Robot time entity."""
 
-    entity_description: RobotTimeEntityDescription[_RobotT]
+    entity_description: RobotTimeEntityDescription[_WhiskerEntityT]
 
     @property
     def native_value(self) -> time | None:
         """Return the value reported by the time."""
         return self.entity_description.value_fn(self.robot)
 
+    @whisker_command
     async def async_set_value(self, value: time) -> None:
         """Update the current value."""
         await self.entity_description.set_fn(self.robot, value)

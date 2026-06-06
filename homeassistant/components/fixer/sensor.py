@@ -1,7 +1,5 @@
 """Currency exchange rate support that comes from fixer.io."""
 
-from __future__ import annotations
-
 from datetime import timedelta
 import logging
 from typing import Any
@@ -16,7 +14,7 @@ from homeassistant.components.sensor import (
 )
 from homeassistant.const import CONF_API_KEY, CONF_NAME, CONF_TARGET
 from homeassistant.core import HomeAssistant
-import homeassistant.helpers.config_validation as cv
+from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
 

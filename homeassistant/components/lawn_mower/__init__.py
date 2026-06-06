@@ -1,11 +1,10 @@
 """The lawn mower integration."""
 
-from __future__ import annotations
-
 from datetime import timedelta
-from functools import cached_property
 import logging
 from typing import final
+
+from propcache.api import cached_property
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
@@ -13,6 +12,7 @@ from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.entity import Entity, EntityDescription
 from homeassistant.helpers.entity_component import EntityComponent
 from homeassistant.helpers.typing import ConfigType
+from homeassistant.util.hass_dict import HassKey
 
 from .const import (
     DOMAIN,
@@ -25,6 +25,8 @@ from .const import (
 
 _LOGGER = logging.getLogger(__name__)
 
+DATA_COMPONENT: HassKey[EntityComponent[LawnMowerEntity]] = HassKey(DOMAIN)
+ENTITY_ID_FORMAT = DOMAIN + ".{}"
 PLATFORM_SCHEMA = cv.PLATFORM_SCHEMA
 PLATFORM_SCHEMA_BASE = cv.PLATFORM_SCHEMA_BASE
 SCAN_INTERVAL = timedelta(seconds=60)
@@ -32,7 +34,7 @@ SCAN_INTERVAL = timedelta(seconds=60)
 
 async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     """Set up the lawn_mower component."""
-    component = hass.data[DOMAIN] = EntityComponent[LawnMowerEntity](
+    component = hass.data[DATA_COMPONENT] = EntityComponent[LawnMowerEntity](
         _LOGGER, DOMAIN, hass, SCAN_INTERVAL
     )
     await component.async_setup(config)
@@ -55,14 +57,12 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up lawn mower devices."""
-    component: EntityComponent[LawnMowerEntity] = hass.data[DOMAIN]
-    return await component.async_setup_entry(entry)
+    return await hass.data[DATA_COMPONENT].async_setup_entry(entry)
 
 
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Unload a config entry."""
-    component: EntityComponent[LawnMowerEntity] = hass.data[DOMAIN]
-    return await component.async_unload_entry(entry)
+    return await hass.data[DATA_COMPONENT].async_unload_entry(entry)
 
 
 class LawnMowerEntityEntityDescription(EntityDescription, frozen_or_thawed=True):
@@ -86,9 +86,7 @@ class LawnMowerEntity(Entity, cached_properties=CACHED_PROPERTIES_WITH_ATTR_):
     @property
     def state(self) -> str | None:
         """Return the current state."""
-        if (activity := self.activity) is None:
-            return None
-        return str(activity)
+        return self.activity
 
     @cached_property
     def activity(self) -> LawnMowerActivity | None:

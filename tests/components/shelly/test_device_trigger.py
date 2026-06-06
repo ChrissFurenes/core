@@ -7,8 +7,8 @@ import pytest
 from pytest_unordered import unordered
 
 from homeassistant.components import automation
-from homeassistant.components.device_automation import DeviceAutomationType
-from homeassistant.components.device_automation.exceptions import (
+from homeassistant.components.device_automation import (
+    DeviceAutomationType,
     InvalidDeviceAutomationConfig,
 )
 from homeassistant.components.shelly.const import (
@@ -25,7 +25,7 @@ from homeassistant.setup import async_setup_component
 
 from . import init_integration
 
-from tests.common import MockConfigEntry, async_get_device_automations
+from tests.common import async_get_device_automations
 
 
 @pytest.mark.parametrize(
@@ -162,14 +162,16 @@ async def test_get_triggers_for_invalid_device_id(
 ) -> None:
     """Test error raised for invalid shelly device_id."""
     await init_integration(hass, 1)
-    config_entry = MockConfigEntry(domain=DOMAIN, data={})
-    config_entry.add_to_hass(hass)
+    config_entry = await init_integration(hass, 1, data={}, skip_setup=True)
     invalid_device = device_registry.async_get_or_create(
         config_entry_id=config_entry.entry_id,
         connections={(dr.CONNECTION_NETWORK_MAC, "12:34:56:AB:CD:EF")},
     )
 
-    with pytest.raises(InvalidDeviceAutomationConfig):
+    with pytest.raises(
+        InvalidDeviceAutomationConfig,
+        match="not found while configuring device automation triggers",
+    ):
         await async_get_device_automations(
             hass, DeviceAutomationType.TRIGGER, invalid_device.id
         )
@@ -385,7 +387,10 @@ async def test_validate_trigger_invalid_triggers(
         },
     )
 
-    assert "Invalid (type,subtype): ('single', 'button3')" in caplog.text
+    assert (
+        "Invalid device automation trigger (type, subtype): ('single', 'button3')"
+        in caplog.text
+    )
 
 
 async def test_rpc_no_runtime_data(
@@ -395,8 +400,10 @@ async def test_rpc_no_runtime_data(
     mock_rpc_device: Mock,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """Test the device trigger for the RPC device when there is no runtime_data in the entry."""
+    """Test RPC device trigger when entry has no runtime_data."""
     entry = await init_integration(hass, 2)
+    # Cache initial runtime_data
+    runtime_data = entry.runtime_data
     monkeypatch.delattr(entry, "runtime_data")
     device = dr.async_entries_for_config_entry(device_registry, entry.entry_id)[0]
 
@@ -432,6 +439,9 @@ async def test_rpc_no_runtime_data(
     assert len(service_calls) == 1
     assert service_calls[0].data["some"] == "test_trigger_single_push"
 
+    # Restore runtime_data to avoid issues on cleanup
+    entry.runtime_data = runtime_data
+
 
 async def test_block_no_runtime_data(
     hass: HomeAssistant,
@@ -440,8 +450,10 @@ async def test_block_no_runtime_data(
     mock_block_device: Mock,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """Test the device trigger for the block device when there is no runtime_data in the entry."""
+    """Test block device trigger when entry has no runtime_data."""
     entry = await init_integration(hass, 1)
+    # Cache initial runtime_data
+    runtime_data = entry.runtime_data
     monkeypatch.delattr(entry, "runtime_data")
     device = dr.async_entries_for_config_entry(device_registry, entry.entry_id)[0]
 
@@ -476,3 +488,6 @@ async def test_block_no_runtime_data(
 
     assert len(service_calls) == 1
     assert service_calls[0].data["some"] == "test_trigger_single"
+
+    # Restore runtime_data to avoid issues on cleanup
+    entry.runtime_data = runtime_data

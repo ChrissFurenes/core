@@ -1,7 +1,5 @@
 """Provide functionality to interact with vlc devices on the network."""
 
-from __future__ import annotations
-
 import logging
 from typing import Any
 
@@ -20,10 +18,10 @@ from homeassistant.components.media_player import (
 )
 from homeassistant.const import CONF_NAME
 from homeassistant.core import HomeAssistant
-import homeassistant.helpers.config_validation as cv
+from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
-import homeassistant.util.dt as dt_util
+from homeassistant.util import dt as dt_util
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -70,7 +68,7 @@ class VlcDevice(MediaPlayerEntity):
         self._vlc = self._instance.media_player_new()
         self._attr_name = name
 
-    def update(self):
+    def update(self) -> None:
         """Get the latest details from the device."""
         status = self._vlc.get_state()
         if status == vlc.State.Playing:
@@ -87,8 +85,6 @@ class VlcDevice(MediaPlayerEntity):
 
         self._attr_volume_level = self._vlc.audio_get_volume() / 100
         self._attr_is_volume_muted = self._vlc.audio_get_mute() == 1
-
-        return True
 
     def media_seek(self, position: float) -> None:
         """Seek the media to a specific location."""

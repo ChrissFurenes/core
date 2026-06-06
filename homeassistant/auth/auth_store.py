@@ -1,7 +1,5 @@
 """Storage for auth models."""
 
-from __future__ import annotations
-
 from datetime import timedelta
 import hmac
 import itertools
@@ -119,6 +117,9 @@ class AuthStore:
         )
 
         new_user = models.User(**kwargs)
+
+        while new_user.id in self._users:
+            new_user = models.User(**kwargs)
 
         self._users[new_user.id] = new_user
 
@@ -308,7 +309,7 @@ class AuthStore:
         credentials.data = data
         self._async_schedule_save()
 
-    async def async_load(self) -> None:  # noqa: C901
+    async def async_load(self) -> None:
         """Load the users."""
         if self._loaded:
             raise RuntimeError("Auth storage is already loaded")

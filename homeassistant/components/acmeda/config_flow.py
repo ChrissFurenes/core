@@ -1,7 +1,5 @@
 """Config flow for Rollease Acmeda Automate Pulse Hub."""
 
-from __future__ import annotations
-
 from asyncio import timeout
 from contextlib import suppress
 from typing import Any
@@ -40,9 +38,10 @@ class AcmedaFlowHandler(ConfigFlow, domain=DOMAIN):
             entry.unique_id for entry in self._async_current_entries()
         }
 
+        hubs: list[aiopulse.Hub] = []
         with suppress(TimeoutError):
             async with timeout(5):
-                hubs: list[aiopulse.Hub] = [
+                hubs = [
                     hub
                     async for hub in aiopulse.Hub.discover()
                     if hub.id not in already_configured

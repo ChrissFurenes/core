@@ -1,10 +1,8 @@
 """Coordinator for the elmax-cloud integration."""
 
-from __future__ import annotations
-
 from asyncio import timeout
 from datetime import timedelta
-from logging import Logger
+import logging
 
 from elmax_api.exceptions import (
     ElmaxApiError,
@@ -22,11 +20,16 @@ from elmax_api.model.panel import PanelEntry, PanelStatus
 from elmax_api.push.push import PushNotificationHandler
 from httpx import ConnectError, ConnectTimeout
 
+from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryAuthFailed, HomeAssistantError
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
-from .const import DEFAULT_TIMEOUT
+from .const import DEFAULT_TIMEOUT, POLLING_SECONDS
+
+_LOGGER = logging.getLogger(__name__)
+
+type ElmaxConfigEntry = ConfigEntry[ElmaxCoordinator]
 
 
 class ElmaxCoordinator(DataUpdateCoordinator[PanelStatus]):
@@ -37,11 +40,9 @@ class ElmaxCoordinator(DataUpdateCoordinator[PanelStatus]):
     def __init__(
         self,
         hass: HomeAssistant,
-        logger: Logger,
+        entry: ElmaxConfigEntry,
         elmax_api_client: GenericElmax,
         panel: PanelEntry,
-        name: str,
-        update_interval: timedelta,
     ) -> None:
         """Instantiate the object."""
         self._client = elmax_api_client
@@ -49,7 +50,11 @@ class ElmaxCoordinator(DataUpdateCoordinator[PanelStatus]):
         self._state_by_endpoint = {}
         self._push_notification_handler = None
         super().__init__(
-            hass=hass, logger=logger, name=name, update_interval=update_interval
+            hass=hass,
+            config_entry=entry,
+            logger=_LOGGER,
+            name=f"Elmax Cloud {entry.entry_id}",
+            update_interval=timedelta(seconds=POLLING_SECONDS),
         )
 
     @property
@@ -125,7 +130,8 @@ class ElmaxCoordinator(DataUpdateCoordinator[PanelStatus]):
         # Store a dictionary for fast endpoint state access
         self._state_by_endpoint = {k.endpoint_id: k for k in status.all_endpoints}
 
-        # If panel supports it and a it hasn't been registered yet, register the push notification handler
+        # If panel supports it and it hasn't been registered yet,
+        # register the push notification handler
         if status.push_feature and self._push_notification_handler is None:
             self._register_push_notification_handler()
 

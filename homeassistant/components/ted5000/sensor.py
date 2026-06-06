@@ -1,7 +1,5 @@
 """Support gathering ted5000 information."""
 
-from __future__ import annotations
-
 from contextlib import suppress
 from datetime import timedelta
 import logging
@@ -136,8 +134,8 @@ class Ted5000Gateway:
             mtus = int(doc["LiveData"]["System"]["NumberMTU"])
 
             for mtu in range(1, mtus + 1):
-                power = int(doc["LiveData"]["Power"]["MTU%d" % mtu]["PowerNow"])
-                voltage = int(doc["LiveData"]["Voltage"]["MTU%d" % mtu]["VoltageNow"])
+                power = int(doc["LiveData"]["Power"][f"MTU{mtu}"]["PowerNow"])
+                voltage = int(doc["LiveData"]["Voltage"][f"MTU{mtu}"]["VoltageNow"])
 
                 self.data[mtu] = {
                     UnitOfPower.WATT: power,

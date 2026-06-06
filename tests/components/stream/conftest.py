@@ -10,8 +10,6 @@ allows the tests to pause the worker thread before finalizing the stream
 so that it can inspect the output.
 """
 
-from __future__ import annotations
-
 import asyncio
 from collections.abc import Generator
 import logging
@@ -26,6 +24,8 @@ from homeassistant.components.stream.core import StreamOutput
 from homeassistant.components.stream.worker import StreamState
 
 from .common import generate_h264_video, stream_teardown
+
+_LOGGER = logging.getLogger(__name__)
 
 TEST_TIMEOUT = 7.0  # Lower than 9s home assistant timeout
 
@@ -44,7 +44,7 @@ class WorkerSync:
 
     def resume(self):
         """Allow the worker thread to finalize the stream."""
-        logging.debug("waking blocked worker")
+        _LOGGER.debug("waking blocked worker")
         self._event.set()
 
     def blocking_discontinuity(self, stream_state: StreamState):
@@ -52,7 +52,7 @@ class WorkerSync:
         # Worker is ending the stream, which clears all output buffers.
         # Block the worker thread until the test has a chance to verify
         # the segments under test.
-        logging.debug("blocking worker")
+        _LOGGER.debug("blocking worker")
         if self._event:
             self._event.wait()
 
@@ -120,13 +120,13 @@ class HLSSync:
         return False
 
     def bad_request(self):
-        """Intercept the HTTPBadRequest call so we know when the web handler is finished."""
+        """Intercept HTTPBadRequest to detect web handler completion."""
         self._num_finished += 1
         self.check_requests_ready()
         return self._original_bad_request()
 
     def not_found(self):
-        """Intercept the HTTPNotFound call so we know when the web handler is finished."""
+        """Intercept HTTPNotFound to detect web handler completion."""
         self._num_finished += 1
         self.check_requests_ready()
         return self._original_not_found()

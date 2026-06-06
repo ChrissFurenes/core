@@ -10,7 +10,7 @@ from homeassistant.components import mqtt, scene
 from homeassistant.const import ATTR_ENTITY_ID, SERVICE_TURN_ON, STATE_UNKNOWN
 from homeassistant.core import HomeAssistant, State
 
-from .test_common import (
+from .common import (
     help_test_availability_when_connection_lost,
     help_test_availability_without_topic,
     help_test_custom_availability_payload,
@@ -81,7 +81,7 @@ async def test_sending_mqtt_commands(
     await hass.services.async_call(scene.DOMAIN, SERVICE_TURN_ON, data, blocking=True)
 
     mqtt_mock.async_publish.assert_called_once_with(
-        "command-topic", "beer on", 0, False
+        "command-topic", "beer on", 0, False, message_expiry_interval=None
     )
 
 

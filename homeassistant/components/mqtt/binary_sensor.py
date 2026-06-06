@@ -1,7 +1,5 @@
 """Support for MQTT binary sensors."""
 
-from __future__ import annotations
-
 from datetime import datetime, timedelta
 import logging
 from typing import Any
@@ -26,9 +24,8 @@ from homeassistant.const import (
     STATE_UNKNOWN,
 )
 from homeassistant.core import CALLBACK_TYPE, HomeAssistant, callback
-import homeassistant.helpers.config_validation as cv
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
-import homeassistant.helpers.event as evt
+from homeassistant.helpers import config_validation as cv, event as evt
+from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 from homeassistant.helpers.event import async_call_later
 from homeassistant.helpers.restore_state import RestoreEntity
 from homeassistant.helpers.typing import ConfigType
@@ -36,15 +33,16 @@ from homeassistant.util import dt as dt_util
 
 from . import subscription
 from .config import MQTT_RO_SCHEMA
-from .const import CONF_STATE_TOPIC, PAYLOAD_NONE
-from .mixins import MqttAvailabilityMixin, MqttEntity, async_setup_entity_entry_helper
+from .const import CONF_OFF_DELAY, CONF_STATE_TOPIC, PAYLOAD_NONE
+from .entity import MqttAvailabilityMixin, MqttEntity, async_setup_entity_entry_helper
 from .models import MqttValueTemplate, ReceiveMessage
 from .schemas import MQTT_ENTITY_COMMON_SCHEMA
 
 _LOGGER = logging.getLogger(__name__)
 
+PARALLEL_UPDATES = 0
+
 DEFAULT_NAME = "MQTT Binary sensor"
-CONF_OFF_DELAY = "off_delay"
 DEFAULT_PAYLOAD_OFF = "OFF"
 DEFAULT_PAYLOAD_ON = "ON"
 DEFAULT_FORCE_UPDATE = False
@@ -68,7 +66,7 @@ DISCOVERY_SCHEMA = PLATFORM_SCHEMA_MODERN.extend({}, extra=vol.REMOVE_EXTRA)
 async def async_setup_entry(
     hass: HomeAssistant,
     config_entry: ConfigEntry,
-    async_add_entities: AddEntitiesCallback,
+    async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up MQTT binary sensor through YAML and through MQTT discovery."""
     async_setup_entity_entry_helper(
@@ -127,8 +125,7 @@ class MqttBinarySensor(MqttEntity, BinarySensorEntity, RestoreEntity):
             )
 
     async def async_will_remove_from_hass(self) -> None:
-        """Remove exprire triggers."""
-        # Clean up expire triggers
+        """Clean up expire triggers."""
         if self._expiration_trigger:
             _LOGGER.debug("Clean up expire after trigger for %s", self.entity_id)
             self._expiration_trigger()

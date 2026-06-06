@@ -1,7 +1,5 @@
 """Support for Sesame, by CANDY HOUSE."""
 
-from __future__ import annotations
-
 from typing import Any
 
 import pysesame2
@@ -13,7 +11,7 @@ from homeassistant.components.lock import (
 )
 from homeassistant.const import ATTR_BATTERY_LEVEL, ATTR_DEVICE_ID, CONF_API_KEY
 from homeassistant.core import HomeAssistant
-import homeassistant.helpers.config_validation as cv
+from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
 

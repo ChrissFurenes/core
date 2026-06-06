@@ -1,7 +1,5 @@
 """Demo platform that offers a fake water heater device."""
 
-from __future__ import annotations
-
 from typing import Any
 
 from homeassistant.components.water_heater import (
@@ -11,7 +9,7 @@ from homeassistant.components.water_heater import (
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import ATTR_TEMPERATURE, UnitOfTemperature
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
 SUPPORT_FLAGS_HEATER = (
     WaterHeaterEntityFeature.TARGET_TEMPERATURE
@@ -24,16 +22,28 @@ SUPPORT_FLAGS_HEATER = (
 async def async_setup_entry(
     hass: HomeAssistant,
     config_entry: ConfigEntry,
-    async_add_entities: AddEntitiesCallback,
+    async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up the Demo config entry."""
     async_add_entities(
         [
             DemoWaterHeater(
-                "Demo Water Heater", 119, UnitOfTemperature.FAHRENHEIT, False, "eco"
+                "demo_water_heater",
+                "Demo Water Heater",
+                119,
+                UnitOfTemperature.FAHRENHEIT,
+                False,
+                "eco",
+                1,
             ),
             DemoWaterHeater(
-                "Demo Water Heater Celsius", 45, UnitOfTemperature.CELSIUS, True, "eco"
+                "demo_water_heater_celsius",
+                "Demo Water Heater Celsius",
+                45,
+                UnitOfTemperature.CELSIUS,
+                True,
+                "eco",
+                1,
             ),
         ]
     )
@@ -47,13 +57,16 @@ class DemoWaterHeater(WaterHeaterEntity):
 
     def __init__(
         self,
+        unique_id: str,
         name: str,
         target_temperature: int,
         unit_of_measurement: str,
         away: bool,
         current_operation: str,
+        target_temperature_step: float,
     ) -> None:
         """Initialize the water_heater device."""
+        self._attr_unique_id = unique_id
         self._attr_name = name
         if target_temperature is not None:
             self._attr_supported_features |= WaterHeaterEntityFeature.TARGET_TEMPERATURE
@@ -74,6 +87,7 @@ class DemoWaterHeater(WaterHeaterEntity):
             "gas",
             "off",
         ]
+        self._attr_target_temperature_step = target_temperature_step
 
     def set_temperature(self, **kwargs: Any) -> None:
         """Set new target temperatures."""

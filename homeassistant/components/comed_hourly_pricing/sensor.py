@@ -1,7 +1,5 @@
 """Support for ComEd Hourly Pricing data."""
 
-from __future__ import annotations
-
 import asyncio
 from datetime import timedelta
 import json
@@ -17,8 +15,8 @@ from homeassistant.components.sensor import (
 )
 from homeassistant.const import CONF_NAME, CONF_OFFSET, CURRENCY_CENT, UnitOfEnergy
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
-import homeassistant.helpers.config_validation as cv
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
 
@@ -126,5 +124,5 @@ class ComedHourlyPricingSensor(SensorEntity):
 
         except (TimeoutError, aiohttp.ClientError) as err:
             _LOGGER.error("Could not get data from ComEd API: %s", err)
-        except (ValueError, KeyError):
+        except ValueError, KeyError:
             _LOGGER.warning("Could not update status for %s", self.name)

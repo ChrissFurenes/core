@@ -1,9 +1,7 @@
 """The test for the Trafikverket sensor platform."""
 
-from __future__ import annotations
-
 import pytest
-from pytrafikverket.models import CameraInfoModel
+from pytrafikverket import CameraInfoModel
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant

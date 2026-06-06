@@ -1,7 +1,5 @@
 """Support for RainMachine devices."""
 
-from __future__ import annotations
-
 from collections.abc import Callable, Coroutine
 from dataclasses import dataclass
 from datetime import timedelta
@@ -13,8 +11,9 @@ from regenmaschine.controller import Controller
 from regenmaschine.errors import RainMachineError, UnknownAPICallError
 import voluptuous as vol
 
-from homeassistant.config_entries import ConfigEntry, ConfigEntryState
+from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
+    CONF_CONDITION,
     CONF_DEVICE_ID,
     CONF_IP_ADDRESS,
     CONF_PASSWORD,
@@ -31,8 +30,7 @@ from homeassistant.helpers import (
     device_registry as dr,
     entity_registry as er,
 )
-from homeassistant.helpers.device_registry import DeviceInfo
-from homeassistant.helpers.update_coordinator import CoordinatorEntity, UpdateFailed
+from homeassistant.helpers.update_coordinator import UpdateFailed
 from homeassistant.util.dt import as_timestamp, utcnow
 from homeassistant.util.network import is_ip_address
 
@@ -54,10 +52,12 @@ from .const import (
     LOGGER,
 )
 from .coordinator import RainMachineDataUpdateCoordinator
-from .model import RainMachineEntityDescription
+
+API_URL_REFERENCE = (
+    "https://rainmachine.docs.apiary.io/#reference/weather-services/parserdata/post"
+)
 
 DEFAULT_SSL = True
-
 
 PLATFORMS = [
     Platform.BINARY_SENSOR,
@@ -68,7 +68,6 @@ PLATFORMS = [
     Platform.UPDATE,
 ]
 
-CONF_CONDITION = "condition"
 CONF_DEWPOINT = "dewpoint"
 CONF_ET = "et"
 CONF_MAXRH = "maxrh"
@@ -101,7 +100,7 @@ CV_WX_DATA_VALID_TEMP_RANGE = vol.All(vol.Coerce(float), vol.Range(min=-40.0, ma
 CV_WX_DATA_VALID_RAIN_RANGE = vol.All(vol.Coerce(float), vol.Range(min=0.0, max=1000.0))
 CV_WX_DATA_VALID_WIND_SPEED = vol.All(vol.Coerce(float), vol.Range(min=0.0, max=65.0))
 CV_WX_DATA_VALID_PRESSURE = vol.All(vol.Coerce(float), vol.Range(min=60.0, max=110.0))
-CV_WX_DATA_VALID_SOLARRAD = vol.All(vol.Coerce(float), vol.Range(min=0.0, max=5.0))
+CV_WX_DATA_VALID_SOLARRAD = vol.All(vol.Coerce(float), vol.Range(min=0.0, max=100.0))
 
 SERVICE_NAME_PAUSE_WATERING = "pause_watering"
 SERVICE_NAME_PUSH_FLOW_METER_DATA = "push_flow_meter_data"
@@ -291,7 +290,7 @@ async def async_setup_entry(  # noqa: C901
             else:
                 data = await controller.zones.all(details=True, include_inactive=True)
         except UnknownAPICallError:
-            LOGGER.info(
+            LOGGER.warning(
                 "Skipping unsupported API call for controller %s: %s",
                 controller.name,
                 api_category,
@@ -457,7 +456,16 @@ async def async_setup_entry(  # noqa: C901
     ):
         if hass.services.has_service(DOMAIN, service_name):
             continue
-        hass.services.async_register(DOMAIN, service_name, method, schema=schema)
+        # pylint: disable-next=home-assistant-service-registered-in-setup-entry
+        hass.services.async_register(
+            DOMAIN,
+            service_name,
+            method,
+            schema=schema,
+            description_placeholders={
+                "api_url": API_URL_REFERENCE,
+            },
+        )
 
     return True
 
@@ -467,12 +475,7 @@ async def async_unload_entry(
 ) -> bool:
     """Unload an RainMachine config entry."""
     unload_ok = await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
-    loaded_entries = [
-        entry
-        for entry in hass.config_entries.async_entries(DOMAIN)
-        if entry.state is ConfigEntryState.LOADED
-    ]
-    if len(loaded_entries) == 1:
+    if not hass.config_entries.async_loaded_entries(DOMAIN):
         # If this is the last loaded instance of RainMachine, deregister any services
         # defined during integration setup:
         for service_name in (
@@ -518,7 +521,7 @@ async def async_migrate_entry(
 
         await er.async_migrate_entries(hass, entry.entry_id, migrate_unique_id)
 
-    LOGGER.info("Migration to version %s successful", version)
+    LOGGER.debug("Migration to version %s successful", version)
 
     return True
 
@@ -528,64 +531,3 @@ async def async_reload_entry(
 ) -> None:
     """Handle an options update."""
     await hass.config_entries.async_reload(entry.entry_id)
-
-
-class RainMachineEntity(CoordinatorEntity[RainMachineDataUpdateCoordinator]):
-    """Define a generic RainMachine entity."""
-
-    _attr_has_entity_name = True
-
-    def __init__(
-        self,
-        entry: RainMachineConfigEntry,
-        data: RainMachineData,
-        description: RainMachineEntityDescription,
-    ) -> None:
-        """Initialize."""
-        super().__init__(data.coordinators[description.api_category])
-
-        self._attr_extra_state_attributes = {}
-        self._attr_unique_id = f"{data.controller.mac}_{description.key}"
-        self._entry = entry
-        self._data = data
-        self._version_coordinator = data.coordinators[DATA_API_VERSIONS]
-        self.entity_description = description
-
-    @property
-    def device_info(self) -> DeviceInfo:
-        """Return device information about this controller."""
-        return DeviceInfo(
-            identifiers={(DOMAIN, self._data.controller.mac)},
-            configuration_url=(
-                f"https://{self._entry.data[CONF_IP_ADDRESS]}:"
-                f"{self._entry.data[CONF_PORT]}"
-            ),
-            connections={(dr.CONNECTION_NETWORK_MAC, self._data.controller.mac)},
-            name=self._data.controller.name.capitalize(),
-            manufacturer="RainMachine",
-            model=(
-                f"Version {self._version_coordinator.data['hwVer']} "
-                f"(API: {self._version_coordinator.data['apiVer']})"
-            ),
-            sw_version=self._version_coordinator.data["swVer"],
-        )
-
-    @callback
-    def _handle_coordinator_update(self) -> None:
-        """Respond to a DataUpdateCoordinator update."""
-        self.update_from_latest_data()
-        self.async_write_ha_state()
-
-    async def async_added_to_hass(self) -> None:
-        """When entity is added to hass."""
-        await super().async_added_to_hass()
-        self.async_on_remove(
-            self._version_coordinator.async_add_listener(
-                self._handle_coordinator_update, self.coordinator_context
-            )
-        )
-        self.update_from_latest_data()
-
-    @callback
-    def update_from_latest_data(self) -> None:
-        """Update the state."""

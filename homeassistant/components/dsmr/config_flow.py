@@ -1,10 +1,7 @@
 """Config flow for DSMR integration."""
 
-from __future__ import annotations
-
 import asyncio
 from functools import partial
-import os
 from typing import Any
 
 from dsmr_parser import obis_references as obis_ref
@@ -14,10 +11,9 @@ from dsmr_parser.clients.rfxtrx_protocol import (
     create_rfxtrx_tcp_dsmr_reader,
 )
 from dsmr_parser.objects import DSMRObject
-import serial
-import serial.tools.list_ports
 import voluptuous as vol
 
+from homeassistant.components import usb
 from homeassistant.config_entries import (
     ConfigEntry,
     ConfigFlow,
@@ -59,7 +55,7 @@ class DSMRConnection:
         self._equipment_identifier = obis_ref.EQUIPMENT_IDENTIFIER
         if dsmr_version == "5B":
             self._equipment_identifier = obis_ref.BELGIUM_EQUIPMENT_IDENTIFIER
-        if dsmr_version == "5L":
+        if dsmr_version in ("5L", "5EONHU"):
             self._equipment_identifier = obis_ref.LUXEMBOURG_EQUIPMENT_IDENTIFIER
         if dsmr_version == "Q3D":
             self._equipment_identifier = obis_ref.Q3D_EQUIPMENT_IDENTIFIER
@@ -120,7 +116,7 @@ class DSMRConnection:
 
         try:
             transport, protocol = await asyncio.create_task(reader_factory())
-        except (serial.SerialException, OSError):
+        except OSError:
             LOGGER.exception("Error connecting to DSMR")
             return False
 
@@ -129,7 +125,9 @@ class DSMRConnection:
                 async with asyncio.timeout(30):
                     await protocol.wait_closed()
             except TimeoutError:
-                # Timeout (no data received), close transport and return True (if telegram is empty, will result in CannotCommunicate error)
+                # Timeout (no data received), close transport
+                # and return True (if telegram is empty, will
+                # result in CannotCommunicate error)
                 transport.close()
                 await protocol.wait_closed()
         return True
@@ -171,9 +169,11 @@ class DSMRFlowHandler(ConfigFlow, domain=DOMAIN):
 
     @staticmethod
     @callback
-    def async_get_options_flow(config_entry: ConfigEntry) -> DSMROptionFlowHandler:
+    def async_get_options_flow(
+        config_entry: ConfigEntry,
+    ) -> DSMROptionFlowHandler:
         """Get the options flow for this handler."""
-        return DSMROptionFlowHandler(config_entry)
+        return DSMROptionFlowHandler()
 
     async def async_step_user(
         self, user_input: dict[str, Any] | None = None
@@ -227,9 +227,7 @@ class DSMRFlowHandler(ConfigFlow, domain=DOMAIN):
                 self._dsmr_version = user_input[CONF_DSMR_VERSION]
                 return await self.async_step_setup_serial_manual_path()
 
-            dev_path = await self.hass.async_add_executor_job(
-                get_serial_by_id, user_selection
-            )
+            dev_path = user_selection
 
             validate_data = {
                 CONF_PORT: dev_path,
@@ -240,9 +238,10 @@ class DSMRFlowHandler(ConfigFlow, domain=DOMAIN):
             if not errors:
                 return self.async_create_entry(title=data[CONF_PORT], data=data)
 
-        ports = await self.hass.async_add_executor_job(serial.tools.list_ports.comports)
+        ports = await usb.async_scan_serial_ports(self.hass)
         list_of_ports = {
-            port.device: f"{port}, s/n: {port.serial_number or 'n/a'}"
+            port.device: f"{port.device} - {port.description or 'n/a'}"
+            f", s/n: {port.serial_number or 'n/a'}"
             + (f" - {port.manufacturer}" if port.manufacturer else "")
             for port in ports
         }
@@ -311,10 +310,6 @@ class DSMRFlowHandler(ConfigFlow, domain=DOMAIN):
 class DSMROptionFlowHandler(OptionsFlow):
     """Handle options."""
 
-    def __init__(self, entry: ConfigEntry) -> None:
-        """Initialize options flow."""
-        self.entry = entry
-
     async def async_step_init(
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
@@ -328,25 +323,13 @@ class DSMROptionFlowHandler(OptionsFlow):
                 {
                     vol.Optional(
                         CONF_TIME_BETWEEN_UPDATE,
-                        default=self.entry.options.get(
+                        default=self.config_entry.options.get(
                             CONF_TIME_BETWEEN_UPDATE, DEFAULT_TIME_BETWEEN_UPDATE
                         ),
                     ): vol.All(vol.Coerce(int), vol.Range(min=0)),
                 }
             ),
         )
-
-
-def get_serial_by_id(dev_path: str) -> str:
-    """Return a /dev/serial/by-id match for given device if available."""
-    by_id = "/dev/serial/by-id"
-    if not os.path.isdir(by_id):
-        return dev_path
-
-    for path in (entry.path for entry in os.scandir(by_id) if entry.is_symlink()):
-        if os.path.realpath(path) == dev_path:
-            return path
-    return dev_path
 
 
 class CannotConnect(HomeAssistantError):

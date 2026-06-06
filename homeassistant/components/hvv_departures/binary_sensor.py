@@ -1,7 +1,5 @@
 """Binary sensor platform for hvv_departures."""
 
-from __future__ import annotations
-
 import asyncio
 from datetime import timedelta
 import logging
@@ -14,10 +12,9 @@ from homeassistant.components.binary_sensor import (
     BinarySensorDeviceClass,
     BinarySensorEntity,
 )
-from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.device_registry import DeviceEntryType, DeviceInfo
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 from homeassistant.helpers.update_coordinator import (
     CoordinatorEntity,
     DataUpdateCoordinator,
@@ -25,15 +22,18 @@ from homeassistant.helpers.update_coordinator import (
 )
 
 from .const import ATTRIBUTION, CONF_STATION, DOMAIN, MANUFACTURER
+from .hub import HVVConfigEntry
 
 _LOGGER = logging.getLogger(__name__)
 
 
 async def async_setup_entry(
-    hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback
+    hass: HomeAssistant,
+    entry: HVVConfigEntry,
+    async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up the binary_sensor platform."""
-    hub = hass.data[DOMAIN][entry.entry_id]
+    hub = entry.runtime_data
     station_name = entry.data[CONF_STATION]["name"]
     station = entry.data[CONF_STATION]
 
@@ -110,6 +110,7 @@ async def async_setup_entry(
         update_method=async_update_data,
         # Polling interval. Will only be polled if there are subscribers.
         update_interval=timedelta(hours=1),
+        config_entry=entry,
     )
 
     # Fetch initial data so we have data when entities subscribe
@@ -151,7 +152,7 @@ class HvvDepartureBinarySensor(CoordinatorEntity, BinarySensorEntity):
         )
 
     @property
-    def is_on(self):
+    def is_on(self) -> bool:
         """Return entity state."""
         return self.coordinator.data[self.idx]["state"]
 

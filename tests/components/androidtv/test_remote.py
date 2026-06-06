@@ -99,9 +99,9 @@ async def test_services_remote(hass: HomeAssistant, config) -> None:
                 "adb_shell",
                 {ATTR_COMMAND: ["BACK", "test"], ATTR_NUM_REPEATS: 2},
                 [
-                    f"input keyevent {KEYS["BACK"]}",
+                    f"input keyevent {KEYS['BACK']}",
                     "test",
-                    f"input keyevent {KEYS["BACK"]}",
+                    f"input keyevent {KEYS['BACK']}",
                     "test",
                 ],
             )
@@ -138,7 +138,7 @@ async def test_services_remote_custom(hass: HomeAssistant, config) -> None:
 
 
 async def test_remote_unicode_decode_error(hass: HomeAssistant) -> None:
-    """Test sending a command via the send_command remote service that raises a UnicodeDecodeError exception."""
+    """Test send_command remote service raising UnicodeDecodeError."""
     patch_key, entity_id, config_entry = _setup(CONFIG_ANDROID_DEFAULT)
     config_entry.add_to_hass(hass)
     response = b"test response"

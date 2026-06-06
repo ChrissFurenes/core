@@ -1,14 +1,12 @@
 """Demo platform that has two fake switches."""
 
-from __future__ import annotations
-
 from typing import Any
 
 from homeassistant.components.switch import SwitchDeviceClass, SwitchEntity
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.device_registry import DeviceInfo
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
 from . import DOMAIN
 
@@ -16,7 +14,7 @@ from . import DOMAIN
 async def async_setup_entry(
     hass: HomeAssistant,
     config_entry: ConfigEntry,
-    async_add_entities: AddEntitiesCallback,
+    async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up the demo switch platform."""
     async_add_entities(
@@ -61,12 +59,12 @@ class DemoSwitch(SwitchEntity):
             name=device_name,
         )
 
-    def turn_on(self, **kwargs: Any) -> None:
+    async def async_turn_on(self, **kwargs: Any) -> None:
         """Turn the switch on."""
         self._attr_is_on = True
-        self.schedule_update_ha_state()
+        self.async_write_ha_state()
 
-    def turn_off(self, **kwargs: Any) -> None:
-        """Turn the device off."""
+    async def async_turn_off(self, **kwargs: Any) -> None:
+        """Turn the switch off."""
         self._attr_is_on = False
-        self.schedule_update_ha_state()
+        self.async_write_ha_state()

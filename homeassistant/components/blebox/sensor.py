@@ -1,6 +1,7 @@
 """BleBox sensor entities."""
 
-from blebox_uniapi.box import Box
+from datetime import datetime, timedelta
+
 import blebox_uniapi.sensor
 
 from homeassistant.components.sensor import (
@@ -9,7 +10,6 @@ from homeassistant.components.sensor import (
     SensorEntityDescription,
     SensorStateClass,
 )
-from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
     CONCENTRATION_MICROGRAMS_PER_CUBIC_METER,
     LIGHT_LUX,
@@ -25,10 +25,13 @@ from homeassistant.const import (
     UnitOfTemperature,
 )
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
-from . import BleBoxEntity
-from .const import DOMAIN, PRODUCT
+from . import BleBoxConfigEntry
+from .entity import BleBoxEntity
+
+SCAN_INTERVAL = timedelta(seconds=5)
+
 
 SENSOR_TYPES = (
     SensorEntityDescription(
@@ -53,9 +56,9 @@ SENSOR_TYPES = (
     ),
     SensorEntityDescription(
         key="powerConsumption",
-        device_class=SensorDeviceClass.ENERGY,
         native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
-        state_class=SensorStateClass.TOTAL,
+        suggested_display_precision=2,
+        icon="mdi:lightning-bolt",
     ),
     SensorEntityDescription(
         key="humidity",
@@ -117,14 +120,13 @@ SENSOR_TYPES = (
 
 async def async_setup_entry(
     hass: HomeAssistant,
-    config_entry: ConfigEntry,
-    async_add_entities: AddEntitiesCallback,
+    config_entry: BleBoxConfigEntry,
+    async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up a BleBox entry."""
-    product: Box = hass.data[DOMAIN][config_entry.entry_id][PRODUCT]
     entities = [
         BleBoxSensorEntity(feature, description)
-        for feature in product.features.get("sensors", [])
+        for feature in config_entry.runtime_data.features.get("sensors", [])
         for description in SENSOR_TYPES
         if description.key == feature.device_class
     ]
@@ -149,8 +151,9 @@ class BleBoxSensorEntity(BleBoxEntity[blebox_uniapi.sensor.BaseSensor], SensorEn
         return self._feature.native_value
 
     @property
-    def last_reset(self):
+    def last_reset(self) -> datetime | None:
         """Return the time when the sensor was last reset, if implemented."""
+        if self.state_class != SensorStateClass.TOTAL:
+            return None
         native_implementation = getattr(self._feature, "last_reset", None)
-
         return native_implementation or super().last_reset

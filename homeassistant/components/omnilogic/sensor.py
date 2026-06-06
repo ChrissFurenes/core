@@ -3,7 +3,6 @@
 from typing import Any
 
 from homeassistant.components.sensor import SensorDeviceClass, SensorEntity
-from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
     CONCENTRATION_PARTS_PER_MILLION,
     PERCENTAGE,
@@ -13,21 +12,22 @@ from homeassistant.const import (
     UnitOfVolume,
 )
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
-from .common import OmniLogicEntity, check_guard
-from .const import COORDINATOR, DEFAULT_PH_OFFSET, DOMAIN, PUMP_TYPES
-from .coordinator import OmniLogicUpdateCoordinator
+from .common import check_guard
+from .const import DEFAULT_PH_OFFSET, PUMP_TYPES
+from .coordinator import OmniLogicConfigEntry, OmniLogicUpdateCoordinator
+from .entity import OmniLogicEntity
 
 
 async def async_setup_entry(
-    hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback
+    hass: HomeAssistant,
+    entry: OmniLogicConfigEntry,
+    async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up the sensor platform."""
 
-    coordinator: OmniLogicUpdateCoordinator = hass.data[DOMAIN][entry.entry_id][
-        COORDINATOR
-    ]
+    coordinator = entry.runtime_data
     entities = []
 
     for item_id, item in coordinator.data.items():
@@ -112,8 +112,10 @@ class OmniLogicTemperatureSensor(OmnilogicSensor):
             hayward_state = None
             state = None
 
-        self._attrs["hayward_temperature"] = hayward_state
-        self._attrs["hayward_unit_of_measure"] = hayward_unit_of_measure
+        self._attr_extra_state_attributes["hayward_temperature"] = hayward_state
+        self._attr_extra_state_attributes["hayward_unit_of_measure"] = (
+            hayward_unit_of_measure
+        )
 
         self._attr_native_unit_of_measurement = UnitOfTemperature.FAHRENHEIT
 
@@ -150,7 +152,7 @@ class OmniLogicPumpSpeedSensor(OmnilogicSensor):
             ):
                 state = "high"
 
-        self._attrs["pump_type"] = pump_type
+        self._attr_extra_state_attributes["pump_type"] = pump_type
 
         return state
 

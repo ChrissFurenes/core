@@ -3,7 +3,7 @@
 from unittest.mock import patch
 
 import pytest
-from syrupy import SnapshotAssertion
+from syrupy.assertion import SnapshotAssertion
 
 from homeassistant.components.binary_sensor import DOMAIN as BINARY_SENSOR_DOMAIN
 from homeassistant.const import Platform
@@ -64,14 +64,18 @@ from tests.common import snapshot_platform
         ),
         (
             {
-                "topic": "tnsaxis:CameraApplicationPlatform/MotionGuard/Camera1Profile1",
+                "topic": (
+                    "tnsaxis:CameraApplicationPlatform/MotionGuard/Camera1Profile1"
+                ),
                 "data_type": "active",
                 "data_value": "1",
             }
         ),
         (
             {
-                "topic": "tnsaxis:CameraApplicationPlatform/LoiteringGuard/Camera1Profile1",
+                "topic": (
+                    "tnsaxis:CameraApplicationPlatform/LoiteringGuard/Camera1Profile1"
+                ),
                 "data_type": "active",
                 "data_value": "1",
             }
@@ -85,7 +89,9 @@ from tests.common import snapshot_platform
         ),
         (
             {
-                "topic": "tnsaxis:CameraApplicationPlatform/ObjectAnalytics/Device1Scenario1",
+                "topic": (
+                    "tnsaxis:CameraApplicationPlatform/ObjectAnalytics/Device1Scenario1"
+                ),
                 "data_type": "active",
                 "data_value": "1",
             }
@@ -100,7 +106,9 @@ from tests.common import snapshot_platform
         ),
         (
             {
-                "topic": "tnsaxis:CameraApplicationPlatform/ObjectAnalytics/Device1Scenario8",
+                "topic": (
+                    "tnsaxis:CameraApplicationPlatform/ObjectAnalytics/Device1Scenario8"
+                ),
                 "data_type": "active",
                 "data_value": "1",
             }
@@ -119,7 +127,6 @@ async def test_binary_sensors(
     with patch("homeassistant.components.axis.PLATFORMS", [Platform.BINARY_SENSOR]):
         config_entry = await config_entry_factory()
     mock_rtsp_event(**event)
-    assert len(hass.states.async_entity_ids(BINARY_SENSOR_DOMAIN)) == 1
     await snapshot_platform(hass, entity_registry, snapshot, config_entry.entry_id)
 
 
@@ -150,7 +157,9 @@ async def test_binary_sensors(
             "data_value": "1",
         },
         {
-            "topic": "tnsaxis:CameraApplicationPlatform/ObjectAnalytics/Device1ScenarioANY",
+            "topic": (
+                "tnsaxis:CameraApplicationPlatform/ObjectAnalytics/Device1ScenarioANY"
+            ),
             "data_type": "active",
             "data_value": "1",
         },

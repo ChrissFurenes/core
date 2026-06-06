@@ -8,8 +8,8 @@
       "user": {
         "data": {
           "host": "[%key:common::config_flow::data::host%]",
-          "username": "[%key:common::config_flow::data::username%]",
-          "password": "[%key:common::config_flow::data::password%]"
+          "password": "[%key:common::config_flow::data::password%]",
+          "username": "[%key:common::config_flow::data::username%]"
         },
         "data_description": {
           "host": "The hostname or IP address of the Lutron main repeater."
@@ -17,9 +17,6 @@
         "description": "Please enter the main repeater login information",
         "title": "Main repeater setup"
       }
-    },
-    "abort": {
-      "single_instance_allowed": "[%key:common::config_flow::abort::single_instance_allowed%]"
     }
   },
   "entity": {
@@ -28,11 +25,30 @@
         "state_attributes": {
           "event_type": {
             "state": {
-              "single_press": "Single press",
               "press": "Press",
-              "release": "Release"
+              "release": "Release",
+              "single_press": "Single press"
             }
           }
+        }
+      }
+    },
+    "select": {
+      "led_state": {
+        "state": {
+          "fast_flash": "Fast flash",
+          "off": "[%key:common::state::off%]",
+          "on": "[%key:common::state::on%]",
+          "slow_flash": "Slow flash"
+        }
+      }
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "data": {
+          "default_dimmer_level": "Default light level when first turning on a light from Home Assistant"
         }
       }
     }

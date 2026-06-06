@@ -1,7 +1,5 @@
 """Adds config flow for 17track.net."""
 
-from __future__ import annotations
-
 import logging
 from typing import Any
 
@@ -9,7 +7,7 @@ from pyseventeentrack import Client as SeventeenTrackClient
 from pyseventeentrack.errors import SeventeenTrackError
 import voluptuous as vol
 
-from homeassistant.config_entries import ConfigEntry, ConfigFlow, ConfigFlowResult
+from homeassistant.config_entries import ConfigFlow, ConfigFlowResult
 from homeassistant.const import CONF_PASSWORD, CONF_USERNAME
 from homeassistant.core import callback
 from homeassistant.helpers import aiohttp_client
@@ -25,6 +23,7 @@ from .const import (
     DEFAULT_SHOW_DELIVERED,
     DOMAIN,
 )
+from .coordinator import SeventeenTrackConfigEntry
 
 CONF_SHOW = {
     vol.Optional(CONF_SHOW_ARCHIVED, default=DEFAULT_SHOW_ARCHIVED): bool,
@@ -54,7 +53,7 @@ class SeventeenTrackConfigFlow(ConfigFlow, domain=DOMAIN):
     @staticmethod
     @callback
     def async_get_options_flow(
-        config_entry: ConfigEntry,
+        config_entry: SeventeenTrackConfigEntry,
     ) -> SchemaOptionsFlowHandler:
         """Get options flow for this handler."""
         return SchemaOptionsFlowHandler(config_entry, OPTIONS_FLOW)
@@ -97,39 +96,7 @@ class SeventeenTrackConfigFlow(ConfigFlow, domain=DOMAIN):
             errors=errors,
         )
 
-    async def async_step_import(self, import_data: dict[str, Any]) -> ConfigFlowResult:
-        """Import 17Track config from configuration.yaml."""
-
-        client = self._get_client()
-
-        try:
-            login_result = await client.profile.login(
-                import_data[CONF_USERNAME], import_data[CONF_PASSWORD]
-            )
-        except SeventeenTrackError:
-            return self.async_abort(reason="cannot_connect")
-
-        if not login_result:
-            return self.async_abort(reason="invalid_auth")
-
-        account_id = client.profile.account_id
-
-        await self.async_set_unique_id(account_id)
-        self._abort_if_unique_id_configured()
-        return self.async_create_entry(
-            title=import_data[CONF_USERNAME],
-            data=import_data,
-            options={
-                CONF_SHOW_ARCHIVED: import_data.get(
-                    CONF_SHOW_ARCHIVED, DEFAULT_SHOW_ARCHIVED
-                ),
-                CONF_SHOW_DELIVERED: import_data.get(
-                    CONF_SHOW_DELIVERED, DEFAULT_SHOW_DELIVERED
-                ),
-            },
-        )
-
     @callback
     def _get_client(self):
-        session = aiohttp_client.async_get_clientsession(self.hass)
+        session = aiohttp_client.async_create_clientsession(self.hass)
         return SeventeenTrackClient(session=session)

@@ -1,7 +1,5 @@
 """Representation of a thermostat."""
 
-from __future__ import annotations
-
 from typing import Any
 
 from zwave_me_ws import ZWaveMeData
@@ -11,14 +9,14 @@ from homeassistant.components.climate import (
     ClimateEntityFeature,
     HVACMode,
 )
-from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import ATTR_TEMPERATURE
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
-from . import ZWaveMeEntity
-from .const import DOMAIN, ZWaveMePlatform
+from .const import ZWaveMePlatform
+from .controller import ZWaveMeConfigEntry
+from .entity import ZWaveMeEntity
 
 TEMPERATURE_DEFAULT_STEP = 0.5
 
@@ -27,22 +25,15 @@ DEVICE_NAME = ZWaveMePlatform.CLIMATE
 
 async def async_setup_entry(
     hass: HomeAssistant,
-    config_entry: ConfigEntry,
-    async_add_entities: AddEntitiesCallback,
+    config_entry: ZWaveMeConfigEntry,
+    async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up the climate platform."""
 
     @callback
     def add_new_device(new_device: ZWaveMeData) -> None:
         """Add a new device."""
-        controller = hass.data[DOMAIN][config_entry.entry_id]
-        climate = ZWaveMeClimate(controller, new_device)
-
-        async_add_entities(
-            [
-                climate,
-            ]
-        )
+        async_add_entities([ZWaveMeClimate(config_entry.runtime_data, new_device)])
 
     config_entry.async_on_unload(
         async_dispatcher_connect(
@@ -57,7 +48,6 @@ class ZWaveMeClimate(ZWaveMeEntity, ClimateEntity):
     _attr_hvac_mode = HVACMode.HEAT
     _attr_hvac_modes = [HVACMode.HEAT]
     _attr_supported_features = ClimateEntityFeature.TARGET_TEMPERATURE
-    _enable_turn_on_off_backwards_compatibility = False
 
     def set_temperature(self, **kwargs: Any) -> None:
         """Set new target temperature."""

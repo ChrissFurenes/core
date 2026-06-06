@@ -1,35 +1,35 @@
 """Config flow for Mastodon."""
 
-from __future__ import annotations
-
+from collections.abc import Mapping
 from typing import Any
 
-from mastodon.Mastodon import MastodonNetworkError, MastodonUnauthorizedError
-import voluptuous as vol
-
-from homeassistant.config_entries import ConfigEntry, ConfigFlow, ConfigFlowResult
-from homeassistant.const import (
-    CONF_ACCESS_TOKEN,
-    CONF_CLIENT_ID,
-    CONF_CLIENT_SECRET,
-    CONF_NAME,
+from mastodon.Mastodon import (
+    Account,
+    Instance,
+    InstanceV2,
+    MastodonNetworkError,
+    MastodonNotFoundError,
+    MastodonUnauthorizedError,
 )
+import voluptuous as vol
+from yarl import URL
+
+from homeassistant.config_entries import ConfigFlow, ConfigFlowResult
+from homeassistant.const import CONF_ACCESS_TOKEN, CONF_CLIENT_ID, CONF_CLIENT_SECRET
 from homeassistant.helpers.selector import (
     TextSelector,
     TextSelectorConfig,
     TextSelectorType,
 )
-from homeassistant.helpers.typing import ConfigType
 from homeassistant.util import slugify
 
-from .const import CONF_BASE_URL, DEFAULT_URL, DOMAIN, LOGGER
+from .const import CONF_BASE_URL, DOMAIN, LOGGER
 from .utils import construct_mastodon_username, create_mastodon_client
 
 STEP_USER_DATA_SCHEMA = vol.Schema(
     {
         vol.Required(
             CONF_BASE_URL,
-            default=DEFAULT_URL,
         ): TextSelector(TextSelectorConfig(type=TextSelectorType.URL)),
         vol.Required(
             CONF_CLIENT_ID,
@@ -42,6 +42,40 @@ STEP_USER_DATA_SCHEMA = vol.Schema(
         ): TextSelector(TextSelectorConfig(type=TextSelectorType.PASSWORD)),
     }
 )
+REAUTH_SCHEMA = vol.Schema(
+    {
+        vol.Required(
+            CONF_ACCESS_TOKEN,
+        ): TextSelector(TextSelectorConfig(type=TextSelectorType.PASSWORD)),
+    }
+)
+STEP_RECONFIGURE_SCHEMA = vol.Schema(
+    {
+        vol.Required(
+            CONF_CLIENT_ID,
+        ): TextSelector(TextSelectorConfig(type=TextSelectorType.PASSWORD)),
+        vol.Required(
+            CONF_CLIENT_SECRET,
+        ): TextSelector(TextSelectorConfig(type=TextSelectorType.PASSWORD)),
+        vol.Required(
+            CONF_ACCESS_TOKEN,
+        ): TextSelector(TextSelectorConfig(type=TextSelectorType.PASSWORD)),
+    }
+)
+
+EXAMPLE_URL = "https://mastodon.social"
+
+
+def base_url_from_url(url: str) -> str:
+    """Return the base url from a url."""
+    return str(URL(url).origin())
+
+
+def remove_email_link(account_name: str) -> str:
+    """Remove email link from account name."""
+
+    # Replaces the @ with a HTML entity to prevent mailto links.
+    return account_name.replace("@", "&#64;")
 
 
 class MastodonConfigFlow(ConfigFlow, domain=DOMAIN):
@@ -49,28 +83,31 @@ class MastodonConfigFlow(ConfigFlow, domain=DOMAIN):
 
     VERSION = 1
     MINOR_VERSION = 2
-    config_entry: ConfigEntry
+
+    base_url: str
+    client_id: str
+    client_secret: str
+    access_token: str
 
     def check_connection(
         self,
-        base_url: str,
-        client_id: str,
-        client_secret: str,
-        access_token: str,
     ) -> tuple[
-        dict[str, str] | None,
-        dict[str, str] | None,
+        InstanceV2 | Instance | None,
+        Account | None,
         dict[str, str],
     ]:
         """Check connection to the Mastodon instance."""
         try:
             client = create_mastodon_client(
-                base_url,
-                client_id,
-                client_secret,
-                access_token,
+                self.base_url,
+                self.client_id,
+                self.client_secret,
+                self.access_token,
             )
-            instance = client.instance()
+            try:
+                instance = client.instance_v2()
+            except MastodonNotFoundError:
+                instance = client.instance_v1()
             account = client.account_verify_credentials()
 
         except MastodonNetworkError:
@@ -107,12 +144,15 @@ class MastodonConfigFlow(ConfigFlow, domain=DOMAIN):
         """Handle a flow initialized by the user."""
         errors: dict[str, str] | None = None
         if user_input:
+            user_input[CONF_BASE_URL] = base_url_from_url(user_input[CONF_BASE_URL])
+
+            self.base_url = user_input[CONF_BASE_URL]
+            self.client_id = user_input[CONF_CLIENT_ID]
+            self.client_secret = user_input[CONF_CLIENT_SECRET]
+            self.access_token = user_input[CONF_ACCESS_TOKEN]
+
             instance, account, errors = await self.hass.async_add_executor_job(
-                self.check_connection,
-                user_input[CONF_BASE_URL],
-                user_input[CONF_CLIENT_ID],
-                user_input[CONF_CLIENT_SECRET],
-                user_input[CONF_ACCESS_TOKEN],
+                self.check_connection
             )
 
             if not errors:
@@ -124,45 +164,84 @@ class MastodonConfigFlow(ConfigFlow, domain=DOMAIN):
                     data=user_input,
                 )
 
-        return self.show_user_form(user_input, errors)
-
-    async def async_step_import(self, import_config: ConfigType) -> ConfigFlowResult:
-        """Import a config entry from configuration.yaml."""
-        errors: dict[str, str] | None = None
-
-        LOGGER.debug("Importing Mastodon from configuration.yaml")
-
-        base_url = str(import_config.get(CONF_BASE_URL, DEFAULT_URL))
-        client_id = str(import_config.get(CONF_CLIENT_ID))
-        client_secret = str(import_config.get(CONF_CLIENT_SECRET))
-        access_token = str(import_config.get(CONF_ACCESS_TOKEN))
-        name = import_config.get(CONF_NAME, None)
-
-        instance, account, errors = await self.hass.async_add_executor_job(
-            self.check_connection,
-            base_url,
-            client_id,
-            client_secret,
-            access_token,
+        return self.show_user_form(
+            user_input,
+            errors,
+            description_placeholders={"example_url": EXAMPLE_URL},
         )
 
-        if not errors:
-            name = construct_mastodon_username(instance, account)
-            await self.async_set_unique_id(slugify(name))
-            self._abort_if_unique_id_configured()
+    async def async_step_reauth(
+        self, entry_data: Mapping[str, Any]
+    ) -> ConfigFlowResult:
+        """Perform reauth upon an API authentication error."""
+        self.base_url = entry_data[CONF_BASE_URL]
+        self.client_id = entry_data[CONF_CLIENT_ID]
+        self.client_secret = entry_data[CONF_CLIENT_SECRET]
+        self.access_token = entry_data[CONF_ACCESS_TOKEN]
+        return await self.async_step_reauth_confirm()
 
-            if not name:
-                name = construct_mastodon_username(instance, account)
-
-            return self.async_create_entry(
-                title=name,
-                data={
-                    CONF_BASE_URL: base_url,
-                    CONF_CLIENT_ID: client_id,
-                    CONF_CLIENT_SECRET: client_secret,
-                    CONF_ACCESS_TOKEN: access_token,
-                },
+    async def async_step_reauth_confirm(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Confirm reauth dialog."""
+        errors: dict[str, str] = {}
+        if user_input:
+            self.access_token = user_input[CONF_ACCESS_TOKEN]
+            instance, account, errors = await self.hass.async_add_executor_job(
+                self.check_connection
             )
+            if not errors:
+                name = construct_mastodon_username(instance, account)
+                await self.async_set_unique_id(slugify(name))
+                self._abort_if_unique_id_mismatch(reason="wrong_account")
+                return self.async_update_reload_and_abort(
+                    self._get_reauth_entry(),
+                    data_updates={CONF_ACCESS_TOKEN: user_input[CONF_ACCESS_TOKEN]},
+                )
+        account_name = self._get_reauth_entry().title
+        return self.async_show_form(
+            step_id="reauth_confirm",
+            data_schema=REAUTH_SCHEMA,
+            errors=errors,
+            description_placeholders={
+                "account_name": remove_email_link(account_name),
+            },
+        )
 
-        reason = next(iter(errors.items()))[1]
-        return self.async_abort(reason=reason)
+    async def async_step_reconfigure(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Handle reconfiguration of the integration."""
+        errors: dict[str, str] = {}
+
+        reconfigure_entry = self._get_reconfigure_entry()
+
+        if user_input:
+            self.base_url = reconfigure_entry.data[CONF_BASE_URL]
+            self.client_id = user_input[CONF_CLIENT_ID]
+            self.client_secret = user_input[CONF_CLIENT_SECRET]
+            self.access_token = user_input[CONF_ACCESS_TOKEN]
+            instance, account, errors = await self.hass.async_add_executor_job(
+                self.check_connection
+            )
+            if not errors:
+                name = construct_mastodon_username(instance, account)
+                await self.async_set_unique_id(slugify(name))
+                self._abort_if_unique_id_mismatch(reason="wrong_account")
+                return self.async_update_reload_and_abort(
+                    reconfigure_entry,
+                    data_updates={
+                        CONF_CLIENT_ID: user_input[CONF_CLIENT_ID],
+                        CONF_CLIENT_SECRET: user_input[CONF_CLIENT_SECRET],
+                        CONF_ACCESS_TOKEN: user_input[CONF_ACCESS_TOKEN],
+                    },
+                )
+        account_name = reconfigure_entry.title
+        return self.async_show_form(
+            step_id="reconfigure",
+            data_schema=STEP_RECONFIGURE_SCHEMA,
+            errors=errors,
+            description_placeholders={
+                "account_name": remove_email_link(account_name),
+            },
+        )

@@ -1,7 +1,5 @@
 """Support for Harmony Hub devices."""
 
-from __future__ import annotations
-
 from collections.abc import Iterable
 import json
 import logging
@@ -20,10 +18,9 @@ from homeassistant.components.remote import (
     RemoteEntityFeature,
 )
 from homeassistant.core import HassJob, HomeAssistant, callback
-from homeassistant.helpers import entity_platform
-import homeassistant.helpers.config_validation as cv
+from homeassistant.helpers import config_validation as cv, entity_platform
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 from homeassistant.helpers.restore_state import RestoreEntity
 from homeassistant.helpers.typing import VolDictType
 
@@ -57,7 +54,7 @@ HARMONY_CHANGE_CHANNEL_SCHEMA: VolDictType = {
 async def async_setup_entry(
     hass: HomeAssistant,
     entry: HarmonyConfigEntry,
-    async_add_entities: AddEntitiesCallback,
+    async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up the Harmony config entry."""
     data = entry.runtime_data
@@ -262,7 +259,8 @@ class HarmonyRemote(HarmonyEntity, RemoteEntity, RestoreEntity):
     def write_config_file(self) -> None:
         """Write Harmony configuration file.
 
-        This is a handy way for users to figure out the available commands for automations.
+        This is a handy way for users to figure out the
+        available commands for automations.
         """
         _LOGGER.debug(
             "%s: Writing hub configuration to file: %s",

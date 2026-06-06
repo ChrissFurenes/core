@@ -1,7 +1,5 @@
 """Climate platform for Tessie integration."""
 
-from __future__ import annotations
-
 from typing import Any
 
 from tessie_api import (
@@ -19,7 +17,7 @@ from homeassistant.components.climate import (
 )
 from homeassistant.const import ATTR_TEMPERATURE, PRECISION_HALVES, UnitOfTemperature
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
 from . import TessieConfigEntry
 from .const import TessieClimateKeeper
@@ -32,7 +30,7 @@ PARALLEL_UPDATES = 0
 async def async_setup_entry(
     hass: HomeAssistant,
     entry: TessieConfigEntry,
-    async_add_entities: AddEntitiesCallback,
+    async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up the Tessie Climate platform from a config entry."""
     data = entry.runtime_data
@@ -60,7 +58,6 @@ class TessieClimateEntity(TessieEntity, ClimateEntity):
         TessieClimateKeeper.DOG,
         TessieClimateKeeper.CAMP,
     ]
-    _enable_turn_on_off_backwards_compatibility = False
 
     def __init__(
         self,

@@ -1,12 +1,10 @@
 """Notifications for Android TV notification service."""
 
-from __future__ import annotations
-
 from io import BufferedReader
 import logging
 from typing import Any
 
-from notifications_android_tv import Notifications
+from notifications_android_tv.notifications import ConnectError, Notifications
 import requests
 from requests.auth import HTTPBasicAuth, HTTPDigestAuth
 import voluptuous as vol
@@ -17,17 +15,16 @@ from homeassistant.components.notify import (
     ATTR_TITLE_DEFAULT,
     BaseNotificationService,
 )
-from homeassistant.const import CONF_HOST
+from homeassistant.const import ATTR_ICON, CONF_HOST
 from homeassistant.core import HomeAssistant
-from homeassistant.exceptions import ServiceValidationError
-import homeassistant.helpers.config_validation as cv
+from homeassistant.exceptions import HomeAssistantError, ServiceValidationError
+from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
 
 from .const import (
     ATTR_COLOR,
     ATTR_DURATION,
     ATTR_FONTSIZE,
-    ATTR_ICON,
     ATTR_ICON_AUTH,
     ATTR_ICON_AUTH_DIGEST,
     ATTR_ICON_PASSWORD,
@@ -59,9 +56,9 @@ async def async_get_service(
     """Get the NFAndroidTV notification service."""
     if discovery_info is None:
         return None
-    notify = await hass.async_add_executor_job(Notifications, discovery_info[CONF_HOST])
+
     return NFAndroidTVNotificationService(
-        notify,
+        discovery_info[CONF_HOST],
         hass.config.is_allowed_path,
     )
 
@@ -71,15 +68,27 @@ class NFAndroidTVNotificationService(BaseNotificationService):
 
     def __init__(
         self,
-        notify: Notifications,
+        host: str,
         is_allowed_path: Any,
     ) -> None:
         """Initialize the service."""
-        self.notify = notify
+        self.host = host
         self.is_allowed_path = is_allowed_path
+        self.notify: Notifications | None = None
 
     def send_message(self, message: str, **kwargs: Any) -> None:
-        """Send a message to a Android TV device."""
+        """Send a message to an Android TV device."""
+        if self.notify is None:
+            try:
+                self.notify = Notifications(self.host)
+            except ConnectError as err:
+                _LOGGER.debug("Full exception:", exc_info=True)
+                raise HomeAssistantError(
+                    translation_domain=DOMAIN,
+                    translation_key="connection_failed",
+                    translation_placeholders={CONF_HOST: self.host},
+                ) from err
+
         data: dict | None = kwargs.get(ATTR_DATA)
         title = kwargs.get(ATTR_TITLE, ATTR_TITLE_DEFAULT)
         duration = None
@@ -96,6 +105,7 @@ class NFAndroidTVNotificationService(BaseNotificationService):
                     duration = int(
                         data.get(ATTR_DURATION, Notifications.DEFAULT_DURATION)
                     )
+                # pylint: disable-next=home-assistant-action-swallowed-exception
                 except ValueError:
                     _LOGGER.warning(
                         "Invalid duration-value: %s", data.get(ATTR_DURATION)
@@ -150,8 +160,8 @@ class NFAndroidTVNotificationService(BaseNotificationService):
                         auth=imagedata.get(ATTR_IMAGE_AUTH),
                     )
                 else:
+                    # pylint: disable-next=home-assistant-exception-message-with-translation
                     raise ServiceValidationError(
-                        "Invalid image provided",
                         translation_domain=DOMAIN,
                         translation_key="invalid_notification_image",
                         translation_placeholders={"type": type(imagedata).__name__},
@@ -172,24 +182,33 @@ class NFAndroidTVNotificationService(BaseNotificationService):
                         auth=icondata.get(ATTR_ICON_AUTH),
                     )
                 else:
+                    # pylint: disable-next=home-assistant-exception-message-with-translation
                     raise ServiceValidationError(
-                        "Invalid Icon provided",
                         translation_domain=DOMAIN,
                         translation_key="invalid_notification_icon",
                         translation_placeholders={"type": type(icondata).__name__},
                     )
-        self.notify.send(
-            message,
-            title=title,
-            duration=duration,
-            fontsize=fontsize,
-            position=position,
-            bkgcolor=bkgcolor,
-            transparency=transparency,
-            interrupt=interrupt,
-            icon=icon,
-            image_file=image_file,
-        )
+
+        try:
+            self.notify.send(
+                message,
+                title=title,
+                duration=duration,
+                fontsize=fontsize,
+                position=position,
+                bkgcolor=bkgcolor,
+                transparency=transparency,
+                interrupt=interrupt,
+                icon=icon,
+                image_file=image_file,
+            )
+        except ConnectError as err:
+            _LOGGER.debug("Full exception:", exc_info=True)
+            raise HomeAssistantError(
+                translation_domain=DOMAIN,
+                translation_key="connection_failed",
+                translation_placeholders={CONF_HOST: self.host},
+            ) from err
 
     def load_file(
         self,

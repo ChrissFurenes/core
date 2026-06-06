@@ -1,13 +1,15 @@
 # serializer version: 1
 # name: test_sensor[sensor.electricity_maps_co2_intensity]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': dict({
       'state_class': <SensorStateClass.MEASUREMENT: 'measurement'>,
     }),
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -21,6 +23,7 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'CO2 intensity',
     'options': dict({
     }),
     'original_device_class': None,
@@ -28,6 +31,7 @@
     'original_name': 'CO2 intensity',
     'platform': 'co2signal',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'carbon_intensity',
     'unique_id': '904a74160aa6f335526706bee85dfb83_co2intensity',
@@ -53,13 +57,15 @@
 # ---
 # name: test_sensor[sensor.electricity_maps_grid_fossil_fuel_percentage]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': dict({
       'state_class': <SensorStateClass.MEASUREMENT: 'measurement'>,
     }),
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -73,6 +79,7 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Grid fossil fuel percentage',
     'options': dict({
     }),
     'original_device_class': None,
@@ -80,6 +87,7 @@
     'original_name': 'Grid fossil fuel percentage',
     'platform': 'co2signal',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'fossil_fuel_percentage',
     'unique_id': '904a74160aa6f335526706bee85dfb83_fossilFuelPercentage',

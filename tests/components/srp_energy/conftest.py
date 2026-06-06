@@ -1,7 +1,5 @@
 """Fixtures for Srp Energy integration tests."""
 
-from __future__ import annotations
-
 from collections.abc import Generator
 import datetime as dt
 from unittest.mock import MagicMock, patch
@@ -12,7 +10,7 @@ import pytest
 from homeassistant.components.srp_energy.const import DOMAIN, PHOENIX_TIME_ZONE
 from homeassistant.const import CONF_ID
 from homeassistant.core import HomeAssistant
-import homeassistant.util.dt as dt_util
+from homeassistant.util import dt as dt_util
 
 from . import MOCK_USAGE, TEST_CONFIG_HOME
 
@@ -88,3 +86,12 @@ async def init_integration(
     await hass.async_block_till_done()
 
     return mock_config_entry
+
+
+@pytest.fixture
+def mock_setup_entry() -> Generator[MagicMock]:
+    """Mock async_setup_entry."""
+    with patch(
+        "homeassistant.components.srp_energy.async_setup_entry", return_value=True
+    ) as mock_setup_entry:
+        yield mock_setup_entry

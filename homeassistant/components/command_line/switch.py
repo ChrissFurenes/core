@@ -1,12 +1,14 @@
 """Support for custom shell commands to turn a switch on/off."""
 
-from __future__ import annotations
-
 import asyncio
 from datetime import datetime, timedelta
-from typing import TYPE_CHECKING, Any, cast
+from typing import TYPE_CHECKING, Any
 
-from homeassistant.components.switch import ENTITY_ID_FORMAT, SwitchEntity
+from homeassistant.components.switch import (
+    DOMAIN as SWITCH_DOMAIN,
+    ENTITY_ID_FORMAT,
+    SwitchEntity,
+)
 from homeassistant.const import (
     CONF_COMMAND_OFF,
     CONF_COMMAND_ON,
@@ -19,12 +21,19 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.event import async_track_time_interval
 from homeassistant.helpers.template import Template
-from homeassistant.helpers.trigger_template_entity import ManualTriggerEntity
+from homeassistant.helpers.trigger_template_entity import (
+    ManualTriggerEntity,
+    ValueTemplate,
+)
 from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
 from homeassistant.util import dt as dt_util, slugify
 
 from .const import CONF_COMMAND_TIMEOUT, LOGGER, TRIGGER_ENTITY_OPTIONS
-from .utils import async_call_shell_with_timeout, async_check_output_or_log
+from .utils import (
+    async_call_shell_with_timeout,
+    async_check_output_or_log,
+    create_platform_yaml_not_supported_issue,
+)
 
 SCAN_INTERVAL = timedelta(seconds=30)
 
@@ -37,10 +46,10 @@ async def async_setup_platform(
 ) -> None:
     """Find and return switches controlled by shell commands."""
     if not discovery_info:
+        create_platform_yaml_not_supported_issue(hass, SWITCH_DOMAIN)
         return
 
     switches = []
-    discovery_info = cast(DiscoveryInfoType, discovery_info)
     entities: dict[str, dict[str, Any]] = {
         slugify(discovery_info[CONF_NAME]): discovery_info
     }
@@ -79,7 +88,7 @@ class CommandSwitch(ManualTriggerEntity, SwitchEntity):
         command_on: str,
         command_off: str,
         command_state: str | None,
-        value_template: Template | None,
+        value_template: ValueTemplate | None,
         timeout: int,
         scan_interval: timedelta,
     ) -> None:
@@ -154,7 +163,8 @@ class CommandSwitch(ManualTriggerEntity, SwitchEntity):
             self._process_updates = asyncio.Lock()
         if self._process_updates.locked():
             LOGGER.warning(
-                "Updating Command Line Switch %s took longer than the scheduled update interval %s",
+                "Updating Command Line Switch %s took longer than"
+                " the scheduled update interval %s",
                 self.name,
                 self._scan_interval,
             )
@@ -167,15 +177,21 @@ class CommandSwitch(ManualTriggerEntity, SwitchEntity):
         """Update device state."""
         if self._command_state:
             payload = str(await self._async_query_state())
+
+            variables = self._template_variables_with_value(payload)
+            if not self._render_availability_template(variables):
+                self.async_write_ha_state()
+                return
+
             value = None
             if self._value_template:
-                value = self._value_template.async_render_with_possible_json_value(
-                    payload, None
+                value = self._value_template.async_render_as_value_template(
+                    self.entity_id, variables, None
                 )
             self._attr_is_on = None
             if payload or value:
                 self._attr_is_on = (value or payload).lower() == "true"
-            self._process_manual_data(payload)
+            self._process_manual_data(variables)
             self.async_write_ha_state()
 
     async def async_update(self) -> None:

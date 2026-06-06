@@ -1,7 +1,5 @@
 """Config flow for edge integration."""
 
-from __future__ import annotations
-
 import logging
 import re
 from typing import Any
@@ -11,7 +9,7 @@ import voluptuous as vol
 
 from homeassistant.config_entries import ConfigFlow, ConfigFlowResult
 from homeassistant.exceptions import HomeAssistantError
-import homeassistant.helpers.config_validation as cv
+from homeassistant.helpers import config_validation as cv
 
 from .const import CONF_PHONE, CONF_REFRESH_TOKEN, DOMAIN
 
@@ -71,6 +69,7 @@ class Tami4ConfigFlow(ConfigFlow, domain=DOMAIN):
                 refresh_token = await self.hass.async_add_executor_job(
                     Tami4EdgeAPI.submit_otp, self.phone, otp
                 )
+                # pylint: disable-next=home-assistant-sequential-executor-jobs
                 api = await self.hass.async_add_executor_job(
                     Tami4EdgeAPI, refresh_token
                 )

@@ -1,13 +1,15 @@
 # serializer version: 1
 # name: test_sensors[sensor.pinecil_dc_input_voltage-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': dict({
       'state_class': <SensorStateClass.MEASUREMENT: 'measurement'>,
     }),
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -21,13 +23,18 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'DC input voltage',
     'options': dict({
+      'sensor': dict({
+        'suggested_display_precision': 0,
+      }),
     }),
     'original_device_class': <SensorDeviceClass.VOLTAGE: 'voltage'>,
     'original_icon': None,
     'original_name': 'DC input voltage',
     'platform': 'iron_os',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': <PinecilSensor.DC_VOLTAGE: 'voltage'>,
     'unique_id': 'c0:ff:ee:c0:ff:ee_voltage',
@@ -52,13 +59,15 @@
 # ---
 # name: test_sensors[sensor.pinecil_estimated_power-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': dict({
       'state_class': <SensorStateClass.MEASUREMENT: 'measurement'>,
     }),
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -72,13 +81,18 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Estimated power',
     'options': dict({
+      'sensor': dict({
+        'suggested_display_precision': 0,
+      }),
     }),
     'original_device_class': <SensorDeviceClass.POWER: 'power'>,
     'original_icon': None,
     'original_name': 'Estimated power',
     'platform': 'iron_os',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': <PinecilSensor.ESTIMATED_POWER: 'estimated_power'>,
     'unique_id': 'c0:ff:ee:c0:ff:ee_estimated_power',
@@ -103,13 +117,15 @@
 # ---
 # name: test_sensors[sensor.pinecil_hall_effect_strength-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': dict({
       'state_class': <SensorStateClass.MEASUREMENT: 'measurement'>,
     }),
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -123,6 +139,7 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Hall effect strength',
     'options': dict({
     }),
     'original_device_class': None,
@@ -130,6 +147,7 @@
     'original_name': 'Hall effect strength',
     'platform': 'iron_os',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': <PinecilSensor.HALL_SENSOR: 'hall_sensor'>,
     'unique_id': 'c0:ff:ee:c0:ff:ee_hall_sensor',
@@ -152,13 +170,15 @@
 # ---
 # name: test_sensors[sensor.pinecil_handle_temperature-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': dict({
       'state_class': <SensorStateClass.MEASUREMENT: 'measurement'>,
     }),
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -172,13 +192,18 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Handle temperature',
     'options': dict({
+      'sensor': dict({
+        'suggested_display_precision': 1,
+      }),
     }),
     'original_device_class': <SensorDeviceClass.TEMPERATURE: 'temperature'>,
     'original_icon': None,
     'original_name': 'Handle temperature',
     'platform': 'iron_os',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': <PinecilSensor.HANDLETEMP: 'handle_temperature'>,
     'unique_id': 'c0:ff:ee:c0:ff:ee_handle_temperature',
@@ -203,13 +228,15 @@
 # ---
 # name: test_sensors[sensor.pinecil_last_movement_time-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': dict({
       'state_class': <SensorStateClass.MEASUREMENT: 'measurement'>,
     }),
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -223,13 +250,18 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Last movement time',
     'options': dict({
+      'sensor': dict({
+        'suggested_display_precision': 2,
+      }),
     }),
     'original_device_class': <SensorDeviceClass.DURATION: 'duration'>,
     'original_icon': None,
     'original_name': 'Last movement time',
     'platform': 'iron_os',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': <PinecilSensor.MOVEMENT_TIME: 'movement_time'>,
     'unique_id': 'c0:ff:ee:c0:ff:ee_movement_time',
@@ -254,11 +286,13 @@
 # ---
 # name: test_sensors[sensor.pinecil_max_tip_temperature-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': None,
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -272,13 +306,18 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Max tip temperature',
     'options': dict({
+      'sensor': dict({
+        'suggested_display_precision': 1,
+      }),
     }),
     'original_device_class': <SensorDeviceClass.TEMPERATURE: 'temperature'>,
     'original_icon': None,
     'original_name': 'Max tip temperature',
     'platform': 'iron_os',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': <PinecilSensor.MAX_TIP_TEMP_ABILITY: 'max_tip_temp_ability'>,
     'unique_id': 'c0:ff:ee:c0:ff:ee_max_tip_temp_ability',
@@ -302,8 +341,9 @@
 # ---
 # name: test_sensors[sensor.pinecil_operating_mode-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': dict({
       'options': list([
@@ -313,9 +353,19 @@
         'sleeping',
         'settings',
         'debug',
+        'soldering_profile',
+        'temperature_adjust',
+        'usb_pd_debug',
+        'thermal_runaway',
+        'startup_logo',
+        'cjc_calibration',
+        'startup_warnings',
+        'initialisation_done',
+        'hibernating',
       ]),
     }),
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -329,6 +379,7 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Operating mode',
     'options': dict({
     }),
     'original_device_class': <SensorDeviceClass.ENUM: 'enum'>,
@@ -336,6 +387,7 @@
     'original_name': 'Operating mode',
     'platform': 'iron_os',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': <PinecilSensor.OPERATING_MODE: 'operating_mode'>,
     'unique_id': 'c0:ff:ee:c0:ff:ee_operating_mode',
@@ -354,6 +406,15 @@
         'sleeping',
         'settings',
         'debug',
+        'soldering_profile',
+        'temperature_adjust',
+        'usb_pd_debug',
+        'thermal_runaway',
+        'startup_logo',
+        'cjc_calibration',
+        'startup_warnings',
+        'initialisation_done',
+        'hibernating',
       ]),
     }),
     'context': <ANY>,
@@ -366,13 +427,15 @@
 # ---
 # name: test_sensors[sensor.pinecil_power_level-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': dict({
       'state_class': <SensorStateClass.MEASUREMENT: 'measurement'>,
     }),
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -386,6 +449,7 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Power level',
     'options': dict({
       'sensor': dict({
         'suggested_display_precision': 0,
@@ -396,6 +460,7 @@
     'original_name': 'Power level',
     'platform': 'iron_os',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': <PinecilSensor.PWMLEVEL: 'power_pwm_level'>,
     'unique_id': 'c0:ff:ee:c0:ff:ee_power_pwm_level',
@@ -420,8 +485,9 @@
 # ---
 # name: test_sensors[sensor.pinecil_power_source-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': dict({
       'options': list([
@@ -432,6 +498,7 @@
       ]),
     }),
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -445,6 +512,7 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Power source',
     'options': dict({
     }),
     'original_device_class': <SensorDeviceClass.ENUM: 'enum'>,
@@ -452,6 +520,7 @@
     'original_name': 'Power source',
     'platform': 'iron_os',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': <PinecilSensor.POWER_SRC: 'power_source'>,
     'unique_id': 'c0:ff:ee:c0:ff:ee_power_source',
@@ -480,13 +549,15 @@
 # ---
 # name: test_sensors[sensor.pinecil_raw_tip_voltage-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': dict({
       'state_class': <SensorStateClass.MEASUREMENT: 'measurement'>,
     }),
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -500,9 +571,10 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Raw tip voltage',
     'options': dict({
       'sensor': dict({
-        'suggested_display_precision': 3,
+        'suggested_display_precision': 0,
       }),
     }),
     'original_device_class': <SensorDeviceClass.VOLTAGE: 'voltage'>,
@@ -510,10 +582,11 @@
     'original_name': 'Raw tip voltage',
     'platform': 'iron_os',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': <PinecilSensor.TIP_VOLTAGE: 'tip_voltage'>,
     'unique_id': 'c0:ff:ee:c0:ff:ee_tip_voltage',
-    'unit_of_measurement': <UnitOfElectricPotential.MILLIVOLT: 'mV'>,
+    'unit_of_measurement': <UnitOfElectricPotential.MICROVOLT: 'μV'>,
   })
 # ---
 # name: test_sensors[sensor.pinecil_raw_tip_voltage-state]
@@ -522,7 +595,7 @@
       'device_class': 'voltage',
       'friendly_name': 'Pinecil Raw tip voltage',
       'state_class': <SensorStateClass.MEASUREMENT: 'measurement'>,
-      'unit_of_measurement': <UnitOfElectricPotential.MILLIVOLT: 'mV'>,
+      'unit_of_measurement': <UnitOfElectricPotential.MICROVOLT: 'μV'>,
     }),
     'context': <ANY>,
     'entity_id': 'sensor.pinecil_raw_tip_voltage',
@@ -534,11 +607,15 @@
 # ---
 # name: test_sensors[sensor.pinecil_tip_resistance-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
-    'capabilities': None,
+    'capabilities': dict({
+      'state_class': <SensorStateClass.MEASUREMENT: 'measurement'>,
+    }),
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -552,6 +629,7 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Tip resistance',
     'options': dict({
     }),
     'original_device_class': None,
@@ -559,6 +637,7 @@
     'original_name': 'Tip resistance',
     'platform': 'iron_os',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': <PinecilSensor.TIP_RESISTANCE: 'tip_resistance'>,
     'unique_id': 'c0:ff:ee:c0:ff:ee_tip_resistance',
@@ -569,6 +648,7 @@
   StateSnapshot({
     'attributes': ReadOnlyDict({
       'friendly_name': 'Pinecil Tip resistance',
+      'state_class': <SensorStateClass.MEASUREMENT: 'measurement'>,
       'unit_of_measurement': 'Ω',
     }),
     'context': <ANY>,
@@ -581,13 +661,15 @@
 # ---
 # name: test_sensors[sensor.pinecil_tip_temperature-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': dict({
       'state_class': <SensorStateClass.MEASUREMENT: 'measurement'>,
     }),
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -601,13 +683,18 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Tip temperature',
     'options': dict({
+      'sensor': dict({
+        'suggested_display_precision': 1,
+      }),
     }),
     'original_device_class': <SensorDeviceClass.TEMPERATURE: 'temperature'>,
     'original_icon': None,
     'original_name': 'Tip temperature',
     'platform': 'iron_os',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': <PinecilSensor.LIVE_TEMP: 'live_temperature'>,
     'unique_id': 'c0:ff:ee:c0:ff:ee_live_temperature',
@@ -632,13 +719,13 @@
 # ---
 # name: test_sensors[sensor.pinecil_uptime-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
-    'capabilities': dict({
-      'state_class': <SensorStateClass.TOTAL_INCREASING: 'total_increasing'>,
-    }),
+    'capabilities': None,
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -652,32 +739,32 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Uptime',
     'options': dict({
     }),
-    'original_device_class': <SensorDeviceClass.DURATION: 'duration'>,
+    'original_device_class': <SensorDeviceClass.UPTIME: 'uptime'>,
     'original_icon': None,
     'original_name': 'Uptime',
     'platform': 'iron_os',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': <PinecilSensor.UPTIME: 'uptime'>,
     'unique_id': 'c0:ff:ee:c0:ff:ee_uptime',
-    'unit_of_measurement': <UnitOfTime.SECONDS: 's'>,
+    'unit_of_measurement': None,
   })
 # ---
 # name: test_sensors[sensor.pinecil_uptime-state]
   StateSnapshot({
     'attributes': ReadOnlyDict({
-      'device_class': 'duration',
+      'device_class': 'uptime',
       'friendly_name': 'Pinecil Uptime',
-      'state_class': <SensorStateClass.TOTAL_INCREASING: 'total_increasing'>,
-      'unit_of_measurement': <UnitOfTime.SECONDS: 's'>,
     }),
     'context': <ANY>,
     'entity_id': 'sensor.pinecil_uptime',
     'last_changed': <ANY>,
     'last_reported': <ANY>,
     'last_updated': <ANY>,
-    'state': '1671',
+    'state': '2026-05-03T17:53:03+00:00',
   })
 # ---

@@ -15,17 +15,21 @@ from homeassistant.components.light import (
     ATTR_HS_COLOR,
     ATTR_TRANSITION,
     ATTR_WHITE,
-    DOMAIN,
+    DOMAIN as LIGHT_DOMAIN,
     ColorMode,
     LightEntity,
     LightEntityFeature,
 )
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
-from . import LutronCasetaDeviceUpdatableEntity
-from .const import DEVICE_TYPE_SPECTRUM_TUNE, DEVICE_TYPE_WHITE_TUNE
+from .const import (
+    DEVICE_TYPE_COLOR_TUNE,
+    DEVICE_TYPE_SPECTRUM_TUNE,
+    DEVICE_TYPE_WHITE_TUNE,
+)
+from .entity import LutronCasetaUpdatableEntity
 from .models import LutronCasetaData
 
 SUPPORTED_COLOR_MODE_DICT = {
@@ -35,14 +39,23 @@ SUPPORTED_COLOR_MODE_DICT = {
         ColorMode.WHITE,
     },
     DEVICE_TYPE_WHITE_TUNE: {ColorMode.COLOR_TEMP},
+    DEVICE_TYPE_COLOR_TUNE: {
+        ColorMode.HS,
+        ColorMode.COLOR_TEMP,
+        ColorMode.WHITE,
+    },
 }
 
-WARM_DEVICE_TYPES = {DEVICE_TYPE_WHITE_TUNE, DEVICE_TYPE_SPECTRUM_TUNE}
+WARM_DEVICE_TYPES = {
+    DEVICE_TYPE_WHITE_TUNE,
+    DEVICE_TYPE_SPECTRUM_TUNE,
+    DEVICE_TYPE_COLOR_TUNE,
+}
 
 
 def to_lutron_level(level):
     """Convert the given Home Assistant light level (0-255) to Lutron (0-100)."""
-    return int(round((level * 100) / 255))
+    return round((level * 100) / 255)
 
 
 def to_hass_level(level):
@@ -53,7 +66,7 @@ def to_hass_level(level):
 async def async_setup_entry(
     hass: HomeAssistant,
     config_entry: ConfigEntry,
-    async_add_entities: AddEntitiesCallback,
+    async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up the Lutron Caseta light platform.
 
@@ -62,14 +75,17 @@ async def async_setup_entry(
     """
     data = config_entry.runtime_data
     bridge = data.bridge
-    light_devices = bridge.get_devices_by_domain(DOMAIN)
+    light_devices = bridge.get_devices_by_domain(LIGHT_DOMAIN)
     async_add_entities(
         LutronCasetaLight(light_device, data) for light_device in light_devices
     )
 
 
-class LutronCasetaLight(LutronCasetaDeviceUpdatableEntity, LightEntity):
-    """Representation of a Lutron Light, including dimmable, white tune, and spectrum tune."""
+class LutronCasetaLight(LutronCasetaUpdatableEntity, LightEntity):
+    """Representation of a Lutron light.
+
+    Including dimmable, white tune, and spectrum/color tune.
+    """
 
     _attr_supported_features = LightEntityFeature.TRANSITION
 
@@ -90,8 +106,14 @@ class LutronCasetaLight(LutronCasetaDeviceUpdatableEntity, LightEntity):
         )
 
         self.supports_warm_cool = light_type in WARM_DEVICE_TYPES
-        self.supports_warm_dim = light_type == DEVICE_TYPE_SPECTRUM_TUNE
-        self.supports_spectrum_tune = light_type == DEVICE_TYPE_SPECTRUM_TUNE
+        self.supports_warm_dim = light_type in (
+            DEVICE_TYPE_SPECTRUM_TUNE,
+            DEVICE_TYPE_COLOR_TUNE,
+        )
+        self.supports_spectrum_tune = light_type in (
+            DEVICE_TYPE_SPECTRUM_TUNE,
+            DEVICE_TYPE_COLOR_TUNE,
+        )
 
     def _get_min_color_temp_kelvin(self, light: dict[str, Any]) -> int:
         """Return minimum supported color temperature.

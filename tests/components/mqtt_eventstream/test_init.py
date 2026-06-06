@@ -5,12 +5,12 @@ from unittest.mock import ANY, patch
 
 import pytest
 
-import homeassistant.components.mqtt_eventstream as eventstream
+from homeassistant.components import mqtt_eventstream as eventstream
 from homeassistant.const import EVENT_STATE_CHANGED, MATCH_ALL
 from homeassistant.core import HomeAssistant, State, callback
 from homeassistant.helpers.json import JSONEncoder
 from homeassistant.setup import async_setup_component
-import homeassistant.util.dt as dt_util
+from homeassistant.util import dt as dt_util
 
 from tests.common import (
     async_fire_mqtt_message,
@@ -100,7 +100,9 @@ async def test_state_changed_event_sends_message(
 
     # The order of the JSON is indeterminate,
     # so first just check that publish was called
-    mqtt_mock.async_publish.assert_called_with(pub_topic, ANY, 0, False)
+    mqtt_mock.async_publish.assert_called_with(
+        pub_topic, ANY, 0, False, message_expiry_interval=None
+    )
     assert mqtt_mock.async_publish.called
 
     # Get the actual call to publish and make sure it was the one

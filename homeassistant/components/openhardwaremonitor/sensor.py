@@ -1,7 +1,5 @@
 """Support for Open Hardware Monitor Sensor Platform."""
 
-from __future__ import annotations
-
 from datetime import timedelta
 import logging
 
@@ -11,11 +9,12 @@ import voluptuous as vol
 from homeassistant.components.sensor import (
     PLATFORM_SCHEMA as SENSOR_PLATFORM_SCHEMA,
     SensorEntity,
+    SensorStateClass,
 )
 from homeassistant.const import CONF_HOST, CONF_PORT
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import PlatformNotReady
-import homeassistant.helpers.config_validation as cv
+from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
 from homeassistant.util import Throttle
@@ -60,40 +59,17 @@ def setup_platform(
 class OpenHardwareMonitorDevice(SensorEntity):
     """Device used to display information from OpenHardwareMonitor."""
 
+    _attr_state_class = SensorStateClass.MEASUREMENT
+
     def __init__(self, data, name, path, unit_of_measurement):
         """Initialize an OpenHardwareMonitor sensor."""
-        self._name = name
+        self._attr_name = name
         self._data = data
         self.path = path
-        self.attributes = {}
-        self._unit_of_measurement = unit_of_measurement
-
-        self.value = None
-
-    @property
-    def name(self):
-        """Return the name of the device."""
-        return self._name
-
-    @property
-    def native_unit_of_measurement(self):
-        """Return the unit of measurement."""
-        return self._unit_of_measurement
-
-    @property
-    def native_value(self):
-        """Return the state of the device."""
-        if self.value == "-":
-            return None
-        return self.value
-
-    @property
-    def extra_state_attributes(self):
-        """Return the state attributes of the entity."""
-        return self.attributes
+        self._attr_native_unit_of_measurement = unit_of_measurement
 
     @classmethod
-    def parse_number(cls, string):
+    def parse_number(cls, string: str) -> str:
         """In some locales a decimal numbers uses ',' instead of '.'."""
         return string.replace(",", ".")
 
@@ -108,7 +84,8 @@ class OpenHardwareMonitorDevice(SensorEntity):
             values = array[path_number]
 
             if path_index == len(self.path) - 1:
-                self.value = self.parse_number(values[OHM_VALUE].split(" ")[0])
+                value = self.parse_number(values[OHM_VALUE].split(" ")[0])
+                self._attr_native_value = None if value == "-" else value
                 _attributes.update(
                     {
                         "name": values[OHM_NAME],
@@ -121,7 +98,7 @@ class OpenHardwareMonitorDevice(SensorEntity):
                     }
                 )
 
-                self.attributes = _attributes
+                self._attr_extra_state_attributes = _attributes
                 return
             array = array[path_number][OHM_CHILDREN]
             _attributes.update({f"level_{path_index}": values[OHM_NAME]})

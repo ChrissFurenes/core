@@ -1,15 +1,15 @@
 """Test the Home Assistant Hardware silabs multiprotocol addon manager."""
 
-from __future__ import annotations
-
 from collections.abc import Generator
 from typing import Any
 from unittest.mock import AsyncMock, Mock, patch
 
+from aiohasupervisor import SupervisorError
+from aiohasupervisor.models import AddonsOptions
+from aiohttp import ClientError
 import pytest
 
 from homeassistant.components.hassio import AddonError, AddonInfo, AddonState, HassIO
-from homeassistant.components.hassio.handler import HassioAPIError
 from homeassistant.components.homeassistant_hardware import silabs_multiprotocol_addon
 from homeassistant.components.zha import DOMAIN as ZHA_DOMAIN
 from homeassistant.config_entries import ConfigEntry, ConfigFlow
@@ -30,6 +30,11 @@ from tests.common import (
 
 TEST_DOMAIN = "test"
 TEST_DOMAIN_2 = "test_2"
+
+
+@pytest.fixture(autouse=True)
+def mock_supervisor_client(supervisor_client: AsyncMock) -> None:
+    """Mock supervisor client."""
 
 
 class FakeConfigFlow(ConfigFlow):
@@ -92,6 +97,19 @@ class FakeOptionsFlow(silabs_multiprotocol_addon.OptionsFlowHandler):
         """Return the name of the hardware."""
         return "Test"
 
+    def _firmware_update_url(self) -> str:
+        """Return the firmware update manifest URL."""
+        return "https://example.com/firmware"
+
+    def _zigbee_firmware_type(self) -> str:
+        """Return the zigbee firmware type identifier."""
+        return "test_zigbee_ncp"
+
+    @property
+    def _flasher_cls(self) -> type:
+        """Return the hardware-specific flasher class."""
+        return Mock
+
 
 @pytest.fixture(autouse=True)
 def config_flow_handler(
@@ -110,6 +128,31 @@ def options_flow_poll_addon_state() -> Generator[None]:
         "homeassistant.components.homeassistant_hardware.silabs_multiprotocol_addon.WaitingAddonManager.async_wait_until_addon_state"
     ):
         yield
+
+
+@pytest.fixture
+def mock_firmware_client() -> Generator[tuple[AsyncMock, AsyncMock]]:
+    """Fixture to mock FirmwareUpdateClient and async_flash_silabs_firmware."""
+    mock_fw_manifest = Mock()
+    mock_fw_manifest.filename = "test_zigbee_ncp_7.4.4.0.gbl"
+    mock_fw_client = AsyncMock()
+    mock_fw_client.async_update_data.return_value = Mock(firmwares=[mock_fw_manifest])
+    mock_fw_client.async_fetch_firmware.return_value = b"fake_firmware"
+
+    with (
+        patch(
+            "homeassistant.components.homeassistant_hardware.silabs_multiprotocol_addon.FirmwareUpdateClient",
+            return_value=mock_fw_client,
+        ),
+        patch(
+            "homeassistant.components.homeassistant_hardware.silabs_multiprotocol_addon.async_firmware_flashing_context"
+        ),
+        patch(
+            "homeassistant.components.homeassistant_hardware.silabs_multiprotocol_addon.async_flash_silabs_firmware",
+            new_callable=AsyncMock,
+        ) as mock_flash,
+    ):
+        yield mock_fw_client, mock_flash
 
 
 @pytest.fixture(autouse=True)
@@ -168,7 +211,7 @@ def get_suggested(schema, key):
 
 
 @patch(
-    "homeassistant.components.homeassistant_hardware.silabs_multiprotocol_addon.ADDON_STATE_POLL_INTERVAL",
+    "homeassistant.components.homeassistant_hardware.util.ADDON_STATE_POLL_INTERVAL",
     0,
 )
 @pytest.mark.usefixtures(
@@ -241,26 +284,25 @@ async def test_option_flow_install_multi_pan_addon(
     assert result["progress_action"] == "install_addon"
 
     await hass.async_block_till_done()
-    install_addon.assert_called_once_with(hass, "core_silabs_multiprotocol")
+    install_addon.assert_called_once_with("core_silabs_multiprotocol")
 
     result = await hass.config_entries.options.async_configure(result["flow_id"])
     assert result["type"] is FlowResultType.SHOW_PROGRESS
     assert result["step_id"] == "start_addon"
     set_addon_options.assert_called_once_with(
-        hass,
         "core_silabs_multiprotocol",
-        {
-            "options": {
+        AddonsOptions(
+            config={
                 "autoflash_firmware": True,
                 "device": "/dev/ttyTEST123",
                 "baudrate": "115200",
                 "flow_control": True,
             }
-        },
+        ),
     )
 
     await hass.async_block_till_done()
-    start_addon.assert_called_once_with(hass, "core_silabs_multiprotocol")
+    start_addon.assert_called_once_with("core_silabs_multiprotocol")
 
     result = await hass.config_entries.options.async_configure(result["flow_id"])
     assert result["type"] is FlowResultType.CREATE_ENTRY
@@ -316,7 +358,7 @@ async def test_option_flow_install_multi_pan_addon_zha(
     assert result["progress_action"] == "install_addon"
 
     await hass.async_block_till_done()
-    install_addon.assert_called_once_with(hass, "core_silabs_multiprotocol")
+    install_addon.assert_called_once_with("core_silabs_multiprotocol")
 
     multipan_manager = await silabs_multiprotocol_addon.get_multiprotocol_addon_manager(
         hass
@@ -330,16 +372,15 @@ async def test_option_flow_install_multi_pan_addon_zha(
     assert result["type"] is FlowResultType.SHOW_PROGRESS
     assert result["step_id"] == "start_addon"
     set_addon_options.assert_called_once_with(
-        hass,
         "core_silabs_multiprotocol",
-        {
-            "options": {
+        AddonsOptions(
+            config={
                 "autoflash_firmware": True,
                 "device": "/dev/ttyTEST123",
                 "baudrate": "115200",
                 "flow_control": True,
             }
-        },
+        ),
     )
     # Check the channel is initialized from ZHA
     assert multipan_manager._channel == 11
@@ -355,7 +396,7 @@ async def test_option_flow_install_multi_pan_addon_zha(
     assert zha_config_entry.title == "Test Multiprotocol"
 
     await hass.async_block_till_done()
-    start_addon.assert_called_once_with(hass, "core_silabs_multiprotocol")
+    start_addon.assert_called_once_with("core_silabs_multiprotocol")
 
     result = await hass.config_entries.options.async_configure(result["flow_id"])
     assert result["type"] is FlowResultType.CREATE_ENTRY
@@ -411,27 +452,26 @@ async def test_option_flow_install_multi_pan_addon_zha_other_radio(
     assert result["progress_action"] == "install_addon"
 
     await hass.async_block_till_done()
-    install_addon.assert_called_once_with(hass, "core_silabs_multiprotocol")
+    install_addon.assert_called_once_with("core_silabs_multiprotocol")
 
-    addon_info.return_value["hostname"] = "core-silabs-multiprotocol"
+    addon_info.return_value.hostname = "core-silabs-multiprotocol"
     result = await hass.config_entries.options.async_configure(result["flow_id"])
     assert result["type"] is FlowResultType.SHOW_PROGRESS
     assert result["step_id"] == "start_addon"
     set_addon_options.assert_called_once_with(
-        hass,
         "core_silabs_multiprotocol",
-        {
-            "options": {
+        AddonsOptions(
+            config={
                 "autoflash_firmware": True,
                 "device": "/dev/ttyTEST123",
                 "baudrate": "115200",
                 "flow_control": True,
             }
-        },
+        ),
     )
 
     await hass.async_block_till_done()
-    start_addon.assert_called_once_with(hass, "core_silabs_multiprotocol")
+    start_addon.assert_called_once_with("core_silabs_multiprotocol")
 
     result = await hass.config_entries.options.async_configure(result["flow_id"])
     assert result["type"] is FlowResultType.CREATE_ENTRY
@@ -447,6 +487,7 @@ async def test_option_flow_install_multi_pan_addon_zha_other_radio(
     }
 
 
+@pytest.mark.parametrize("ignore_translations_for_mock_domains", ["test"])
 async def test_option_flow_non_hassio(
     hass: HomeAssistant,
 ) -> None:
@@ -508,7 +549,7 @@ async def test_option_flow_addon_installed_same_device_reconfigure_unexpected_us
 ) -> None:
     """Test reconfiguring the multi pan addon."""
 
-    addon_info.return_value["options"]["device"] = "/dev/ttyTEST123"
+    addon_info.return_value.options["device"] = "/dev/ttyTEST123"
 
     multipan_manager = await silabs_multiprotocol_addon.get_multiprotocol_addon_manager(
         hass
@@ -567,7 +608,7 @@ async def test_option_flow_addon_installed_same_device_reconfigure_expected_user
 ) -> None:
     """Test reconfiguring the multi pan addon."""
 
-    addon_info.return_value["options"]["device"] = "/dev/ttyTEST123"
+    addon_info.return_value.options["device"] = "/dev/ttyTEST123"
 
     multipan_manager = await silabs_multiprotocol_addon.get_multiprotocol_addon_manager(
         hass
@@ -629,16 +670,14 @@ async def test_option_flow_addon_installed_same_device_uninstall(
     addon_info,
     addon_store_info,
     addon_installed,
-    install_addon,
-    start_addon,
     stop_addon,
     uninstall_addon,
-    set_addon_options,
     options_flow_poll_addon_state,
+    mock_firmware_client: tuple[AsyncMock, AsyncMock],
 ) -> None:
     """Test uninstalling the multi pan addon."""
 
-    addon_info.return_value["options"]["device"] = "/dev/ttyTEST123"
+    addon_info.return_value.options["device"] = "/dev/ttyTEST123"
 
     # Setup the config entry
     config_entry = MockConfigEntry(
@@ -671,39 +710,23 @@ async def test_option_flow_addon_installed_same_device_uninstall(
     assert result["type"] is FlowResultType.FORM
     assert result["step_id"] == "uninstall_addon"
 
-    # Make sure the flasher addon is installed
-    addon_store_info.return_value = {
-        "installed": None,
-        "available": True,
-        "state": "not_installed",
-    }
-
     result = await hass.config_entries.options.async_configure(
         result["flow_id"], {silabs_multiprotocol_addon.CONF_DISABLE_MULTI_PAN: True}
     )
 
     assert result["type"] is FlowResultType.SHOW_PROGRESS
-    assert result["step_id"] == "install_flasher_addon"
-    assert result["progress_action"] == "install_addon"
-
-    await hass.async_block_till_done()
-
-    result = await hass.config_entries.options.async_configure(result["flow_id"])
-    assert result["type"] is FlowResultType.SHOW_PROGRESS
     assert result["step_id"] == "uninstall_multiprotocol_addon"
     assert result["progress_action"] == "uninstall_multiprotocol_addon"
 
     await hass.async_block_till_done()
-    uninstall_addon.assert_called_once_with(hass, "core_silabs_multiprotocol")
+    uninstall_addon.assert_called_once_with("core_silabs_multiprotocol")
 
     result = await hass.config_entries.options.async_configure(result["flow_id"])
     assert result["type"] is FlowResultType.SHOW_PROGRESS
-    assert result["step_id"] == "start_flasher_addon"
-    assert result["progress_action"] == "start_flasher_addon"
-    assert result["description_placeholders"] == {"addon_name": "Silicon Labs Flasher"}
+    assert result["step_id"] == "install_zigbee_firmware"
+    assert result["progress_action"] == "install_zigbee_firmware"
 
     await hass.async_block_till_done()
-    install_addon.assert_called_once_with(hass, "core_silabs_flasher")
 
     result = await hass.config_entries.options.async_configure(result["flow_id"])
     assert result["type"] is FlowResultType.CREATE_ENTRY
@@ -725,15 +748,10 @@ async def test_option_flow_addon_installed_same_device_do_not_uninstall_multi_pa
     addon_info,
     addon_store_info,
     addon_installed,
-    install_addon,
-    start_addon,
-    stop_addon,
-    uninstall_addon,
-    set_addon_options,
 ) -> None:
     """Test uninstalling the multi pan addon."""
 
-    addon_info.return_value["options"]["device"] = "/dev/ttyTEST123"
+    addon_info.return_value.options["device"] = "/dev/ttyTEST123"
 
     # Setup the config entry
     config_entry = MockConfigEntry(
@@ -762,21 +780,18 @@ async def test_option_flow_addon_installed_same_device_do_not_uninstall_multi_pa
     assert result["type"] is FlowResultType.CREATE_ENTRY
 
 
-async def test_option_flow_flasher_already_running_failure(
+@pytest.mark.parametrize("ignore_translations_for_mock_domains", ["test"])
+async def test_option_flow_firmware_flash_failure(
     hass: HomeAssistant,
     addon_info,
     addon_store_info,
     addon_installed,
-    install_addon,
-    start_addon,
-    stop_addon,
     uninstall_addon,
-    set_addon_options,
     options_flow_poll_addon_state,
 ) -> None:
-    """Test uninstalling the multi pan addon but with the flasher addon running."""
+    """Test uninstalling the multi pan addon, case where firmware flash fails."""
 
-    addon_info.return_value["options"]["device"] = "/dev/ttyTEST123"
+    addon_info.return_value.options["device"] = "/dev/ttyTEST123"
 
     # Setup the config entry
     config_entry = MockConfigEntry(
@@ -798,32 +813,62 @@ async def test_option_flow_flasher_already_running_failure(
     assert result["type"] is FlowResultType.FORM
     assert result["step_id"] == "uninstall_addon"
 
-    # The flasher addon is already installed and running, this is bad
-    addon_store_info.return_value["installed"] = True
-    addon_info.return_value["state"] = "started"
+    mock_fw_manifest = Mock()
+    mock_fw_manifest.filename = "test_zigbee_ncp_7.4.4.0.gbl"
+    mock_fw_client = AsyncMock()
+    mock_fw_client.async_update_data.return_value = Mock(firmwares=[mock_fw_manifest])
+    mock_fw_client.async_fetch_firmware.return_value = b"fake_firmware"
 
-    result = await hass.config_entries.options.async_configure(
-        result["flow_id"], {silabs_multiprotocol_addon.CONF_DISABLE_MULTI_PAN: True}
-    )
-    assert result["type"] is FlowResultType.ABORT
-    assert result["reason"] == "addon_already_running"
+    with (
+        patch(
+            "homeassistant.components.homeassistant_hardware.silabs_multiprotocol_addon.FirmwareUpdateClient",
+            return_value=mock_fw_client,
+        ),
+        patch(
+            "homeassistant.components.homeassistant_hardware.silabs_multiprotocol_addon.async_firmware_flashing_context"
+        ),
+        patch(
+            "homeassistant.components.homeassistant_hardware.silabs_multiprotocol_addon.async_flash_silabs_firmware",
+            new_callable=AsyncMock,
+            side_effect=HomeAssistantError("Flash failed"),
+        ),
+    ):
+        result = await hass.config_entries.options.async_configure(
+            result["flow_id"],
+            {silabs_multiprotocol_addon.CONF_DISABLE_MULTI_PAN: True},
+        )
+
+        assert result["type"] is FlowResultType.SHOW_PROGRESS
+        assert result["step_id"] == "uninstall_multiprotocol_addon"
+        assert result["progress_action"] == "uninstall_multiprotocol_addon"
+
+        await hass.async_block_till_done()
+        uninstall_addon.assert_called_once_with("core_silabs_multiprotocol")
+
+        result = await hass.config_entries.options.async_configure(result["flow_id"])
+        assert result["type"] is FlowResultType.SHOW_PROGRESS
+        assert result["step_id"] == "install_zigbee_firmware"
+        assert result["progress_action"] == "install_zigbee_firmware"
+
+        await hass.async_block_till_done()
+
+        result = await hass.config_entries.options.async_configure(result["flow_id"])
+        assert result["type"] is FlowResultType.ABORT
+        assert result["reason"] == "fw_install_failed"
 
 
-async def test_option_flow_addon_installed_same_device_flasher_already_installed(
+@pytest.mark.parametrize("ignore_translations_for_mock_domains", ["test"])
+async def test_option_flow_zigbee_firmware_fetch_failure(
     hass: HomeAssistant,
     addon_info,
     addon_store_info,
     addon_installed,
-    install_addon,
-    start_addon,
-    stop_addon,
     uninstall_addon,
-    set_addon_options,
     options_flow_poll_addon_state,
 ) -> None:
-    """Test uninstalling the multi pan addon."""
+    """Test where fetching Zigbee firmware fails."""
 
-    addon_info.return_value["options"]["device"] = "/dev/ttyTEST123"
+    addon_info.return_value.options["device"] = "/dev/ttyTEST123"
 
     # Setup the config entry
     config_entry = MockConfigEntry(
@@ -845,171 +890,42 @@ async def test_option_flow_addon_installed_same_device_flasher_already_installed
     assert result["type"] is FlowResultType.FORM
     assert result["step_id"] == "uninstall_addon"
 
-    addon_store_info.return_value = {
-        "installed": True,
-        "available": True,
-        "state": "not_running",
-    }
+    mock_fw_client = AsyncMock()
+    mock_fw_client.async_update_data.side_effect = ClientError("Network error")
 
-    result = await hass.config_entries.options.async_configure(
-        result["flow_id"], {silabs_multiprotocol_addon.CONF_DISABLE_MULTI_PAN: True}
-    )
-    assert result["type"] is FlowResultType.SHOW_PROGRESS
-    assert result["step_id"] == "uninstall_multiprotocol_addon"
-    assert result["progress_action"] == "uninstall_multiprotocol_addon"
+    with (
+        patch(
+            "homeassistant.components.homeassistant_hardware.silabs_multiprotocol_addon.FirmwareUpdateClient",
+            return_value=mock_fw_client,
+        ),
+        patch(
+            "homeassistant.components.homeassistant_hardware.silabs_multiprotocol_addon.async_firmware_flashing_context"
+        ),
+    ):
+        result = await hass.config_entries.options.async_configure(
+            result["flow_id"],
+            {silabs_multiprotocol_addon.CONF_DISABLE_MULTI_PAN: True},
+        )
+        assert result["type"] is FlowResultType.SHOW_PROGRESS
+        assert result["step_id"] == "uninstall_multiprotocol_addon"
+        assert result["progress_action"] == "uninstall_multiprotocol_addon"
 
-    await hass.async_block_till_done()
-    uninstall_addon.assert_called_once_with(hass, "core_silabs_multiprotocol")
+        await hass.async_block_till_done()
+        uninstall_addon.assert_called_once_with("core_silabs_multiprotocol")
 
-    result = await hass.config_entries.options.async_configure(result["flow_id"])
-    assert result["type"] is FlowResultType.SHOW_PROGRESS
-    assert result["step_id"] == "start_flasher_addon"
-    assert result["progress_action"] == "start_flasher_addon"
-    assert result["description_placeholders"] == {"addon_name": "Silicon Labs Flasher"}
+        result = await hass.config_entries.options.async_configure(result["flow_id"])
+        assert result["type"] is FlowResultType.SHOW_PROGRESS
+        assert result["step_id"] == "install_zigbee_firmware"
+        assert result["progress_action"] == "install_zigbee_firmware"
 
-    addon_store_info.return_value = {
-        "installed": True,
-        "available": True,
-        "state": "not_running",
-    }
-    await hass.async_block_till_done()
-    install_addon.assert_not_called()
+        await hass.async_block_till_done()
 
-    result = await hass.config_entries.options.async_configure(result["flow_id"])
-    assert result["type"] is FlowResultType.CREATE_ENTRY
-
-
-async def test_option_flow_flasher_install_failure(
-    hass: HomeAssistant,
-    addon_info,
-    addon_store_info,
-    addon_installed,
-    install_addon,
-    start_addon,
-    stop_addon,
-    uninstall_addon,
-    set_addon_options,
-    options_flow_poll_addon_state,
-) -> None:
-    """Test uninstalling the multi pan addon, case where flasher addon fails."""
-
-    addon_info.return_value["options"]["device"] = "/dev/ttyTEST123"
-
-    # Setup the config entry
-    config_entry = MockConfigEntry(
-        data={},
-        domain=TEST_DOMAIN,
-        options={},
-        title="Test HW",
-    )
-    config_entry.add_to_hass(hass)
-
-    zha_config_entry = MockConfigEntry(
-        data={
-            "device": {"path": "socket://core-silabs-multiprotocol:9999"},
-            "radio_type": "ezsp",
-        },
-        domain=ZHA_DOMAIN,
-        options={},
-        title="Test Multiprotocol",
-    )
-    zha_config_entry.add_to_hass(hass)
-
-    result = await hass.config_entries.options.async_init(config_entry.entry_id)
-    assert result["type"] is FlowResultType.MENU
-    assert result["step_id"] == "addon_menu"
-
-    result = await hass.config_entries.options.async_configure(
-        result["flow_id"],
-        {"next_step_id": "uninstall_addon"},
-    )
-    assert result["type"] is FlowResultType.FORM
-    assert result["step_id"] == "uninstall_addon"
-
-    addon_store_info.return_value = {
-        "installed": None,
-        "available": True,
-        "state": "not_installed",
-    }
-    install_addon.side_effect = [AddonError()]
-    result = await hass.config_entries.options.async_configure(
-        result["flow_id"], {silabs_multiprotocol_addon.CONF_DISABLE_MULTI_PAN: True}
-    )
-
-    assert result["type"] is FlowResultType.SHOW_PROGRESS
-    assert result["step_id"] == "install_flasher_addon"
-    assert result["progress_action"] == "install_addon"
-
-    await hass.async_block_till_done()
-    install_addon.assert_called_once_with(hass, "core_silabs_flasher")
-
-    result = await hass.config_entries.options.async_configure(result["flow_id"])
-    assert result["type"] is FlowResultType.ABORT
-    assert result["reason"] == "addon_install_failed"
+        result = await hass.config_entries.options.async_configure(result["flow_id"])
+        assert result["type"] is FlowResultType.ABORT
+        assert result["reason"] == "fw_install_failed"
 
 
-async def test_option_flow_flasher_addon_flash_failure(
-    hass: HomeAssistant,
-    addon_info,
-    addon_store_info,
-    addon_installed,
-    install_addon,
-    start_addon,
-    stop_addon,
-    uninstall_addon,
-    set_addon_options,
-    options_flow_poll_addon_state,
-) -> None:
-    """Test where flasher addon fails to flash Zigbee firmware."""
-
-    addon_info.return_value["options"]["device"] = "/dev/ttyTEST123"
-
-    # Setup the config entry
-    config_entry = MockConfigEntry(
-        data={},
-        domain=TEST_DOMAIN,
-        options={},
-        title="Test HW",
-    )
-    config_entry.add_to_hass(hass)
-
-    result = await hass.config_entries.options.async_init(config_entry.entry_id)
-    assert result["type"] is FlowResultType.MENU
-    assert result["step_id"] == "addon_menu"
-
-    result = await hass.config_entries.options.async_configure(
-        result["flow_id"],
-        {"next_step_id": "uninstall_addon"},
-    )
-    assert result["type"] is FlowResultType.FORM
-    assert result["step_id"] == "uninstall_addon"
-
-    result = await hass.config_entries.options.async_configure(
-        result["flow_id"], {silabs_multiprotocol_addon.CONF_DISABLE_MULTI_PAN: True}
-    )
-    assert result["type"] is FlowResultType.SHOW_PROGRESS
-    assert result["step_id"] == "uninstall_multiprotocol_addon"
-    assert result["progress_action"] == "uninstall_multiprotocol_addon"
-
-    start_addon.side_effect = HassioAPIError("Boom")
-
-    await hass.async_block_till_done()
-    uninstall_addon.assert_called_once_with(hass, "core_silabs_multiprotocol")
-
-    result = await hass.config_entries.options.async_configure(result["flow_id"])
-    assert result["type"] is FlowResultType.SHOW_PROGRESS
-    assert result["step_id"] == "start_flasher_addon"
-    assert result["progress_action"] == "start_flasher_addon"
-    assert result["description_placeholders"] == {"addon_name": "Silicon Labs Flasher"}
-
-    await hass.async_block_till_done()
-
-    result = await hass.config_entries.options.async_configure(result["flow_id"])
-    assert result["type"] is FlowResultType.ABORT
-    assert result["reason"] == "addon_start_failed"
-    assert result["description_placeholders"]["addon_name"] == "Silicon Labs Flasher"
-
-
+@pytest.mark.parametrize("ignore_translations_for_mock_domains", ["test"])
 @patch(
     "homeassistant.components.zha.radio_manager.ZhaMultiPANMigrationHelper.async_initiate_migration",
     side_effect=Exception("Boom!"),
@@ -1020,16 +936,11 @@ async def test_option_flow_uninstall_migration_initiate_failure(
     addon_info,
     addon_store_info,
     addon_installed,
-    install_addon,
-    start_addon,
-    stop_addon,
-    uninstall_addon,
-    set_addon_options,
     options_flow_poll_addon_state,
 ) -> None:
     """Test uninstalling the multi pan addon, case where ZHA migration init fails."""
 
-    addon_info.return_value["options"]["device"] = "/dev/ttyTEST123"
+    addon_info.return_value.options["device"] = "/dev/ttyTEST123"
 
     # Setup the config entry
     config_entry = MockConfigEntry(
@@ -1071,6 +982,7 @@ async def test_option_flow_uninstall_migration_initiate_failure(
     mock_initiate_migration.assert_called_once()
 
 
+@pytest.mark.parametrize("ignore_translations_for_mock_domains", ["test"])
 @patch(
     "homeassistant.components.zha.radio_manager.ZhaMultiPANMigrationHelper.async_finish_migration",
     side_effect=Exception("Boom!"),
@@ -1081,16 +993,13 @@ async def test_option_flow_uninstall_migration_finish_failure(
     addon_info,
     addon_store_info,
     addon_installed,
-    install_addon,
-    start_addon,
-    stop_addon,
     uninstall_addon,
-    set_addon_options,
     options_flow_poll_addon_state,
+    mock_firmware_client: tuple[AsyncMock, AsyncMock],
 ) -> None:
-    """Test uninstalling the multi pan addon, case where ZHA migration init fails."""
+    """Test uninstalling the multi pan addon, case where ZHA migration finish fails."""
 
-    addon_info.return_value["options"]["device"] = "/dev/ttyTEST123"
+    addon_info.return_value.options["device"] = "/dev/ttyTEST123"
 
     # Setup the config entry
     config_entry = MockConfigEntry(
@@ -1128,13 +1037,12 @@ async def test_option_flow_uninstall_migration_finish_failure(
     )
 
     await hass.async_block_till_done()
-    uninstall_addon.assert_called_once_with(hass, "core_silabs_multiprotocol")
+    uninstall_addon.assert_called_once_with("core_silabs_multiprotocol")
 
     result = await hass.config_entries.options.async_configure(result["flow_id"])
     assert result["type"] is FlowResultType.SHOW_PROGRESS
-    assert result["step_id"] == "start_flasher_addon"
-    assert result["progress_action"] == "start_flasher_addon"
-    assert result["description_placeholders"] == {"addon_name": "Silicon Labs Flasher"}
+    assert result["step_id"] == "install_zigbee_firmware"
+    assert result["progress_action"] == "install_zigbee_firmware"
 
     await hass.async_block_till_done()
 
@@ -1172,6 +1080,7 @@ async def test_option_flow_do_not_install_multi_pan_addon(
     assert result["type"] is FlowResultType.CREATE_ENTRY
 
 
+@pytest.mark.parametrize("ignore_translations_for_mock_domains", ["test"])
 async def test_option_flow_install_multi_pan_addon_install_fails(
     hass: HomeAssistant,
     addon_store_info,
@@ -1182,7 +1091,7 @@ async def test_option_flow_install_multi_pan_addon_install_fails(
 ) -> None:
     """Test installing the multi pan addon."""
 
-    install_addon.side_effect = HassioAPIError("Boom")
+    install_addon.side_effect = SupervisorError("Boom")
 
     # Setup the config entry
     config_entry = MockConfigEntry(
@@ -1208,13 +1117,14 @@ async def test_option_flow_install_multi_pan_addon_install_fails(
     assert result["progress_action"] == "install_addon"
 
     await hass.async_block_till_done()
-    install_addon.assert_called_once_with(hass, "core_silabs_multiprotocol")
+    install_addon.assert_called_once_with("core_silabs_multiprotocol")
 
     result = await hass.config_entries.options.async_configure(result["flow_id"])
     assert result["type"] is FlowResultType.ABORT
     assert result["reason"] == "addon_install_failed"
 
 
+@pytest.mark.parametrize("ignore_translations_for_mock_domains", ["test"])
 async def test_option_flow_install_multi_pan_addon_start_fails(
     hass: HomeAssistant,
     addon_store_info,
@@ -1225,7 +1135,7 @@ async def test_option_flow_install_multi_pan_addon_start_fails(
 ) -> None:
     """Test installing the multi pan addon."""
 
-    start_addon.side_effect = HassioAPIError("Boom")
+    start_addon.side_effect = SupervisorError("Boom")
 
     # Setup the config entry
     config_entry = MockConfigEntry(
@@ -1251,32 +1161,32 @@ async def test_option_flow_install_multi_pan_addon_start_fails(
     assert result["progress_action"] == "install_addon"
 
     await hass.async_block_till_done()
-    install_addon.assert_called_once_with(hass, "core_silabs_multiprotocol")
+    install_addon.assert_called_once_with("core_silabs_multiprotocol")
 
     result = await hass.config_entries.options.async_configure(result["flow_id"])
     assert result["type"] is FlowResultType.SHOW_PROGRESS
     assert result["step_id"] == "start_addon"
     set_addon_options.assert_called_once_with(
-        hass,
         "core_silabs_multiprotocol",
-        {
-            "options": {
+        AddonsOptions(
+            config={
                 "autoflash_firmware": True,
                 "device": "/dev/ttyTEST123",
                 "baudrate": "115200",
                 "flow_control": True,
             }
-        },
+        ),
     )
 
     await hass.async_block_till_done()
-    start_addon.assert_called_once_with(hass, "core_silabs_multiprotocol")
+    start_addon.assert_called_once_with("core_silabs_multiprotocol")
 
     result = await hass.config_entries.options.async_configure(result["flow_id"])
     assert result["type"] is FlowResultType.ABORT
     assert result["reason"] == "addon_start_failed"
 
 
+@pytest.mark.parametrize("ignore_translations_for_mock_domains", ["test"])
 async def test_option_flow_install_multi_pan_addon_set_options_fails(
     hass: HomeAssistant,
     addon_store_info,
@@ -1287,7 +1197,7 @@ async def test_option_flow_install_multi_pan_addon_set_options_fails(
 ) -> None:
     """Test installing the multi pan addon."""
 
-    set_addon_options.side_effect = HassioAPIError("Boom")
+    set_addon_options.side_effect = SupervisorError("Boom")
 
     # Setup the config entry
     config_entry = MockConfigEntry(
@@ -1313,13 +1223,14 @@ async def test_option_flow_install_multi_pan_addon_set_options_fails(
     assert result["progress_action"] == "install_addon"
 
     await hass.async_block_till_done()
-    install_addon.assert_called_once_with(hass, "core_silabs_multiprotocol")
+    install_addon.assert_called_once_with("core_silabs_multiprotocol")
 
     result = await hass.config_entries.options.async_configure(result["flow_id"])
     assert result["type"] is FlowResultType.ABORT
     assert result["reason"] == "addon_set_config_failed"
 
 
+@pytest.mark.parametrize("ignore_translations_for_mock_domains", ["test"])
 async def test_option_flow_addon_info_fails(
     hass: HomeAssistant,
     addon_store_info,
@@ -1327,7 +1238,7 @@ async def test_option_flow_addon_info_fails(
 ) -> None:
     """Test installing the multi pan addon."""
 
-    addon_store_info.side_effect = HassioAPIError("Boom")
+    addon_store_info.side_effect = SupervisorError("Boom")
 
     # Setup the config entry
     config_entry = MockConfigEntry(
@@ -1343,6 +1254,7 @@ async def test_option_flow_addon_info_fails(
     assert result["reason"] == "addon_info_failed"
 
 
+@pytest.mark.parametrize("ignore_translations_for_mock_domains", ["test"])
 @patch(
     "homeassistant.components.zha.radio_manager.ZhaMultiPANMigrationHelper.async_initiate_migration",
     side_effect=Exception("Boom!"),
@@ -1390,7 +1302,7 @@ async def test_option_flow_install_multi_pan_addon_zha_migration_fails_step_1(
     assert result["progress_action"] == "install_addon"
 
     await hass.async_block_till_done()
-    install_addon.assert_called_once_with(hass, "core_silabs_multiprotocol")
+    install_addon.assert_called_once_with("core_silabs_multiprotocol")
 
     result = await hass.config_entries.options.async_configure(result["flow_id"])
     assert result["type"] is FlowResultType.ABORT
@@ -1398,6 +1310,7 @@ async def test_option_flow_install_multi_pan_addon_zha_migration_fails_step_1(
     set_addon_options.assert_not_called()
 
 
+@pytest.mark.parametrize("ignore_translations_for_mock_domains", ["test"])
 @patch(
     "homeassistant.components.zha.radio_manager.ZhaMultiPANMigrationHelper.async_finish_migration",
     side_effect=Exception("Boom!"),
@@ -1446,26 +1359,25 @@ async def test_option_flow_install_multi_pan_addon_zha_migration_fails_step_2(
     assert result["progress_action"] == "install_addon"
 
     await hass.async_block_till_done()
-    install_addon.assert_called_once_with(hass, "core_silabs_multiprotocol")
+    install_addon.assert_called_once_with("core_silabs_multiprotocol")
 
     result = await hass.config_entries.options.async_configure(result["flow_id"])
     assert result["type"] is FlowResultType.SHOW_PROGRESS
     assert result["step_id"] == "start_addon"
     set_addon_options.assert_called_once_with(
-        hass,
         "core_silabs_multiprotocol",
-        {
-            "options": {
+        AddonsOptions(
+            config={
                 "autoflash_firmware": True,
                 "device": "/dev/ttyTEST123",
                 "baudrate": "115200",
                 "flow_control": True,
             }
-        },
+        ),
     )
 
     await hass.async_block_till_done()
-    start_addon.assert_called_once_with(hass, "core_silabs_multiprotocol")
+    start_addon.assert_called_once_with("core_silabs_multiprotocol")
 
     result = await hass.config_entries.options.async_configure(result["flow_id"])
     assert result["type"] is FlowResultType.ABORT
@@ -1626,7 +1538,7 @@ async def test_check_multi_pan_addon_info_error(
 ) -> None:
     """Test `check_multi_pan_addon` where the addon info cannot be read."""
 
-    addon_store_info.side_effect = HassioAPIError("Boom")
+    addon_store_info.side_effect = SupervisorError("Boom")
 
     with pytest.raises(HomeAssistantError):
         await silabs_multiprotocol_addon.check_multi_pan_addon(hass)
@@ -1662,18 +1574,15 @@ async def test_check_multi_pan_addon_auto_start(
 ) -> None:
     """Test `check_multi_pan_addon` auto starting the addon."""
 
-    addon_info.return_value["state"] = "not_running"
-    addon_store_info.return_value = {
-        "installed": True,
-        "available": True,
-        "state": "not_running",
-    }
+    addon_info.return_value.state = "not_running"
+    addon_store_info.return_value.installed = True
+    addon_store_info.return_value.available = True
 
     # An error is raised even if we auto-start
     with pytest.raises(HomeAssistantError):
         await silabs_multiprotocol_addon.check_multi_pan_addon(hass)
 
-    start_addon.assert_called_once_with(hass, "core_silabs_multiprotocol")
+    start_addon.assert_called_once_with("core_silabs_multiprotocol")
 
 
 async def test_check_multi_pan_addon(
@@ -1681,12 +1590,9 @@ async def test_check_multi_pan_addon(
 ) -> None:
     """Test `check_multi_pan_addon`."""
 
-    addon_info.return_value["state"] = "started"
-    addon_store_info.return_value = {
-        "installed": True,
-        "available": True,
-        "state": "running",
-    }
+    addon_info.return_value.state = "started"
+    addon_store_info.return_value.installed = True
+    addon_store_info.return_value.available = True
 
     await silabs_multiprotocol_addon.check_multi_pan_addon(hass)
     start_addon.assert_not_called()
@@ -1712,12 +1618,9 @@ async def test_multi_pan_addon_using_device_not_running(
 ) -> None:
     """Test `multi_pan_addon_using_device` when the addon isn't running."""
 
-    addon_info.return_value["state"] = "not_running"
-    addon_store_info.return_value = {
-        "installed": True,
-        "available": True,
-        "state": "not_running",
-    }
+    addon_info.return_value.state = "not_running"
+    addon_store_info.return_value.installed = True
+    addon_store_info.return_value.available = True
 
     assert (
         await silabs_multiprotocol_addon.multi_pan_addon_using_device(
@@ -1740,18 +1643,15 @@ async def test_multi_pan_addon_using_device(
 ) -> None:
     """Test `multi_pan_addon_using_device` when the addon isn't running."""
 
-    addon_info.return_value["state"] = "started"
-    addon_info.return_value["options"] = {
+    addon_info.return_value.state = "started"
+    addon_info.return_value.options = {
         "autoflash_firmware": True,
         "device": options_device,
         "baudrate": "115200",
         "flow_control": True,
     }
-    addon_store_info.return_value = {
-        "installed": True,
-        "available": True,
-        "state": "running",
-    }
+    addon_store_info.return_value.installed = True
+    addon_store_info.return_value.available = True
 
     assert (
         await silabs_multiprotocol_addon.multi_pan_addon_using_device(

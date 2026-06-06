@@ -1,13 +1,12 @@
 """Component for handling incoming events as a platform."""
 
-from __future__ import annotations
-
 from dataclasses import asdict, dataclass
 from datetime import datetime, timedelta
 from enum import StrEnum
-from functools import cached_property
 import logging
 from typing import Any, Self, final
+
+from propcache.api import cached_property
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
@@ -17,10 +16,12 @@ from homeassistant.helpers.entity_component import EntityComponent
 from homeassistant.helpers.restore_state import ExtraStoredData, RestoreEntity
 from homeassistant.helpers.typing import ConfigType
 from homeassistant.util import dt as dt_util
+from homeassistant.util.hass_dict import HassKey
 
-from .const import ATTR_EVENT_TYPE, ATTR_EVENT_TYPES, DOMAIN
+from .const import ATTR_EVENT_TYPE, ATTR_EVENT_TYPES, DOMAIN, DoorbellEventType
 
 _LOGGER = logging.getLogger(__name__)
+DATA_COMPONENT: HassKey[EntityComponent[EventEntity]] = HassKey(DOMAIN)
 ENTITY_ID_FORMAT = DOMAIN + ".{}"
 PLATFORM_SCHEMA = cv.PLATFORM_SCHEMA
 PLATFORM_SCHEMA_BASE = cv.PLATFORM_SCHEMA_BASE
@@ -39,8 +40,9 @@ __all__ = [
     "ATTR_EVENT_TYPE",
     "ATTR_EVENT_TYPES",
     "DOMAIN",
-    "PLATFORM_SCHEMA_BASE",
     "PLATFORM_SCHEMA",
+    "PLATFORM_SCHEMA_BASE",
+    "DoorbellEventType",
     "EventDeviceClass",
     "EventEntity",
     "EventEntityDescription",
@@ -51,7 +53,7 @@ __all__ = [
 
 async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     """Set up Event entities."""
-    component = hass.data[DOMAIN] = EntityComponent[EventEntity](
+    component = hass.data[DATA_COMPONENT] = EntityComponent[EventEntity](
         _LOGGER, DOMAIN, hass, SCAN_INTERVAL
     )
     await component.async_setup(config)
@@ -60,14 +62,12 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up a config entry."""
-    component: EntityComponent[EventEntity] = hass.data[DOMAIN]
-    return await component.async_setup_entry(entry)
+    return await hass.data[DATA_COMPONENT].async_setup_entry(entry)
 
 
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Unload a config entry."""
-    component: EntityComponent[EventEntity] = hass.data[DOMAIN]
-    return await component.async_unload_entry(entry)
+    return await hass.data[DATA_COMPONENT].async_unload_entry(entry)
 
 
 class EventEntityDescription(EntityDescription, frozen_or_thawed=True):
@@ -188,6 +188,21 @@ class EventEntity(RestoreEntity, cached_properties=CACHED_PROPERTIES_WITH_ATTR_)
     async def async_internal_added_to_hass(self) -> None:
         """Call when the event entity is added to hass."""
         await super().async_internal_added_to_hass()
+
+        if (
+            self.device_class == EventDeviceClass.DOORBELL
+            and DoorbellEventType.RING not in self.event_types
+        ):
+            report_issue = self._suggest_report_issue()
+            _LOGGER.warning(
+                "Entity %s is a doorbell event entity but does not support "
+                "the '%s' event type. This will stop working in "
+                "Home Assistant 2027.4, please %s",
+                self.entity_id,
+                DoorbellEventType.RING,
+                report_issue,
+            )
+
         if (
             (state := await self.async_get_last_state())
             and state.state is not None

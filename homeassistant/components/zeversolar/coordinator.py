@@ -1,7 +1,5 @@
 """Zeversolar coordinator."""
 
-from __future__ import annotations
-
 from datetime import timedelta
 import logging
 
@@ -16,15 +14,20 @@ from .const import DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
 
+type ZeversolarConfigEntry = ConfigEntry[ZeversolarCoordinator]
+
 
 class ZeversolarCoordinator(DataUpdateCoordinator[zeversolar.ZeverSolarData]):
     """Data update coordinator."""
 
-    def __init__(self, hass: HomeAssistant, entry: ConfigEntry) -> None:
+    config_entry: ZeversolarConfigEntry
+
+    def __init__(self, hass: HomeAssistant, entry: ZeversolarConfigEntry) -> None:
         """Initialize the coordinator."""
         super().__init__(
             hass,
             _LOGGER,
+            config_entry=entry,
             name=DOMAIN,
             update_interval=timedelta(minutes=1),
         )

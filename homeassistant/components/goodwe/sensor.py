@@ -1,7 +1,5 @@
 """Support for GoodWe inverter via UDP."""
 
-from __future__ import annotations
-
 from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import date, datetime, timedelta
@@ -17,7 +15,6 @@ from homeassistant.components.sensor import (
     SensorEntityDescription,
     SensorStateClass,
 )
-from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
     PERCENTAGE,
     EntityCategory,
@@ -33,14 +30,17 @@ from homeassistant.const import (
 )
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.device_registry import DeviceInfo
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 from homeassistant.helpers.event import async_track_point_in_time
 from homeassistant.helpers.typing import StateType
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
-import homeassistant.util.dt as dt_util
+from homeassistant.util import dt as dt_util
 
-from .const import DOMAIN, KEY_COORDINATOR, KEY_DEVICE_INFO, KEY_INVERTER
-from .coordinator import GoodweUpdateCoordinator
+from .const import DOMAIN
+from .coordinator import GoodweConfigEntry, GoodweUpdateCoordinator
+
+# Coordinator handles all data updates, so parallel updates are not needed
+PARALLEL_UPDATES = 0
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -48,10 +48,16 @@ _LOGGER = logging.getLogger(__name__)
 BATTERY_SOC = "battery_soc"
 
 # Sensors that are reset to 0 at midnight.
-# The inverter is only powered by the solar panels and not mains power, so it goes dead when the sun goes down.
-# The "_day" sensors are reset to 0 when the inverter wakes up in the morning when the sun comes up and power to the inverter is restored.
-# This makes sure daily values are reset at midnight instead of at sunrise.
-# When the inverter has a battery connected, HomeAssistant will not reset the values but let the inverter reset them by looking at the unavailable state of the inverter.
+# The inverter is only powered by the solar panels and not
+# mains power, so it goes dead when the sun goes down.
+# The "_day" sensors are reset to 0 when the inverter wakes
+# up in the morning when the sun comes up and power to the
+# inverter is restored.
+# This makes sure daily values are reset at midnight instead
+# of at sunrise.
+# When the inverter has a battery connected, HomeAssistant
+# will not reset the values but let the inverter reset them
+# by looking at the unavailable state of the inverter.
 DAILY_RESET = ["e_day", "e_load_day"]
 
 _MAIN_SENSORS = (
@@ -80,11 +86,11 @@ _ICONS: dict[SensorKind, str] = {
 class GoodweSensorEntityDescription(SensorEntityDescription):
     """Class describing Goodwe sensor entities."""
 
-    value: Callable[[GoodweUpdateCoordinator, str], Any] = (
-        lambda coordinator, sensor: coordinator.sensor_value(sensor)
+    value: Callable[[GoodweUpdateCoordinator, str], Any] = lambda coordinator, sensor: (
+        coordinator.sensor_value(sensor)
     )
-    available: Callable[[GoodweUpdateCoordinator], bool] = (
-        lambda coordinator: coordinator.last_update_success
+    available: Callable[[GoodweUpdateCoordinator], bool] = lambda coordinator: (
+        coordinator.last_update_success
     )
 
 
@@ -165,14 +171,14 @@ TEXT_SENSOR = GoodweSensorEntityDescription(
 
 async def async_setup_entry(
     hass: HomeAssistant,
-    config_entry: ConfigEntry,
-    async_add_entities: AddEntitiesCallback,
+    config_entry: GoodweConfigEntry,
+    async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up the GoodWe inverter from a config entry."""
     entities: list[InverterSensor] = []
-    inverter = hass.data[DOMAIN][config_entry.entry_id][KEY_INVERTER]
-    coordinator = hass.data[DOMAIN][config_entry.entry_id][KEY_COORDINATOR]
-    device_info = hass.data[DOMAIN][config_entry.entry_id][KEY_DEVICE_INFO]
+    inverter = config_entry.runtime_data.inverter
+    coordinator = config_entry.runtime_data.coordinator
+    device_info = config_entry.runtime_data.device_info
 
     # Individual inverter sensors entities
     entities.extend(
@@ -187,6 +193,7 @@ async def async_setup_entry(
 class InverterSensor(CoordinatorEntity[GoodweUpdateCoordinator], SensorEntity):
     """Entity representing individual inverter sensor."""
 
+    _attr_has_entity_name = True
     entity_description: GoodweSensorEntityDescription
 
     def __init__(
@@ -241,7 +248,8 @@ class InverterSensor(CoordinatorEntity[GoodweUpdateCoordinator], SensorEntity):
 
         Some sensors values like daily produced energy are kept available,
         even when the inverter is in sleep mode and no longer responds to request.
-        In contrast to "total" sensors, these "daily" sensors need to be reset to 0 on midnight.
+        In contrast to "total" sensors, these "daily" sensors
+        need to be reset to 0 on midnight.
         """
         if not self.coordinator.last_update_success:
             self.coordinator.reset_sensor(self._sensor.id_)

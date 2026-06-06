@@ -1,20 +1,19 @@
 """Coordinate data for powerview devices."""
 
-from __future__ import annotations
-
 import asyncio
 from datetime import timedelta
 import logging
 
 from aiopvapi.helpers.aiorequest import PvApiMaintenance
 from aiopvapi.hub import Hub
+from aiopvapi.resources.shade_data import PowerviewShadeData
 from aiopvapi.shades import Shades
 
+from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
 from .const import HUB_EXCEPTIONS
-from .shade_data import PowerviewShadeData
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -22,8 +21,12 @@ _LOGGER = logging.getLogger(__name__)
 class PowerviewShadeUpdateCoordinator(DataUpdateCoordinator[PowerviewShadeData]):
     """DataUpdateCoordinator to gather data from a powerview hub."""
 
-    def __init__(self, hass: HomeAssistant, shades: Shades, hub: Hub) -> None:
-        """Initialize DataUpdateCoordinator to gather data for specific Powerview Hub."""
+    config_entry: ConfigEntry
+
+    def __init__(
+        self, hass: HomeAssistant, config_entry: ConfigEntry, shades: Shades, hub: Hub
+    ) -> None:
+        """Initialize DataUpdateCoordinator to gather data for specific Hub."""
         self.shades = shades
         self.hub = hub
         # The hub tends to crash if there are multiple radio operations at the same time
@@ -33,6 +36,7 @@ class PowerviewShadeUpdateCoordinator(DataUpdateCoordinator[PowerviewShadeData])
         super().__init__(
             hass,
             _LOGGER,
+            config_entry=config_entry,
             name=f"powerview hub {hub.hub_address}",
             update_interval=timedelta(seconds=60),
         )

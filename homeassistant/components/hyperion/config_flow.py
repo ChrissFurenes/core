@@ -1,7 +1,5 @@
 """Hyperion config flow."""
 
-from __future__ import annotations
-
 import asyncio
 from collections.abc import Mapping
 from contextlib import suppress
@@ -12,13 +10,12 @@ from urllib.parse import urlparse
 from hyperion import client, const
 import voluptuous as vol
 
-from homeassistant.components import ssdp
 from homeassistant.config_entries import (
     SOURCE_REAUTH,
     ConfigEntry,
     ConfigFlow,
     ConfigFlowResult,
-    OptionsFlow,
+    OptionsFlowWithReload,
 )
 from homeassistant.const import (
     CONF_BASE,
@@ -29,7 +26,8 @@ from homeassistant.const import (
     CONF_TOKEN,
 )
 from homeassistant.core import callback
-import homeassistant.helpers.config_validation as cv
+from homeassistant.helpers import config_validation as cv
+from homeassistant.helpers.service_info.ssdp import ATTR_UPNP_SERIAL, SsdpServiceInfo
 
 from . import create_hyperion_client
 from .const import (
@@ -46,11 +44,10 @@ from .const import (
 _LOGGER = logging.getLogger(__name__)
 _LOGGER.setLevel(logging.DEBUG)
 
-#  +------------------+ +------------------+ +--------------------+ +--------------------+
-#  |Step: SSDP        | |Step: user        | |Step: import        | |Step: reauth        |
-#  |                  | |                  | |                    | |                    |
-#  |Input: <discovery>| |Input: <host/port>| |Input: <import data>| |Input: <entry_data> |
-#  +------------------+ +------------------+ +--------------------+ +--------------------+
+#  +-----------------+ +-----------------+ +-------------------+ +------------------+
+#  |Step: SSDP       | |Step: user       | |Step: import       | |Step: reauth      |
+#  |Input: <discover>| |Input: host/port | |Input: import data | |Input: entry_data |
+#  +-----------------+ +-----------------+ +-------------------+ +------------------+
 #           v                   v                       v                    v
 #           +-------------------+-----------------------+--------------------+
 # Auth not  |         Auth      |
@@ -72,9 +69,9 @@ _LOGGER.setLevel(logging.DEBUG)
 #           |            +------------------+
 #           |                   |
 #           |                   v
-#           |            +---------------------------+   +--------------------------------+
-#           |            |Step: create_token_external|-->|Step: create_token_external_fail|
-#           |            +---------------------------+   +--------------------------------+
+#           |            +------------------------+  +-----------------------------+
+#           |            |Step: create_token_ext  |->|Step: create_token_ext_fail |
+#           |            +------------------------+  +-----------------------------+
 #           |                   |
 #           |                   v
 #           |            +-----------------------------------+
@@ -110,6 +107,8 @@ class HyperionConfigFlow(ConfigFlow, domain=DOMAIN):
     """Handle a Hyperion config flow."""
 
     VERSION = 1
+
+    unique_id: str
 
     def __init__(self) -> None:
         """Instantiate config flow."""
@@ -153,7 +152,7 @@ class HyperionConfigFlow(ConfigFlow, domain=DOMAIN):
             return await self._advance_to_auth_step_if_necessary(hyperion_client)
 
     async def async_step_ssdp(
-        self, discovery_info: ssdp.SsdpServiceInfo
+        self, discovery_info: SsdpServiceInfo
     ) -> ConfigFlowResult:
         """Handle a flow initiated by SSDP."""
         # Sample data provided by SSDP: {
@@ -187,7 +186,8 @@ class HyperionConfigFlow(ConfigFlow, domain=DOMAIN):
         #   },
         #   'ssdp_usn': 'uuid:f9aab089-f85a-55cf-b7c1-222a72faebe9',
         #   'ssdp_ext': '',
-        #   'ssdp_server': 'Raspbian GNU/Linux 10 (buster)/10 UPnP/1.0 Hyperion/2.0.0-alpha.8'}
+        #   'ssdp_server':
+        #       'Raspbian GNU/Linux 10 (buster)/10 UPnP/1.0 Hyperion/2.0.0-alpha.8'}
 
         # SSDP requires user confirmation.
         self._require_confirm = True
@@ -208,7 +208,7 @@ class HyperionConfigFlow(ConfigFlow, domain=DOMAIN):
         except ValueError:
             self._data[CONF_PORT] = const.DEFAULT_PORT_JSON
 
-        if not (hyperion_id := discovery_info.upnp.get(ssdp.ATTR_UPNP_SERIAL)):
+        if not (hyperion_id := discovery_info.upnp.get(ATTR_UPNP_SERIAL)):
             return self.async_abort(reason="no_id")
 
         # For discovery mechanisms, we set the unique_id as early as possible to
@@ -265,7 +265,8 @@ class HyperionConfigFlow(ConfigFlow, domain=DOMAIN):
         auth_resp: dict[str, Any] | None = None
         async with self._create_client(raw_connection=True) as hyperion_client:
             if hyperion_client:
-                # The Hyperion-py client has a default timeout of 3 minutes on this request.
+                # The Hyperion-py client has a default timeout of
+                # 3 minutes on this request.
                 auth_resp = await hyperion_client.async_request_token(
                     comment=DEFAULT_ORIGIN, id=auth_id
                 )
@@ -422,24 +423,22 @@ class HyperionConfigFlow(ConfigFlow, domain=DOMAIN):
 
     @staticmethod
     @callback
-    def async_get_options_flow(config_entry: ConfigEntry) -> HyperionOptionsFlow:
+    def async_get_options_flow(
+        config_entry: ConfigEntry,
+    ) -> HyperionOptionsFlow:
         """Get the Hyperion Options flow."""
-        return HyperionOptionsFlow(config_entry)
+        return HyperionOptionsFlow()
 
 
-class HyperionOptionsFlow(OptionsFlow):
+class HyperionOptionsFlow(OptionsFlowWithReload):
     """Hyperion options flow."""
-
-    def __init__(self, config_entry: ConfigEntry) -> None:
-        """Initialize a Hyperion options flow."""
-        self._config_entry = config_entry
 
     def _create_client(self) -> client.HyperionClient:
         """Create and connect a client instance."""
         return create_hyperion_client(
-            self._config_entry.data[CONF_HOST],
-            self._config_entry.data[CONF_PORT],
-            token=self._config_entry.data.get(CONF_TOKEN),
+            self.config_entry.data[CONF_HOST],
+            self.config_entry.data[CONF_PORT],
+            token=self.config_entry.data.get(CONF_TOKEN),
         )
 
     async def async_step_init(
@@ -468,8 +467,7 @@ class HyperionOptionsFlow(OptionsFlow):
             return self.async_create_entry(title="", data=user_input)
 
         default_effect_show_list = list(
-            set(effects)
-            - set(self._config_entry.options.get(CONF_EFFECT_HIDE_LIST, []))
+            set(effects) - set(self.config_entry.options.get(CONF_EFFECT_HIDE_LIST, []))
         )
 
         return self.async_show_form(
@@ -478,7 +476,7 @@ class HyperionOptionsFlow(OptionsFlow):
                 {
                     vol.Optional(
                         CONF_PRIORITY,
-                        default=self._config_entry.options.get(
+                        default=self.config_entry.options.get(
                             CONF_PRIORITY, DEFAULT_PRIORITY
                         ),
                     ): vol.All(vol.Coerce(int), vol.Range(min=0, max=255)),

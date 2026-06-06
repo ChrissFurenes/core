@@ -1,24 +1,22 @@
 """Number entities for musiccast."""
 
-from __future__ import annotations
-
 from aiomusiccast.capabilities import NumberSetter
 
 from homeassistant.components.number import NumberEntity
-from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
-from . import DOMAIN, MusicCastCapabilityEntity, MusicCastDataUpdateCoordinator
+from .coordinator import MusicCastConfigEntry, MusicCastDataUpdateCoordinator
+from .entity import MusicCastCapabilityEntity
 
 
 async def async_setup_entry(
     hass: HomeAssistant,
-    entry: ConfigEntry,
-    async_add_entities: AddEntitiesCallback,
+    entry: MusicCastConfigEntry,
+    async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up MusicCast number entities based on a config entry."""
-    coordinator: MusicCastDataUpdateCoordinator = hass.data[DOMAIN][entry.entry_id]
+    coordinator = entry.runtime_data
 
     number_entities = [
         NumberCapability(coordinator, capability)

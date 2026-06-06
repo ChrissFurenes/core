@@ -201,6 +201,7 @@ async def test_discovery(
         device.name = f"{MOCK_NAME}_{counter}"
         device.serial_number = f"{MOCK_SERIAL_NUMBER}_{counter}"
         device.model_name = "Motion"
+        device.model = "Motion"
         device.udn = f"uuid:{device.model_name}-1_0-{device.serial_number}"
         device.firmware_version = MOCK_FIRMWARE_VERSION
         device.get_state.return_value = 0  # Default to Off
@@ -233,7 +234,8 @@ async def test_discovery(
         mock_discover_statics.assert_called()
         pywemo_devices.append(create_device(2))
 
-        # Test that discovery runs periodically and the async_dispatcher_send code works.
+        # Test that discovery runs periodically and the
+        # async_dispatcher_send code works.
         async_fire_time_changed(
             hass,
             dt_util.utcnow()

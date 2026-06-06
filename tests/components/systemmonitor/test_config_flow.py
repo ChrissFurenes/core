@@ -1,8 +1,8 @@
 """Test the System Monitor config flow."""
 
-from __future__ import annotations
-
 from unittest.mock import AsyncMock
+
+import pytest
 
 from homeassistant import config_entries
 from homeassistant.components.systemmonitor.const import CONF_PROCESS, DOMAIN
@@ -34,9 +34,8 @@ async def test_form(hass: HomeAssistant, mock_setup_entry: AsyncMock) -> None:
     assert len(mock_setup_entry.mock_calls) == 1
 
 
-async def test_form_already_configured(
-    hass: HomeAssistant, mock_setup_entry: AsyncMock
-) -> None:
+@pytest.mark.usefixtures("mock_setup_entry")
+async def test_form_already_configured(hass: HomeAssistant) -> None:
     """Test abort when already configured."""
     config_entry = MockConfigEntry(
         domain=DOMAIN,
@@ -48,17 +47,9 @@ async def test_form_already_configured(
     result = await hass.config_entries.flow.async_init(
         DOMAIN, context={"source": config_entries.SOURCE_USER}
     )
-    assert result["step_id"] == "user"
-    assert result["type"] is FlowResultType.FORM
-
-    result = await hass.config_entries.flow.async_configure(
-        result["flow_id"],
-        {},
-    )
-    await hass.async_block_till_done()
 
     assert result["type"] is FlowResultType.ABORT
-    assert result["reason"] == "already_configured"
+    assert result["reason"] == "single_instance_allowed"
 
 
 async def test_add_and_remove_processes(

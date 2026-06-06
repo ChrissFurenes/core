@@ -1,7 +1,5 @@
 """The tests for automation recorder."""
 
-from __future__ import annotations
-
 import pytest
 
 from homeassistant.components import automation
@@ -39,8 +37,8 @@ async def test_exclude_attributes(
         automation.DOMAIN,
         {
             automation.DOMAIN: {
-                "trigger": {"platform": "event", "event_type": "test_event"},
-                "action": {"action": "test.automation", "entity_id": "hello.world"},
+                "trigger": {"trigger": "event", "event_type": "test_event"},
+                "actions": {"action": "test.automation", "entity_id": "hello.world"},
             }
         },
     )

@@ -1,63 +1,47 @@
 """UK Environment Agency Flood Monitoring Integration."""
 
-import asyncio
-from datetime import timedelta
-import logging
-from typing import Any
-
-from aioeafm import get_station
-
-from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers.aiohttp_client import async_get_clientsession
-from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
+from homeassistant.helpers import device_registry as dr
 
 from .const import DOMAIN
+from .coordinator import EafmConfigEntry, EafmCoordinator
 
 PLATFORMS = [Platform.SENSOR]
 
-_LOGGER = logging.getLogger(__name__)
+
+def _fix_device_registry_identifiers(
+    hass: HomeAssistant, entry: EafmConfigEntry
+) -> None:
+    """Fix invalid identifiers in device registry.
+
+    Added in 2026.4, can be removed in 2026.10 or later.
+    """
+    device_registry = dr.async_get(hass)
+    for device_entry in dr.async_entries_for_config_entry(
+        device_registry, entry.entry_id
+    ):
+        old_identifier = (DOMAIN, "measure-id", entry.data["station"])
+        if old_identifier not in device_entry.identifiers:  # type: ignore[comparison-overlap]
+            continue
+        new_identifiers = device_entry.identifiers.copy()
+        new_identifiers.discard(old_identifier)
+        new_identifiers.add((DOMAIN, entry.data["station"]))
+        device_registry.async_update_device(
+            device_entry.id, new_identifiers=new_identifiers
+        )
 
 
-def get_measures(station_data):
-    """Force measure key to always be a list."""
-    if "measures" not in station_data:
-        return []
-    if isinstance(station_data["measures"], dict):
-        return [station_data["measures"]]
-    return station_data["measures"]
-
-
-async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
+async def async_setup_entry(hass: HomeAssistant, entry: EafmConfigEntry) -> bool:
     """Set up flood monitoring sensors for this config entry."""
-    station_key = entry.data["station"]
-    session = async_get_clientsession(hass=hass)
-
-    async def _async_update_data() -> dict[str, dict[str, Any]]:
-        # DataUpdateCoordinator will handle aiohttp ClientErrors and timeouts
-        async with asyncio.timeout(30):
-            data = await get_station(session, station_key)
-
-        measures = get_measures(data)
-        # Turn data.measures into a dict rather than a list so easier for entities to
-        # find themselves.
-        data["measures"] = {measure["@id"]: measure for measure in measures}
-        return data
-
-    coordinator = DataUpdateCoordinator[dict[str, dict[str, Any]]](
-        hass,
-        _LOGGER,
-        name="sensor",
-        update_method=_async_update_data,
-        update_interval=timedelta(seconds=15 * 60),
-    )
+    _fix_device_registry_identifiers(hass, entry)
+    coordinator = EafmCoordinator(hass, entry=entry)
     await coordinator.async_config_entry_first_refresh()
-    hass.data.setdefault(DOMAIN, {})[entry.entry_id] = coordinator
+    entry.runtime_data = coordinator
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
     return True
 
 
-async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
+async def async_unload_entry(hass: HomeAssistant, entry: EafmConfigEntry) -> bool:
     """Unload flood monitoring sensors."""
     return await hass.config_entries.async_unload_platforms(entry, PLATFORMS)

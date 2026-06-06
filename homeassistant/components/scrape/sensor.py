@@ -1,14 +1,11 @@
 """Support for getting data from websites with scraping."""
 
-from __future__ import annotations
-
 import logging
-from typing import Any, cast
+from typing import Any
 
 import voluptuous as vol
 
-from homeassistant.components.sensor import CONF_STATE_CLASS, SensorDeviceClass
-from homeassistant.components.sensor.helpers import async_parse_date_datetime
+from homeassistant.components.sensor import CONF_STATE_CLASS, DOMAIN as SENSOR_DOMAIN
 from homeassistant.const import (
     CONF_ATTRIBUTE,
     CONF_DEVICE_CLASS,
@@ -21,14 +18,19 @@ from homeassistant.const import (
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.exceptions import PlatformNotReady
 from homeassistant.helpers.device_registry import DeviceEntryType, DeviceInfo
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
-from homeassistant.helpers.template import Template
+from homeassistant.helpers.entity_platform import (
+    AddConfigEntryEntitiesCallback,
+    AddEntitiesCallback,
+    async_create_platform_config_not_supported_issue,
+)
+from homeassistant.helpers.template import _SENTINEL, Template
 from homeassistant.helpers.trigger_template_entity import (
     CONF_AVAILABILITY,
     CONF_PICTURE,
     TEMPLATE_SENSOR_BASE_SCHEMA,
     ManualTriggerEntity,
     ManualTriggerSensorEntity,
+    ValueTemplate,
 )
 from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
@@ -43,9 +45,10 @@ TRIGGER_ENTITY_OPTIONS = (
     CONF_AVAILABILITY,
     CONF_DEVICE_CLASS,
     CONF_ICON,
+    CONF_NAME,
     CONF_PICTURE,
-    CONF_UNIQUE_ID,
     CONF_STATE_CLASS,
+    CONF_UNIQUE_ID,
     CONF_UNIT_OF_MEASUREMENT,
 )
 
@@ -57,7 +60,17 @@ async def async_setup_platform(
     discovery_info: DiscoveryInfoType | None = None,
 ) -> None:
     """Set up the Web scrape sensor."""
-    discovery_info = cast(DiscoveryInfoType, discovery_info)
+    if discovery_info is None:
+        async_create_platform_config_not_supported_issue(
+            hass,
+            DOMAIN,
+            SENSOR_DOMAIN,
+            yaml_config_under_integration_supported=True,
+            learn_more_url="https://www.home-assistant.io/integrations/scrape/",
+            logger=_LOGGER,
+        )
+        return
+
     coordinator: ScrapeCoordinator = discovery_info["coordinator"]
     sensors_config: list[ConfigType] = discovery_info["configs"]
 
@@ -67,7 +80,7 @@ async def async_setup_platform(
 
     entities: list[ScrapeSensor] = []
     for sensor_config in sensors_config:
-        trigger_entity_config = {CONF_NAME: sensor_config[CONF_NAME]}
+        trigger_entity_config = {}
         for key in TRIGGER_ENTITY_OPTIONS:
             if key not in sensor_config:
                 continue
@@ -92,26 +105,27 @@ async def async_setup_platform(
 async def async_setup_entry(
     hass: HomeAssistant,
     entry: ScrapeConfigEntry,
-    async_add_entities: AddEntitiesCallback,
+    async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up the Scrape sensor entry."""
-    entities: list = []
-
     coordinator = entry.runtime_data
-    config = dict(entry.options)
-    for sensor in config["sensor"]:
+    for subentry in entry.subentries.values():
+        sensor = dict(subentry.data)
+        sensor.update(sensor.pop("advanced", {}))
+        sensor[CONF_UNIQUE_ID] = subentry.subentry_id
+        sensor[CONF_NAME] = subentry.title
+
         sensor_config: ConfigType = vol.Schema(
             TEMPLATE_SENSOR_BASE_SCHEMA.schema, extra=vol.ALLOW_EXTRA
         )(sensor)
 
-        name: str = sensor_config[CONF_NAME]
         value_string: str | None = sensor_config.get(CONF_VALUE_TEMPLATE)
 
-        value_template: Template | None = (
-            Template(value_string, hass) if value_string is not None else None
+        value_template: ValueTemplate | None = (
+            ValueTemplate(value_string, hass) if value_string is not None else None
         )
 
-        trigger_entity_config: dict[str, str | Template | None] = {CONF_NAME: name}
+        trigger_entity_config: dict[str, str | Template | None] = {}
         for key in TRIGGER_ENTITY_OPTIONS:
             if key not in sensor_config:
                 continue
@@ -120,24 +134,27 @@ async def async_setup_entry(
                 continue
             trigger_entity_config[key] = sensor_config[key]
 
-        entities.append(
-            ScrapeSensor(
-                hass,
-                coordinator,
-                trigger_entity_config,
-                sensor_config[CONF_SELECT],
-                sensor_config.get(CONF_ATTRIBUTE),
-                sensor_config[CONF_INDEX],
-                value_template,
-                False,
-            )
+        async_add_entities(
+            [
+                ScrapeSensor(
+                    hass,
+                    coordinator,
+                    trigger_entity_config,
+                    sensor_config[CONF_SELECT],
+                    sensor_config.get(CONF_ATTRIBUTE),
+                    sensor_config[CONF_INDEX],
+                    value_template,
+                    False,
+                )
+            ],
+            config_subentry_id=subentry.subentry_id,
         )
-
-    async_add_entities(entities)
 
 
 class ScrapeSensor(CoordinatorEntity[ScrapeCoordinator], ManualTriggerSensorEntity):
     """Representation of a web scrape sensor."""
+
+    _sensor_name: str | None = None
 
     def __init__(
         self,
@@ -147,7 +164,7 @@ class ScrapeSensor(CoordinatorEntity[ScrapeCoordinator], ManualTriggerSensorEnti
         select: str,
         attr: str | None,
         index: int,
-        value_template: Template | None,
+        value_template: ValueTemplate | None,
         yaml: bool,
     ) -> None:
         """Initialize a web scrape sensor."""
@@ -159,14 +176,26 @@ class ScrapeSensor(CoordinatorEntity[ScrapeCoordinator], ManualTriggerSensorEnti
         self._value_template = value_template
         self._attr_native_value = None
         if not yaml and (unique_id := trigger_entity_config.get(CONF_UNIQUE_ID)):
-            self._attr_name = None
+            self._sensor_name = None
             self._attr_has_entity_name = True
             self._attr_device_info = DeviceInfo(
                 entry_type=DeviceEntryType.SERVICE,
                 identifiers={(DOMAIN, unique_id)},
                 manufacturer="Scrape",
-                name=self.name,
+                name=self._rendered[CONF_NAME],
             )
+        else:
+            self._sensor_name = self._rendered.get(CONF_NAME)
+
+    @property
+    def name(self) -> str | None:
+        """Return the name of the sensor.
+
+        Override needed because TriggerBaseEntity.name always returns the
+        rendered name, ignoring _attr_name. When has_entity_name is True,
+        we need name to return None to use the device name instead.
+        """
+        return self._sensor_name
 
     def _extract_value(self) -> Any:
         """Parse the html extraction in the executor."""
@@ -183,12 +212,12 @@ class ScrapeSensor(CoordinatorEntity[ScrapeCoordinator], ManualTriggerSensorEnti
                     value = tag.text
         except IndexError:
             _LOGGER.warning("Index '%s' not found in %s", self._index, self.entity_id)
-            value = None
+            return _SENTINEL
         except KeyError:
             _LOGGER.warning(
                 "Attribute '%s' not found in %s", self._attr, self.entity_id
             )
-            value = None
+            return _SENTINEL
         _LOGGER.debug("Parsed value: %s", value)
         return value
 
@@ -196,35 +225,33 @@ class ScrapeSensor(CoordinatorEntity[ScrapeCoordinator], ManualTriggerSensorEnti
         """Ensure the data from the initial update is reflected in the state."""
         await super().async_added_to_hass()
         self._async_update_from_rest_data()
+        self.async_write_ha_state()
 
     def _async_update_from_rest_data(self) -> None:
         """Update state from the rest data."""
-        value = self._extract_value()
-        raw_value = value
-
-        if (template := self._value_template) is not None:
-            value = template.async_render_with_possible_json_value(value, None)
-
-        if self.device_class not in {
-            SensorDeviceClass.DATE,
-            SensorDeviceClass.TIMESTAMP,
-        }:
-            self._attr_native_value = value
-            self._process_manual_data(raw_value)
+        self._attr_available = True
+        if (value := self._extract_value()) is _SENTINEL:
+            self._attr_available = False
             return
 
-        self._attr_native_value = async_parse_date_datetime(
-            value, self.entity_id, self.device_class
-        )
-        self._process_manual_data(raw_value)
-        self.async_write_ha_state()
+        variables = self._template_variables_with_value(value)
+        if not self._render_availability_template(variables):
+            return
+
+        if (template := self._value_template) is not None:
+            value = template.async_render_as_value_template(
+                self.entity_id, variables, None
+            )
+
+        self._set_native_value_with_possible_timestamp(value)
+        self._process_manual_data(variables)
 
     @property
     def available(self) -> bool:
         """Return if entity is available."""
         available1 = CoordinatorEntity.available.fget(self)  # type: ignore[attr-defined]
         available2 = ManualTriggerEntity.available.fget(self)  # type: ignore[attr-defined]
-        return bool(available1 and available2)
+        return bool(available1 and available2 and self._attr_available)
 
     @callback
     def _handle_coordinator_update(self) -> None:

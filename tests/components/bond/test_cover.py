@@ -8,7 +8,7 @@ from homeassistant.components.cover import (
     ATTR_CURRENT_POSITION,
     ATTR_POSITION,
     DOMAIN as COVER_DOMAIN,
-    STATE_CLOSED,
+    CoverState,
 )
 from homeassistant.const import (
     ATTR_ENTITY_ID,
@@ -19,7 +19,6 @@ from homeassistant.const import (
     SERVICE_SET_COVER_POSITION,
     SERVICE_STOP_COVER,
     SERVICE_STOP_COVER_TILT,
-    STATE_OPEN,
     STATE_UNKNOWN,
 )
 from homeassistant.core import HomeAssistant
@@ -224,11 +223,11 @@ async def test_tilt_and_open(hass: HomeAssistant) -> None:
         await hass.async_block_till_done()
 
     mock_open.assert_called_once_with("test-device-id", Action.tilt_open())
-    assert hass.states.get("cover.name_1").state == STATE_CLOSED
+    assert hass.states.get("cover.name_1").state == CoverState.CLOSED
 
 
 async def test_update_reports_open_cover(hass: HomeAssistant) -> None:
-    """Tests that update command sets correct state when Bond API reports cover is open."""
+    """Tests that update sets correct state when Bond API reports cover is open."""
     await setup_platform(hass, COVER_DOMAIN, shades("name-1"))
 
     with patch_bond_device_state(return_value={"open": 1}):
@@ -239,7 +238,7 @@ async def test_update_reports_open_cover(hass: HomeAssistant) -> None:
 
 
 async def test_update_reports_closed_cover(hass: HomeAssistant) -> None:
-    """Tests that update command sets correct state when Bond API reports cover is closed."""
+    """Tests that update sets correct state when Bond API reports cover is closed."""
     await setup_platform(hass, COVER_DOMAIN, shades("name-1"))
 
     with patch_bond_device_state(return_value={"open": 0}):
@@ -280,7 +279,7 @@ async def test_set_position_cover(hass: HomeAssistant) -> None:
 
     mock_hold.assert_called_once_with("test-device-id", Action.set_position(0))
     entity_state = hass.states.get("cover.name_1")
-    assert entity_state.state == STATE_OPEN
+    assert entity_state.state == CoverState.OPEN
     assert entity_state.attributes[ATTR_CURRENT_POSITION] == 100
 
     with (
@@ -298,7 +297,7 @@ async def test_set_position_cover(hass: HomeAssistant) -> None:
 
     mock_hold.assert_called_once_with("test-device-id", Action.set_position(100))
     entity_state = hass.states.get("cover.name_1")
-    assert entity_state.state == STATE_CLOSED
+    assert entity_state.state == CoverState.CLOSED
     assert entity_state.attributes[ATTR_CURRENT_POSITION] == 0
 
     with (
@@ -316,5 +315,5 @@ async def test_set_position_cover(hass: HomeAssistant) -> None:
 
     mock_hold.assert_called_once_with("test-device-id", Action.set_position(40))
     entity_state = hass.states.get("cover.name_1")
-    assert entity_state.state == STATE_OPEN
+    assert entity_state.state == CoverState.OPEN
     assert entity_state.attributes[ATTR_CURRENT_POSITION] == 60

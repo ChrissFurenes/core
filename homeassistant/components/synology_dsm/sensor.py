@@ -1,11 +1,14 @@
 """Support for Synology DSM sensors."""
 
-from __future__ import annotations
-
+from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import datetime, timedelta
-from typing import cast
+from typing import TYPE_CHECKING, Any, cast
 
+from synology_dsm.api.core.external_usb import (
+    SynoCoreExternalUSB,
+    SynoCoreExternalUSBDevice,
+)
 from synology_dsm.api.core.utilization import SynoCoreUtilization
 from synology_dsm.api.dsm.information import SynoDSMInformation
 from synology_dsm.api.storage.storage import SynoStorage
@@ -16,8 +19,8 @@ from homeassistant.components.sensor import (
     SensorEntityDescription,
     SensorStateClass,
 )
-from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
+    CONF_DEVICES,
     CONF_DISKS,
     PERCENTAGE,
     EntityCategory,
@@ -26,19 +29,18 @@ from homeassistant.const import (
     UnitOfTemperature,
 )
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 from homeassistant.helpers.typing import StateType
 from homeassistant.util.dt import utcnow
 
 from . import SynoApi
-from .const import CONF_VOLUMES, DOMAIN, ENTITY_UNIT_LOAD
-from .coordinator import SynologyDSMCentralUpdateCoordinator
+from .const import CONF_VOLUMES, ENTITY_UNIT_LOAD
+from .coordinator import SynologyDSMCentralUpdateCoordinator, SynologyDSMConfigEntry
 from .entity import (
     SynologyDSMBaseEntity,
     SynologyDSMDeviceEntity,
     SynologyDSMEntityDescription,
 )
-from .models import SynologyDSMData
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -46,6 +48,8 @@ class SynologyDSMSensorEntityDescription(
     SensorEntityDescription, SynologyDSMEntityDescription
 ):
     """Describes Synology DSM sensor entity."""
+
+    value_fn: Callable[[SynoDSMInformation, str], Any] = getattr
 
 
 UTILISATION_SENSORS: tuple[SynologyDSMSensorEntityDescription, ...] = (
@@ -263,6 +267,53 @@ STORAGE_DISK_SENSORS: tuple[SynologyDSMSensorEntityDescription, ...] = (
         entity_category=EntityCategory.DIAGNOSTIC,
     ),
 )
+EXTERNAL_USB_DISK_SENSORS: tuple[SynologyDSMSensorEntityDescription, ...] = (
+    SynologyDSMSensorEntityDescription(
+        api_key=SynoCoreExternalUSB.API_KEY,
+        key="device_status",
+        translation_key="device_status",
+    ),
+    SynologyDSMSensorEntityDescription(
+        api_key=SynoCoreExternalUSB.API_KEY,
+        key="device_size_total",
+        translation_key="device_size_total",
+        native_unit_of_measurement=UnitOfInformation.BYTES,
+        suggested_unit_of_measurement=UnitOfInformation.GIBIBYTES,
+        suggested_display_precision=2,
+        device_class=SensorDeviceClass.DATA_SIZE,
+        entity_registry_enabled_default=False,
+        state_class=SensorStateClass.MEASUREMENT,
+    ),
+)
+EXTERNAL_USB_PARTITION_SENSORS: tuple[SynologyDSMSensorEntityDescription, ...] = (
+    SynologyDSMSensorEntityDescription(
+        api_key=SynoCoreExternalUSB.API_KEY,
+        key="partition_size_total",
+        translation_key="partition_size_total",
+        native_unit_of_measurement=UnitOfInformation.BYTES,
+        suggested_unit_of_measurement=UnitOfInformation.GIBIBYTES,
+        suggested_display_precision=2,
+        device_class=SensorDeviceClass.DATA_SIZE,
+        state_class=SensorStateClass.MEASUREMENT,
+    ),
+    SynologyDSMSensorEntityDescription(
+        api_key=SynoCoreExternalUSB.API_KEY,
+        key="partition_size_used",
+        translation_key="partition_size_used",
+        native_unit_of_measurement=UnitOfInformation.BYTES,
+        suggested_unit_of_measurement=UnitOfInformation.GIBIBYTES,
+        suggested_display_precision=2,
+        device_class=SensorDeviceClass.DATA_SIZE,
+        state_class=SensorStateClass.MEASUREMENT,
+    ),
+    SynologyDSMSensorEntityDescription(
+        api_key=SynoCoreExternalUSB.API_KEY,
+        key="partition_percentage_used",
+        translation_key="partition_percentage_used",
+        native_unit_of_measurement=PERCENTAGE,
+        state_class=SensorStateClass.MEASUREMENT,
+    ),
+)
 
 INFORMATION_SENSORS: tuple[SynologyDSMSensorEntityDescription, ...] = (
     SynologyDSMSensorEntityDescription(
@@ -277,8 +328,10 @@ INFORMATION_SENSORS: tuple[SynologyDSMSensorEntityDescription, ...] = (
     SynologyDSMSensorEntityDescription(
         api_key=SynoDSMInformation.API_KEY,
         key="uptime",
-        translation_key="uptime",
-        device_class=SensorDeviceClass.TIMESTAMP,
+        value_fn=lambda api_information, _: (
+            utcnow() - timedelta(seconds=api_information.uptime)
+        ),
+        device_class=SensorDeviceClass.UPTIME,
         entity_registry_enabled_default=False,
         entity_category=EntityCategory.DIAGNOSTIC,
     ),
@@ -286,14 +339,51 @@ INFORMATION_SENSORS: tuple[SynologyDSMSensorEntityDescription, ...] = (
 
 
 async def async_setup_entry(
-    hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback
+    hass: HomeAssistant,
+    entry: SynologyDSMConfigEntry,
+    async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up the Synology NAS Sensor."""
-    data: SynologyDSMData = hass.data[DOMAIN][entry.unique_id]
+    data = entry.runtime_data
     api = data.api
     coordinator = data.coordinator_central
     storage = api.storage
-    assert storage is not None
+    if TYPE_CHECKING:
+        assert storage is not None
+    known_usb_devices: set[str] = set()
+
+    def _check_usb_devices() -> None:
+        """Check for new USB devices during and after initial setup."""
+        if api.external_usb is not None and api.external_usb.get_devices:
+            current_usb_devices: set[str] = {
+                device.device_name for device in api.external_usb.get_devices.values()
+            }
+            new_usb_devices = current_usb_devices - known_usb_devices
+            if new_usb_devices:
+                known_usb_devices.update(new_usb_devices)
+                external_devices: list[SynoCoreExternalUSBDevice] = [
+                    device
+                    for device in api.external_usb.get_devices.values()
+                    if device.device_name in new_usb_devices
+                ]
+                new_usb_entities: list[SynoDSMExternalUSBSensor] = [
+                    SynoDSMExternalUSBSensor(
+                        api, coordinator, description, device.device_name
+                    )
+                    for device in entry.data.get(CONF_DEVICES, external_devices)
+                    for description in EXTERNAL_USB_DISK_SENSORS
+                ]
+                new_usb_entities.extend(
+                    [
+                        SynoDSMExternalUSBSensor(
+                            api, coordinator, description, partition.partition_title
+                        )
+                        for device in entry.data.get(CONF_DEVICES, external_devices)
+                        for partition in device.device_partitions.values()
+                        for description in EXTERNAL_USB_PARTITION_SENSORS
+                    ]
+                )
+                async_add_entities(new_usb_entities)
 
     entities: list[SynoDSMUtilSensor | SynoDSMStorageSensor | SynoDSMInfoSensor] = [
         SynoDSMUtilSensor(api, coordinator, description)
@@ -326,6 +416,9 @@ async def async_setup_entry(
             for description in INFORMATION_SENSORS
         ]
     )
+
+    _check_usb_devices()
+    entry.async_on_unload(coordinator.async_add_listener(_check_usb_devices))
 
     async_add_entities(entities)
 
@@ -396,32 +489,74 @@ class SynoDSMStorageSensor(SynologyDSMDeviceEntity, SynoDSMSensor):
         )
 
 
-class SynoDSMInfoSensor(SynoDSMSensor):
-    """Representation a Synology information sensor."""
+class SynoDSMExternalUSBSensor(SynologyDSMDeviceEntity, SynoDSMSensor):
+    """Representation a Synology Storage sensor."""
+
+    entity_description: SynologyDSMSensorEntityDescription
 
     def __init__(
         self,
         api: SynoApi,
         coordinator: SynologyDSMCentralUpdateCoordinator,
         description: SynologyDSMSensorEntityDescription,
+        device_id: str | None = None,
     ) -> None:
-        """Initialize the Synology SynoDSMInfoSensor entity."""
-        super().__init__(api, coordinator, description)
-        self._previous_uptime: str | None = None
-        self._last_boot: datetime | None = None
+        """Initialize the Synology DSM external usb sensor entity."""
+        super().__init__(api, coordinator, description, device_id)
+
+    @property
+    def native_value(self) -> StateType:
+        """Return the state."""
+        external_usb = self._api.external_usb
+        if TYPE_CHECKING:
+            assert external_usb is not None
+        if "device" in self.entity_description.key:
+            for device in external_usb.get_devices.values():
+                if device.device_name == self._device_id:
+                    attr = getattr(device, self.entity_description.key)
+                    break
+        elif "partition" in self.entity_description.key:
+            for device in external_usb.get_devices.values():
+                for partition in device.device_partitions.values():
+                    if partition.partition_title == self._device_id:
+                        attr = getattr(partition, self.entity_description.key)
+                        break
+        if callable(attr):
+            attr = attr()
+        if attr is None:
+            return None
+
+        return attr  # type: ignore[no-any-return]
+
+    @property
+    def available(self) -> bool:
+        """Return True if entity is available."""
+        external_usb = self._api.external_usb
+        assert external_usb is not None
+        if "device" in self.entity_description.key:
+            for device in external_usb.get_devices.values():
+                if device.device_name == self._device_id:
+                    return super().available
+        elif "partition" in self.entity_description.key:
+            for device in external_usb.get_devices.values():
+                for partition in device.device_partitions.values():
+                    if partition.partition_title == self._device_id:
+                        return super().available
+        return False
+
+
+class SynoDSMInfoSensor(SynoDSMSensor):
+    """Representation a Synology information sensor."""
 
     @property
     def native_value(self) -> StateType | datetime:
         """Return the state."""
-        attr = getattr(self._api.information, self.entity_description.key)
-        if attr is None:
+        if self._api.information is None:
             return None
 
-        if self.entity_description.key == "uptime":
-            # reboot happened or entity creation
-            if self._previous_uptime is None or self._previous_uptime > attr:
-                self._last_boot = utcnow() - timedelta(seconds=attr)
-
-            self._previous_uptime = attr
-            return self._last_boot
-        return attr  # type: ignore[no-any-return]
+        return cast(
+            StateType | datetime,
+            self.entity_description.value_fn(
+                self._api.information, self.entity_description.key
+            ),
+        )

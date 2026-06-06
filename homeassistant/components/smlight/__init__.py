@@ -1,27 +1,61 @@
 """SMLIGHT SLZB Zigbee device integration."""
 
-from __future__ import annotations
+from pysmlight import Api2
 
-from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_HOST, Platform
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers import config_validation as cv
+from homeassistant.helpers.aiohttp_client import async_get_clientsession
+from homeassistant.helpers.typing import ConfigType
 
-from .coordinator import SmDataUpdateCoordinator
+from .const import DOMAIN
+from .coordinator import (
+    SmConfigEntry,
+    SmDataUpdateCoordinator,
+    SmFirmwareUpdateCoordinator,
+    SmlightData,
+)
+from .services import async_setup_services
+
+CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
 
 PLATFORMS: list[Platform] = [
+    Platform.BINARY_SENSOR,
+    Platform.BUTTON,
+    Platform.INFRARED,
+    Platform.LIGHT,
     Platform.SENSOR,
+    Platform.SWITCH,
+    Platform.UPDATE,
 ]
-type SmConfigEntry = ConfigEntry[SmDataUpdateCoordinator]
+
+
+async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
+    """Set up the SMLIGHT services."""
+    async_setup_services(hass)
+    return True
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: SmConfigEntry) -> bool:
     """Set up SMLIGHT Zigbee from a config entry."""
-    coordinator = SmDataUpdateCoordinator(hass, entry.data[CONF_HOST])
-    await coordinator.async_config_entry_first_refresh()
-    entry.runtime_data = coordinator
+    client = Api2(host=entry.data[CONF_HOST], session=async_get_clientsession(hass))
+
+    data_coordinator = SmDataUpdateCoordinator(hass, entry, client)
+    firmware_coordinator = SmFirmwareUpdateCoordinator(hass, entry, client)
+
+    await data_coordinator.async_config_entry_first_refresh()
+    await firmware_coordinator.async_config_entry_first_refresh()
+
+    if data_coordinator.data.info.legacy_api < 2:
+        entry.async_create_background_task(
+            hass, client.sse.client(), "smlight-sse-client"
+        )
+
+    entry.runtime_data = SmlightData(
+        data=data_coordinator, firmware=firmware_coordinator
+    )
 
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
-
     return True
 
 

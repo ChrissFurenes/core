@@ -1,20 +1,19 @@
 """Entity representing a Sonos player."""
 
-from __future__ import annotations
-
 from abc import abstractmethod
 import datetime
 import logging
 
 from soco.core import SoCo
 
-import homeassistant.helpers.device_registry as dr
+from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
 from homeassistant.helpers.entity import Entity
 
-from .const import DATA_SONOS, DOMAIN, SONOS_FALLBACK_POLL, SONOS_STATE_UPDATED
+from .const import DOMAIN, SONOS_FALLBACK_POLL, SONOS_STATE_UPDATED
 from .exception import SonosUpdateError
+from .helpers import SonosConfigEntry
 from .speaker import SonosSpeaker
 
 _LOGGER = logging.getLogger(__name__)
@@ -26,13 +25,17 @@ class SonosEntity(Entity):
     _attr_should_poll = False
     _attr_has_entity_name = True
 
-    def __init__(self, speaker: SonosSpeaker) -> None:
+    def __init__(self, speaker: SonosSpeaker, config_entry: SonosConfigEntry) -> None:
         """Initialize a SonosEntity."""
         self.speaker = speaker
+        self.config_entry = config_entry
 
     async def async_added_to_hass(self) -> None:
         """Handle common setup when added to hass."""
-        self.hass.data[DATA_SONOS].entity_id_mappings[self.entity_id] = self.speaker
+        assert self.unique_id
+        self.config_entry.runtime_data.unique_id_speaker_mappings[self.unique_id] = (
+            self.speaker
+        )
         self.async_on_remove(
             async_dispatcher_connect(
                 self.hass,
@@ -50,7 +53,8 @@ class SonosEntity(Entity):
 
     async def async_will_remove_from_hass(self) -> None:
         """Clean up when entity is removed."""
-        del self.hass.data[DATA_SONOS].entity_id_mappings[self.entity_id]
+        assert self.unique_id
+        del self.config_entry.runtime_data.unique_id_speaker_mappings[self.unique_id]
 
     async def async_fallback_poll(self, now: datetime.datetime) -> None:
         """Poll the entity if subscriptions fail."""
@@ -85,6 +89,7 @@ class SonosEntity(Entity):
             identifiers={(DOMAIN, self.soco.uid)},
             name=self.speaker.zone_name,
             model=self.speaker.model_name.replace("Sonos ", ""),
+            model_id=self.speaker.model_number,
             sw_version=self.speaker.version,
             connections={
                 (dr.CONNECTION_NETWORK_MAC, self.speaker.mac_address),
@@ -102,11 +107,14 @@ class SonosEntity(Entity):
 
 
 class SonosPollingEntity(SonosEntity):
-    """Representation of a Sonos entity which may not support updating by subscriptions."""
+    """Representation of a Sonos entity without subscription support."""
 
     @abstractmethod
     def poll_state(self) -> None:
         """Poll the device for the current state."""
+
+    async def _async_fallback_poll(self) -> None:
+        """No-op: polling entities are already handled by HA's built-in poller."""
 
     def update(self) -> None:
         """Update the state using the built-in entity poller."""

@@ -1,7 +1,5 @@
 """Provides tag scanning for MQTT."""
 
-from __future__ import annotations
-
 from collections.abc import Callable
 import functools
 import logging
@@ -12,14 +10,15 @@ from homeassistant.components import tag
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_DEVICE, CONF_VALUE_TEMPLATE
 from homeassistant.core import HassJobType, HomeAssistant, callback
-import homeassistant.helpers.config_validation as cv
+from homeassistant.helpers import config_validation as cv
+from homeassistant.helpers.service_info.mqtt import ReceivePayloadType
 from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
 
 from . import subscription
 from .config import MQTT_BASE_SCHEMA
 from .const import ATTR_DISCOVERY_HASH, CONF_QOS, CONF_TOPIC
 from .discovery import MQTTDiscoveryPayload
-from .mixins import (
+from .entity import (
     MqttDiscoveryDeviceUpdateMixin,
     async_handle_schema_error,
     async_setup_non_entity_entry_helper,
@@ -31,7 +30,6 @@ from .models import (
     MqttValueTemplate,
     MqttValueTemplateException,
     ReceiveMessage,
-    ReceivePayloadType,
 )
 from .schemas import MQTT_ENTITY_DEVICE_INFO_SCHEMA
 from .subscription import EntitySubscription
@@ -53,7 +51,9 @@ DISCOVERY_SCHEMA = MQTT_BASE_SCHEMA.extend(
 )
 
 
-async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> None:
+async def async_setup_mqtt_tag_entry(
+    hass: HomeAssistant, config_entry: ConfigEntry
+) -> None:
     """Set up MQTT tag scanner dynamically through MQTT discovery."""
 
     setup = functools.partial(_async_setup_tag, hass, config_entry=config_entry)

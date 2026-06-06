@@ -1,14 +1,11 @@
 """API for Ondilo ICO bound to Home Assistant OAuth."""
 
 from asyncio import run_coroutine_threadsafe
-import logging
 
 from ondilo import Ondilo
 
 from homeassistant import config_entries, core
 from homeassistant.helpers import config_entry_oauth2_flow
-
-_LOGGER = logging.getLogger(__name__)
 
 
 class OndiloClient(Ondilo):
@@ -29,7 +26,7 @@ class OndiloClient(Ondilo):
         super().__init__(self.session.token)
 
     def refresh_tokens(self) -> dict:
-        """Refresh and return new Ondilo ICO tokens using Home Assistant OAuth2 session."""
+        """Refresh and return new Ondilo ICO tokens using HA OAuth2 session."""
         run_coroutine_threadsafe(
             self.session.async_ensure_token_valid(), self.hass.loop
         ).result()

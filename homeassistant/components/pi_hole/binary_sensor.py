@@ -1,7 +1,5 @@
 """Support for getting status from a Pi-hole system."""
 
-from __future__ import annotations
-
 from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Any
@@ -14,10 +12,10 @@ from homeassistant.components.binary_sensor import (
 )
 from homeassistant.const import CONF_NAME
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
-from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
+from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
-from . import PiHoleConfigEntry, PiHoleEntity
+from .coordinator import PiHoleConfigEntry, PiHoleUpdateCoordinator
+from .entity import PiHoleEntity
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -32,7 +30,7 @@ BINARY_SENSOR_TYPES: tuple[PiHoleBinarySensorEntityDescription, ...] = (
     PiHoleBinarySensorEntityDescription(
         key="status",
         translation_key="status",
-        state_value=lambda api: bool(api.data.get("status") == "enabled"),
+        state_value=lambda api: bool(api.status == "enabled"),
     ),
 )
 
@@ -40,7 +38,7 @@ BINARY_SENSOR_TYPES: tuple[PiHoleBinarySensorEntityDescription, ...] = (
 async def async_setup_entry(
     hass: HomeAssistant,
     entry: PiHoleConfigEntry,
-    async_add_entities: AddEntitiesCallback,
+    async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up the Pi-hole binary sensor."""
     name = entry.data[CONF_NAME]
@@ -69,7 +67,7 @@ class PiHoleBinarySensor(PiHoleEntity, BinarySensorEntity):
     def __init__(
         self,
         api: Hole,
-        coordinator: DataUpdateCoordinator[None],
+        coordinator: PiHoleUpdateCoordinator,
         name: str,
         server_unique_id: str,
         description: PiHoleBinarySensorEntityDescription,

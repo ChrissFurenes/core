@@ -1,11 +1,13 @@
 # serializer version: 1
 # name: test_button[button.test_flash_lights-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': None,
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -19,6 +21,7 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Flash lights',
     'options': dict({
     }),
     'original_device_class': None,
@@ -26,9 +29,10 @@
     'original_name': 'Flash lights',
     'platform': 'teslemetry',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'flash_lights',
-    'unique_id': 'LRWXF7EK4KC700000-flash_lights',
+    'unique_id': 'LRW3F7EK4NC700000-flash_lights',
     'unit_of_measurement': None,
   })
 # ---
@@ -47,11 +51,13 @@
 # ---
 # name: test_button[button.test_homelink-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': None,
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -65,6 +71,7 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Homelink',
     'options': dict({
     }),
     'original_device_class': None,
@@ -72,9 +79,10 @@
     'original_name': 'Homelink',
     'platform': 'teslemetry',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'homelink',
-    'unique_id': 'LRWXF7EK4KC700000-homelink',
+    'unique_id': 'LRW3F7EK4NC700000-homelink',
     'unit_of_measurement': None,
   })
 # ---
@@ -93,11 +101,13 @@
 # ---
 # name: test_button[button.test_honk_horn-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': None,
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -111,6 +121,7 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Honk horn',
     'options': dict({
     }),
     'original_device_class': None,
@@ -118,9 +129,10 @@
     'original_name': 'Honk horn',
     'platform': 'teslemetry',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'honk',
-    'unique_id': 'LRWXF7EK4KC700000-honk',
+    'unique_id': 'LRW3F7EK4NC700000-honk',
     'unit_of_measurement': None,
   })
 # ---
@@ -139,11 +151,13 @@
 # ---
 # name: test_button[button.test_keyless_driving-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': None,
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -157,6 +171,7 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Keyless driving',
     'options': dict({
     }),
     'original_device_class': None,
@@ -164,9 +179,10 @@
     'original_name': 'Keyless driving',
     'platform': 'teslemetry',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'enable_keyless_driving',
-    'unique_id': 'LRWXF7EK4KC700000-enable_keyless_driving',
+    'unique_id': 'LRW3F7EK4NC700000-enable_keyless_driving',
     'unit_of_measurement': None,
   })
 # ---
@@ -185,11 +201,13 @@
 # ---
 # name: test_button[button.test_play_fart-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': None,
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -203,6 +221,7 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Play fart',
     'options': dict({
     }),
     'original_device_class': None,
@@ -210,9 +229,10 @@
     'original_name': 'Play fart',
     'platform': 'teslemetry',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'boombox',
-    'unique_id': 'LRWXF7EK4KC700000-boombox',
+    'unique_id': 'LRW3F7EK4NC700000-boombox',
     'unit_of_measurement': None,
   })
 # ---
@@ -231,11 +251,13 @@
 # ---
 # name: test_button[button.test_wake-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': None,
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -249,6 +271,7 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Wake',
     'options': dict({
     }),
     'original_device_class': None,
@@ -256,9 +279,10 @@
     'original_name': 'Wake',
     'platform': 'teslemetry',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'wake',
-    'unique_id': 'LRWXF7EK4KC700000-wake',
+    'unique_id': 'LRW3F7EK4NC700000-wake',
     'unit_of_measurement': None,
   })
 # ---

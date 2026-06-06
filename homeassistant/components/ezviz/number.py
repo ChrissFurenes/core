@@ -1,13 +1,11 @@
 """Support for EZVIZ number controls."""
 
-from __future__ import annotations
-
 from dataclasses import dataclass
 from datetime import timedelta
 import logging
 
-from pyezviz.constants import SupportExt
-from pyezviz.exceptions import (
+from pyezvizapi.constants import SupportExt
+from pyezvizapi.exceptions import (
     EzvizAuthTokenExpired,
     EzvizAuthVerificationCode,
     HTTPError,
@@ -16,14 +14,12 @@ from pyezviz.exceptions import (
 )
 
 from homeassistant.components.number import NumberEntity, NumberEntityDescription
-from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import EntityCategory
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import HomeAssistantError
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
-from .const import DATA_COORDINATOR, DOMAIN
-from .coordinator import EzvizDataUpdateCoordinator
+from .coordinator import EzvizConfigEntry, EzvizDataUpdateCoordinator
 from .entity import EzvizBaseEntity
 
 SCAN_INTERVAL = timedelta(seconds=3600)
@@ -51,12 +47,12 @@ NUMBER_TYPE = EzvizNumberEntityDescription(
 
 
 async def async_setup_entry(
-    hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback
+    hass: HomeAssistant,
+    entry: EzvizConfigEntry,
+    async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up EZVIZ sensors based on a config entry."""
-    coordinator: EzvizDataUpdateCoordinator = hass.data[DOMAIN][entry.entry_id][
-        DATA_COORDINATOR
-    ]
+    coordinator = entry.runtime_data
 
     async_add_entities(
         EzvizNumber(coordinator, camera, value, entry.entry_id)
@@ -123,7 +119,7 @@ class EzvizNumber(EzvizBaseEntity, NumberEntity):
                 str(self.sensitivity_type),
             )
 
-        except (EzvizAuthTokenExpired, EzvizAuthVerificationCode):
+        except EzvizAuthTokenExpired, EzvizAuthVerificationCode:
             _LOGGER.debug("Failed to login to EZVIZ API")
             self.hass.async_create_task(
                 self.hass.config_entries.async_reload(self.config_entry_id)

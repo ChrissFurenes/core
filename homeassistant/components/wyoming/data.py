@@ -1,7 +1,5 @@
 """Base class for Wyoming providers."""
 
-from __future__ import annotations
-
 import asyncio
 
 from wyoming.client import AsyncTcpClient
@@ -37,6 +35,10 @@ class WyomingService:
             self.platforms.append(Platform.TTS)
         if any(wake.installed for wake in info.wake):
             self.platforms.append(Platform.WAKE_WORD)
+        if any(intent.installed for intent in info.intent) or any(
+            handle.installed for handle in info.handle
+        ):
+            self.platforms.append(Platform.CONVERSATION)
 
     def has_services(self) -> bool:
         """Return True if services are installed that Home Assistant can use."""
@@ -44,6 +46,8 @@ class WyomingService:
             any(asr for asr in self.info.asr if asr.installed)
             or any(tts for tts in self.info.tts if tts.installed)
             or any(wake for wake in self.info.wake if wake.installed)
+            or any(intent for intent in self.info.intent if intent.installed)
+            or any(handle for handle in self.info.handle if handle.installed)
             or ((self.info.satellite is not None) and self.info.satellite.installed)
         )
 
@@ -69,6 +73,16 @@ class WyomingService:
         wake_installed = [wake for wake in self.info.wake if wake.installed]
         if wake_installed:
             return wake_installed[0].name
+
+        # intent recognition (text -> intent)
+        intent_installed = [intent for intent in self.info.intent if intent.installed]
+        if intent_installed:
+            return intent_installed[0].name
+
+        # intent handling (text -> text)
+        handle_installed = [handle for handle in self.info.handle if handle.installed]
+        if handle_installed:
+            return handle_installed[0].name
 
         return None
 
@@ -110,7 +124,7 @@ async def load_wyoming_info(
 
                 if wyoming_info is not None:
                     break  # for
-        except (TimeoutError, OSError, WyomingError):
+        except TimeoutError, OSError, WyomingError:
             # Sleep and try again
             await asyncio.sleep(retry_wait)
 

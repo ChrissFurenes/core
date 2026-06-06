@@ -1,14 +1,12 @@
 """Diagnostics support for Nanoleaf."""
 
-from __future__ import annotations
-
 from typing import Any
 
 from homeassistant.components.diagnostics import async_redact_data
 from homeassistant.const import CONF_TOKEN
 from homeassistant.core import HomeAssistant
 
-from . import NanoleafConfigEntry
+from .coordinator import NanoleafConfigEntry
 
 
 async def async_get_config_entry_diagnostics(

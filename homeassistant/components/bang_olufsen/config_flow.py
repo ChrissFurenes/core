@@ -1,7 +1,5 @@
 """Config flow for the Bang & Olufsen integration."""
 
-from __future__ import annotations
-
 from ipaddress import AddressValueError, IPv4Address
 from typing import Any, TypedDict
 
@@ -10,21 +8,23 @@ from mozart_api.exceptions import ApiException
 from mozart_api.mozart_client import MozartClient
 import voluptuous as vol
 
-from homeassistant.components.zeroconf import ZeroconfServiceInfo
 from homeassistant.config_entries import ConfigFlow, ConfigFlowResult
 from homeassistant.const import CONF_HOST, CONF_MODEL
 from homeassistant.helpers.selector import SelectSelector, SelectSelectorConfig
+from homeassistant.helpers.service_info.zeroconf import ZeroconfServiceInfo
+from homeassistant.util.ssl import get_default_context
 
 from .const import (
     ATTR_FRIENDLY_NAME,
     ATTR_ITEM_NUMBER,
     ATTR_SERIAL_NUMBER,
     ATTR_TYPE_NUMBER,
-    COMPATIBLE_MODELS,
     CONF_SERIAL_NUMBER,
     DEFAULT_MODEL,
     DOMAIN,
+    SELECTABLE_MODELS,
 )
+from .util import get_serial_number_from_jid
 
 
 class EntryData(TypedDict, total=False):
@@ -45,11 +45,12 @@ _exception_map = {
 }
 
 
-class BangOlufsenConfigFlowHandler(ConfigFlow, domain=DOMAIN):
+class BeoConfigFlowHandler(ConfigFlow, domain=DOMAIN):
     """Handle a config flow."""
 
     _beolink_jid = ""
     _client: MozartClient
+    _friendly_name = ""
     _host = ""
     _model = ""
     _name = ""
@@ -68,7 +69,7 @@ class BangOlufsenConfigFlowHandler(ConfigFlow, domain=DOMAIN):
             {
                 vol.Required(CONF_HOST): str,
                 vol.Required(CONF_MODEL, default=DEFAULT_MODEL): SelectSelector(
-                    SelectSelectorConfig(options=COMPATIBLE_MODELS)
+                    SelectSelectorConfig(options=SELECTABLE_MODELS)
                 ),
             }
         )
@@ -87,7 +88,9 @@ class BangOlufsenConfigFlowHandler(ConfigFlow, domain=DOMAIN):
                     errors={"base": _exception_map[type(error)]},
                 )
 
-            self._client = MozartClient(self._host)
+            self._client = MozartClient(
+                host=self._host, ssl_context=get_default_context()
+            )
 
             # Try to get information from Beolink self method.
             async with self._client:
@@ -107,7 +110,8 @@ class BangOlufsenConfigFlowHandler(ConfigFlow, domain=DOMAIN):
                     )
 
             self._beolink_jid = beolink_self.jid
-            self._serial_number = beolink_self.jid.split(".")[2].split("@")[0]
+            self._friendly_name = beolink_self.friendly_name
+            self._serial_number = get_serial_number_from_jid(beolink_self.jid)
 
             await self.async_set_unique_id(self._serial_number)
             self._abort_if_unique_id_configured()
@@ -136,17 +140,23 @@ class BangOlufsenConfigFlowHandler(ConfigFlow, domain=DOMAIN):
             return self.async_abort(reason="ipv6_address")
 
         # Check connection to ensure valid address is received
-        self._client = MozartClient(self._host)
+        self._client = MozartClient(self._host, ssl_context=get_default_context())
 
         async with self._client:
             try:
                 await self._client.get_beolink_self(_request_timeout=3)
-            except (ClientConnectorError, TimeoutError):
+            except ClientConnectorError, TimeoutError:
                 return self.async_abort(reason="invalid_address")
 
         self._model = discovery_info.hostname[:-16].replace("-", " ")
+        self._friendly_name = discovery_info.properties[ATTR_FRIENDLY_NAME]
         self._serial_number = discovery_info.properties[ATTR_SERIAL_NUMBER]
-        self._beolink_jid = f"{discovery_info.properties[ATTR_TYPE_NUMBER]}.{discovery_info.properties[ATTR_ITEM_NUMBER]}.{self._serial_number}@products.bang-olufsen.com"
+        type_number = discovery_info.properties[ATTR_TYPE_NUMBER]
+        item_number = discovery_info.properties[ATTR_ITEM_NUMBER]
+        self._beolink_jid = (
+            f"{type_number}.{item_number}"
+            f".{self._serial_number}@products.bang-olufsen.com"
+        )
 
         await self.async_set_unique_id(self._serial_number)
         self._abort_if_unique_id_configured(updates={CONF_HOST: self._host})
@@ -159,17 +169,14 @@ class BangOlufsenConfigFlowHandler(ConfigFlow, domain=DOMAIN):
         return await self.async_step_zeroconf_confirm()
 
     async def _create_entry(self) -> ConfigFlowResult:
-        """Create the config entry for a discovered or manually configured Bang & Olufsen device."""
-        # Ensure that created entities have a unique and easily identifiable id and not a "friendly name"
-        self._name = f"{self._model}-{self._serial_number}"
-
+        """Create the config entry for a Bang & Olufsen device."""
         return self.async_create_entry(
-            title=self._name,
+            title=self._friendly_name,
             data=EntryData(
                 host=self._host,
                 jid=self._beolink_jid,
                 model=self._model,
-                name=self._name,
+                name=self._friendly_name,
             ),
         )
 

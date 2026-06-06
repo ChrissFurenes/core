@@ -1,12 +1,12 @@
 """Support for custom shell commands to retrieve values."""
 
-from __future__ import annotations
-
 import asyncio
 from datetime import datetime, timedelta
-from typing import cast
 
-from homeassistant.components.binary_sensor import BinarySensorEntity
+from homeassistant.components.binary_sensor import (
+    DOMAIN as BINARY_SENSOR_DOMAIN,
+    BinarySensorEntity,
+)
 from homeassistant.const import (
     CONF_COMMAND,
     CONF_NAME,
@@ -19,12 +19,16 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.event import async_track_time_interval
 from homeassistant.helpers.template import Template
-from homeassistant.helpers.trigger_template_entity import ManualTriggerEntity
+from homeassistant.helpers.trigger_template_entity import (
+    ManualTriggerEntity,
+    ValueTemplate,
+)
 from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
 from homeassistant.util import dt as dt_util
 
 from .const import CONF_COMMAND_TIMEOUT, LOGGER, TRIGGER_ENTITY_OPTIONS
 from .sensor import CommandSensorData
+from .utils import create_platform_yaml_not_supported_issue
 
 DEFAULT_NAME = "Binary Command Sensor"
 DEFAULT_PAYLOAD_ON = "ON"
@@ -41,11 +45,10 @@ async def async_setup_platform(
 ) -> None:
     """Set up the Command line Binary Sensor."""
     if not discovery_info:
+        create_platform_yaml_not_supported_issue(hass, BINARY_SENSOR_DOMAIN)
         return
 
-    discovery_info = cast(DiscoveryInfoType, discovery_info)
     binary_sensor_config = discovery_info
-
     command: str = binary_sensor_config[CONF_COMMAND]
     payload_off: str = binary_sensor_config[CONF_PAYLOAD_OFF]
     payload_on: str = binary_sensor_config[CONF_PAYLOAD_ON]
@@ -53,7 +56,7 @@ async def async_setup_platform(
     scan_interval: timedelta = binary_sensor_config.get(
         CONF_SCAN_INTERVAL, SCAN_INTERVAL
     )
-    value_template: Template | None = binary_sensor_config.get(CONF_VALUE_TEMPLATE)
+    value_template: ValueTemplate | None = binary_sensor_config.get(CONF_VALUE_TEMPLATE)
 
     data = CommandSensorData(hass, command, command_timeout)
 
@@ -89,7 +92,7 @@ class CommandBinarySensor(ManualTriggerEntity, BinarySensorEntity):
         config: ConfigType,
         payload_on: str,
         payload_off: str,
-        value_template: Template | None,
+        value_template: ValueTemplate | None,
         scan_interval: timedelta,
     ) -> None:
         """Initialize the Command line binary sensor."""
@@ -122,7 +125,8 @@ class CommandBinarySensor(ManualTriggerEntity, BinarySensorEntity):
             self._process_updates = asyncio.Lock()
         if self._process_updates.locked():
             LOGGER.warning(
-                "Updating Command Line Binary Sensor %s took longer than the scheduled update interval %s",
+                "Updating Command Line Binary Sensor %s took longer"
+                " than the scheduled update interval %s",
                 self.name,
                 self._scan_interval,
             )
@@ -136,9 +140,14 @@ class CommandBinarySensor(ManualTriggerEntity, BinarySensorEntity):
         await self.data.async_update()
         value = self.data.value
 
+        variables = self._template_variables_with_value(value)
+        if not self._render_availability_template(variables):
+            self.async_write_ha_state()
+            return
+
         if self._value_template is not None:
-            value = self._value_template.async_render_with_possible_json_value(
-                value, None
+            value = self._value_template.async_render_as_value_template(
+                self.entity_id, variables, None
             )
         self._attr_is_on = None
         if value == self._payload_on:
@@ -146,7 +155,7 @@ class CommandBinarySensor(ManualTriggerEntity, BinarySensorEntity):
         elif value == self._payload_off:
             self._attr_is_on = False
 
-        self._process_manual_data(value)
+        self._process_manual_data(variables)
         self.async_write_ha_state()
 
     async def async_update(self) -> None:

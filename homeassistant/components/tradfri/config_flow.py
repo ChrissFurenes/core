@@ -1,19 +1,20 @@
 """Config flow for Tradfri."""
 
-from __future__ import annotations
-
 import asyncio
-from typing import Any
+from typing import Any, cast
 from uuid import uuid4
 
 from pytradfri import Gateway, RequestError
 from pytradfri.api.aiocoap_api import APIFactory
 import voluptuous as vol
 
-from homeassistant.components import zeroconf
 from homeassistant.config_entries import ConfigFlow, ConfigFlowResult
 from homeassistant.const import CONF_HOST
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers.service_info.zeroconf import (
+    ATTR_PROPERTIES_ID,
+    ZeroconfServiceInfo,
+)
 
 from .const import CONF_GATEWAY_ID, CONF_IDENTITY, CONF_KEY, DOMAIN
 
@@ -32,7 +33,7 @@ class AuthError(Exception):
 class FlowHandler(ConfigFlow, domain=DOMAIN):
     """Handle a config flow."""
 
-    VERSION = 1
+    VERSION = 2
 
     def __init__(self) -> None:
         """Initialize flow."""
@@ -51,7 +52,7 @@ class FlowHandler(ConfigFlow, domain=DOMAIN):
         errors: dict[str, str] = {}
 
         if user_input is not None:
-            host = user_input.get(CONF_HOST, self._host)
+            host = cast(str, user_input.get(CONF_HOST, self._host))
             try:
                 auth = await authenticate(
                     self.hass, host, user_input[KEY_SECURITY_CODE]
@@ -60,10 +61,7 @@ class FlowHandler(ConfigFlow, domain=DOMAIN):
                 return await self._entry_from_data(auth)
 
             except AuthError as err:
-                if err.code == "invalid_security_code":
-                    errors[KEY_SECURITY_CODE] = err.code
-                else:
-                    errors["base"] = err.code
+                errors["base"] = err.code
         else:
             user_input = {}
 
@@ -81,12 +79,10 @@ class FlowHandler(ConfigFlow, domain=DOMAIN):
         )
 
     async def async_step_homekit(
-        self, discovery_info: zeroconf.ZeroconfServiceInfo
+        self, discovery_info: ZeroconfServiceInfo
     ) -> ConfigFlowResult:
         """Handle homekit discovery."""
-        await self.async_set_unique_id(
-            discovery_info.properties[zeroconf.ATTR_PROPERTIES_ID]
-        )
+        await self.async_set_unique_id(discovery_info.properties[ATTR_PROPERTIES_ID])
         self._abort_if_unique_id_configured({CONF_HOST: discovery_info.host})
 
         host = discovery_info.host
@@ -99,7 +95,7 @@ class FlowHandler(ConfigFlow, domain=DOMAIN):
             if not entry.unique_id:
                 self.hass.config_entries.async_update_entry(
                     entry,
-                    unique_id=discovery_info.properties[zeroconf.ATTR_PROPERTIES_ID],
+                    unique_id=discovery_info.properties[ATTR_PROPERTIES_ID],
                 )
 
             return self.async_abort(reason="already_configured")

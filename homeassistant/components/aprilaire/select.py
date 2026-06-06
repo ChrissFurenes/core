@@ -1,7 +1,5 @@
 """The Aprilaire select component."""
 
-from __future__ import annotations
-
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
 from typing import cast
@@ -9,12 +7,10 @@ from typing import cast
 from pyaprilaire.const import Attribute
 
 from homeassistant.components.select import SelectEntity, SelectEntityDescription
-from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
-from .const import DOMAIN
-from .coordinator import AprilaireCoordinator
+from .coordinator import AprilaireConfigEntry, AprilaireCoordinator
 from .entity import BaseAprilaireEntity
 
 AIR_CLEANING_EVENT_MAP = {0: "off", 3: "event_clean", 4: "allergies"}
@@ -25,12 +21,12 @@ FRESH_AIR_MODE_MAP = {0: "off", 1: "automatic"}
 
 async def async_setup_entry(
     hass: HomeAssistant,
-    config_entry: ConfigEntry,
-    async_add_entities: AddEntitiesCallback,
+    config_entry: AprilaireConfigEntry,
+    async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up Aprilaire select devices."""
 
-    coordinator: AprilaireCoordinator = hass.data[DOMAIN][config_entry.unique_id]
+    coordinator = config_entry.runtime_data
 
     assert config_entry.unique_id is not None
 

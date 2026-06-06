@@ -1,8 +1,7 @@
 """Support for displaying details about a Gitter.im chat room."""
 
-from __future__ import annotations
-
 import logging
+from typing import Any
 
 from gitterpy.client import GitterClient
 from gitterpy.errors import GitterRoomError, GitterTokenError
@@ -14,7 +13,7 @@ from homeassistant.components.sensor import (
 )
 from homeassistant.const import CONF_API_KEY, CONF_NAME, CONF_ROOM
 from homeassistant.core import HomeAssistant
-import homeassistant.helpers.config_validation as cv
+from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
 
@@ -90,7 +89,7 @@ class GitterSensor(SensorEntity):
         return self._unit_of_measurement
 
     @property
-    def extra_state_attributes(self):
+    def extra_state_attributes(self) -> dict[str, Any]:
         """Return the state attributes."""
         return {
             ATTR_USERNAME: self._username,

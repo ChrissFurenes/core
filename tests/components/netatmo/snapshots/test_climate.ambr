@@ -1,8 +1,9 @@
 # serializer version: 1
-# name: test_entity[climate.bureau-entry]
+# name: test_entity[climate.bureau_bureau-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': dict({
       'hvac_modes': list([
@@ -14,18 +15,19 @@
       'preset_modes': list([
         'away',
         'boost',
-        'Frost Guard',
-        'Schedule',
+        'frost_guard',
+        'schedule',
       ]),
       'target_temp_step': 0.5,
     }),
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
     'domain': 'climate',
     'entity_category': None,
-    'entity_id': 'climate.bureau',
+    'entity_id': 'climate.bureau_bureau',
     'has_entity_name': True,
     'hidden_by': None,
     'icon': None,
@@ -33,6 +35,7 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': None,
     'options': dict({
     }),
     'original_device_class': None,
@@ -40,13 +43,14 @@
     'original_name': None,
     'platform': 'netatmo',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': <ClimateEntityFeature: 401>,
-    'translation_key': None,
+    'translation_key': 'thermostat',
     'unique_id': '222452125-DeviceType.OTM',
     'unit_of_measurement': None,
   })
 # ---
-# name: test_entity[climate.bureau-state]
+# name: test_entity[climate.bureau_bureau-state]
   StateSnapshot({
     'attributes': ReadOnlyDict({
       'attribution': 'Data provided by Netatmo',
@@ -60,24 +64,25 @@
       'preset_modes': list([
         'away',
         'boost',
-        'Frost Guard',
-        'Schedule',
+        'frost_guard',
+        'schedule',
       ]),
       'supported_features': <ClimateEntityFeature: 401>,
       'target_temp_step': 0.5,
     }),
     'context': <ANY>,
-    'entity_id': 'climate.bureau',
+    'entity_id': 'climate.bureau_bureau',
     'last_changed': <ANY>,
     'last_reported': <ANY>,
     'last_updated': <ANY>,
     'state': 'unavailable',
   })
 # ---
-# name: test_entity[climate.cocina-entry]
+# name: test_entity[climate.cocina_cocina-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': dict({
       'hvac_modes': list([
@@ -89,18 +94,19 @@
       'preset_modes': list([
         'away',
         'boost',
-        'Frost Guard',
-        'Schedule',
+        'frost_guard',
+        'schedule',
       ]),
       'target_temp_step': 0.5,
     }),
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
     'domain': 'climate',
     'entity_category': None,
-    'entity_id': 'climate.cocina',
+    'entity_id': 'climate.cocina_cocina',
     'has_entity_name': True,
     'hidden_by': None,
     'icon': None,
@@ -108,6 +114,7 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': None,
     'options': dict({
     }),
     'original_device_class': None,
@@ -115,13 +122,14 @@
     'original_name': None,
     'platform': 'netatmo',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': <ClimateEntityFeature: 401>,
-    'translation_key': None,
+    'translation_key': 'thermostat',
     'unique_id': '2940411577-DeviceType.NRV',
     'unit_of_measurement': None,
   })
 # ---
-# name: test_entity[climate.cocina-state]
+# name: test_entity[climate.cocina_cocina-state]
   StateSnapshot({
     'attributes': ReadOnlyDict({
       'attribution': 'Data provided by Netatmo',
@@ -135,30 +143,32 @@
       ]),
       'max_temp': 30,
       'min_temp': 7,
-      'preset_mode': 'Frost Guard',
+      'preset_mode': 'frost_guard',
       'preset_modes': list([
         'away',
         'boost',
-        'Frost Guard',
-        'Schedule',
+        'frost_guard',
+        'schedule',
       ]),
       'selected_schedule': 'Default',
+      'selected_schedule_id': '591b54a2764ff4d50d8b5795',
       'supported_features': <ClimateEntityFeature: 401>,
       'target_temp_step': 0.5,
       'temperature': 7,
     }),
     'context': <ANY>,
-    'entity_id': 'climate.cocina',
+    'entity_id': 'climate.cocina_cocina',
     'last_changed': <ANY>,
     'last_reported': <ANY>,
     'last_updated': <ANY>,
     'state': 'auto',
   })
 # ---
-# name: test_entity[climate.corridor-entry]
+# name: test_entity[climate.corridor_corridor-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': dict({
       'hvac_modes': list([
@@ -170,18 +180,19 @@
       'preset_modes': list([
         'away',
         'boost',
-        'Frost Guard',
-        'Schedule',
+        'frost_guard',
+        'schedule',
       ]),
       'target_temp_step': 0.5,
     }),
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
     'domain': 'climate',
     'entity_category': None,
-    'entity_id': 'climate.corridor',
+    'entity_id': 'climate.corridor_corridor',
     'has_entity_name': True,
     'hidden_by': None,
     'icon': None,
@@ -189,6 +200,7 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': None,
     'options': dict({
     }),
     'original_device_class': None,
@@ -196,13 +208,14 @@
     'original_name': None,
     'platform': 'netatmo',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': <ClimateEntityFeature: 401>,
-    'translation_key': None,
+    'translation_key': 'thermostat',
     'unique_id': '1002003001-DeviceType.BNS',
     'unit_of_measurement': None,
   })
 # ---
-# name: test_entity[climate.corridor-state]
+# name: test_entity[climate.corridor_corridor-state]
   StateSnapshot({
     'attributes': ReadOnlyDict({
       'attribution': 'Data provided by Netatmo',
@@ -215,30 +228,32 @@
       ]),
       'max_temp': 30,
       'min_temp': 7,
-      'preset_mode': 'Schedule',
+      'preset_mode': 'schedule',
       'preset_modes': list([
         'away',
         'boost',
-        'Frost Guard',
-        'Schedule',
+        'frost_guard',
+        'schedule',
       ]),
       'selected_schedule': 'Default',
+      'selected_schedule_id': '591b54a2764ff4d50d8b5795',
       'supported_features': <ClimateEntityFeature: 401>,
       'target_temp_step': 0.5,
       'temperature': 22,
     }),
     'context': <ANY>,
-    'entity_id': 'climate.corridor',
+    'entity_id': 'climate.corridor_corridor',
     'last_changed': <ANY>,
     'last_reported': <ANY>,
     'last_updated': <ANY>,
     'state': 'auto',
   })
 # ---
-# name: test_entity[climate.entrada-entry]
+# name: test_entity[climate.entrada_entrada-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': dict({
       'hvac_modes': list([
@@ -250,18 +265,19 @@
       'preset_modes': list([
         'away',
         'boost',
-        'Frost Guard',
-        'Schedule',
+        'frost_guard',
+        'schedule',
       ]),
       'target_temp_step': 0.5,
     }),
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
     'domain': 'climate',
     'entity_category': None,
-    'entity_id': 'climate.entrada',
+    'entity_id': 'climate.entrada_entrada',
     'has_entity_name': True,
     'hidden_by': None,
     'icon': None,
@@ -269,6 +285,7 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': None,
     'options': dict({
     }),
     'original_device_class': None,
@@ -276,13 +293,14 @@
     'original_name': None,
     'platform': 'netatmo',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': <ClimateEntityFeature: 401>,
-    'translation_key': None,
+    'translation_key': 'thermostat',
     'unique_id': '2833524037-DeviceType.NRV',
     'unit_of_measurement': None,
   })
 # ---
-# name: test_entity[climate.entrada-state]
+# name: test_entity[climate.entrada_entrada-state]
   StateSnapshot({
     'attributes': ReadOnlyDict({
       'attribution': 'Data provided by Netatmo',
@@ -296,30 +314,32 @@
       ]),
       'max_temp': 30,
       'min_temp': 7,
-      'preset_mode': 'Frost Guard',
+      'preset_mode': 'frost_guard',
       'preset_modes': list([
         'away',
         'boost',
-        'Frost Guard',
-        'Schedule',
+        'frost_guard',
+        'schedule',
       ]),
       'selected_schedule': 'Default',
+      'selected_schedule_id': '591b54a2764ff4d50d8b5795',
       'supported_features': <ClimateEntityFeature: 401>,
       'target_temp_step': 0.5,
       'temperature': 7,
     }),
     'context': <ANY>,
-    'entity_id': 'climate.entrada',
+    'entity_id': 'climate.entrada_entrada',
     'last_changed': <ANY>,
     'last_reported': <ANY>,
     'last_updated': <ANY>,
     'state': 'auto',
   })
 # ---
-# name: test_entity[climate.livingroom-entry]
+# name: test_entity[climate.livingroom_livingroom-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': dict({
       'hvac_modes': list([
@@ -332,18 +352,19 @@
       'preset_modes': list([
         'away',
         'boost',
-        'Frost Guard',
-        'Schedule',
+        'frost_guard',
+        'schedule',
       ]),
       'target_temp_step': 0.5,
     }),
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
     'domain': 'climate',
     'entity_category': None,
-    'entity_id': 'climate.livingroom',
+    'entity_id': 'climate.livingroom_livingroom',
     'has_entity_name': True,
     'hidden_by': None,
     'icon': None,
@@ -351,6 +372,7 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': None,
     'options': dict({
     }),
     'original_device_class': None,
@@ -358,13 +380,14 @@
     'original_name': None,
     'platform': 'netatmo',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': <ClimateEntityFeature: 401>,
-    'translation_key': None,
+    'translation_key': 'thermostat',
     'unique_id': '2746182631-DeviceType.NATherm1',
     'unit_of_measurement': None,
   })
 # ---
-# name: test_entity[climate.livingroom-state]
+# name: test_entity[climate.livingroom_livingroom-state]
   StateSnapshot({
     'attributes': ReadOnlyDict({
       'attribution': 'Data provided by Netatmo',
@@ -382,16 +405,17 @@
       'preset_modes': list([
         'away',
         'boost',
-        'Frost Guard',
-        'Schedule',
+        'frost_guard',
+        'schedule',
       ]),
       'selected_schedule': 'Default',
+      'selected_schedule_id': '591b54a2764ff4d50d8b5795',
       'supported_features': <ClimateEntityFeature: 401>,
       'target_temp_step': 0.5,
       'temperature': 12,
     }),
     'context': <ANY>,
-    'entity_id': 'climate.livingroom',
+    'entity_id': 'climate.livingroom_livingroom',
     'last_changed': <ANY>,
     'last_reported': <ANY>,
     'last_updated': <ANY>,

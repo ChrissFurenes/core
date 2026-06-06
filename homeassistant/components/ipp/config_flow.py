@@ -1,7 +1,5 @@
 """Config flow to configure the IPP integration."""
 
-from __future__ import annotations
-
 import logging
 from typing import Any
 
@@ -16,7 +14,6 @@ from pyipp import (
 )
 import voluptuous as vol
 
-from homeassistant.components import zeroconf
 from homeassistant.config_entries import ConfigFlow, ConfigFlowResult
 from homeassistant.const import (
     CONF_HOST,
@@ -28,6 +25,7 @@ from homeassistant.const import (
 )
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
+from homeassistant.helpers.service_info.zeroconf import ZeroconfServiceInfo
 
 from .const import CONF_BASE_PATH, CONF_SERIAL, DOMAIN
 
@@ -74,7 +72,7 @@ class IPPFlowHandler(ConfigFlow, domain=DOMAIN):
             info = await validate_input(self.hass, user_input)
         except IPPConnectionUpgradeRequired:
             return self._show_setup_form({"base": "connection_upgrade"})
-        except (IPPConnectionError, IPPResponseError):
+        except IPPConnectionError, IPPResponseError:
             _LOGGER.debug("IPP Connection/Response Error", exc_info=True)
             return self._show_setup_form({"base": "cannot_connect"})
         except IPPParseError:
@@ -103,7 +101,7 @@ class IPPFlowHandler(ConfigFlow, domain=DOMAIN):
         return self.async_create_entry(title=user_input[CONF_HOST], data=user_input)
 
     async def async_step_zeroconf(
-        self, discovery_info: zeroconf.ZeroconfServiceInfo
+        self, discovery_info: ZeroconfServiceInfo
     ) -> ConfigFlowResult:
         """Handle zeroconf discovery."""
         host = discovery_info.host
@@ -142,7 +140,7 @@ class IPPFlowHandler(ConfigFlow, domain=DOMAIN):
             info = await validate_input(self.hass, self.discovery_info)
         except IPPConnectionUpgradeRequired:
             return self.async_abort(reason="connection_upgrade")
-        except (IPPConnectionError, IPPResponseError):
+        except IPPConnectionError, IPPResponseError:
             _LOGGER.debug("IPP Connection/Response Error", exc_info=True)
             return self.async_abort(reason="cannot_connect")
         except IPPParseError:

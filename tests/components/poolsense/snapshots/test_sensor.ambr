@@ -1,11 +1,13 @@
 # serializer version: 1
 # name: test_all_entities[sensor.test_test_com_battery-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': None,
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -19,6 +21,7 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Battery',
     'options': dict({
     }),
     'original_device_class': <SensorDeviceClass.BATTERY: 'battery'>,
@@ -26,6 +29,7 @@
     'original_name': 'Battery',
     'platform': 'poolsense',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': None,
     'unique_id': 'test@test.com-Battery',
@@ -50,11 +54,13 @@
 # ---
 # name: test_all_entities[sensor.test_test_com_chlorine-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': None,
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -68,6 +74,7 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Chlorine',
     'options': dict({
     }),
     'original_device_class': None,
@@ -75,6 +82,7 @@
     'original_name': 'Chlorine',
     'platform': 'poolsense',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'chlorine',
     'unique_id': 'test@test.com-Chlorine',
@@ -98,11 +106,13 @@
 # ---
 # name: test_all_entities[sensor.test_test_com_chlorine_high-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': None,
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -116,6 +126,7 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Chlorine high',
     'options': dict({
     }),
     'original_device_class': None,
@@ -123,6 +134,7 @@
     'original_name': 'Chlorine high',
     'platform': 'poolsense',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'chlorine_high',
     'unique_id': 'test@test.com-Chlorine High',
@@ -146,11 +158,13 @@
 # ---
 # name: test_all_entities[sensor.test_test_com_chlorine_low-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': None,
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -164,6 +178,7 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Chlorine low',
     'options': dict({
     }),
     'original_device_class': None,
@@ -171,6 +186,7 @@
     'original_name': 'Chlorine low',
     'platform': 'poolsense',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'chlorine_low',
     'unique_id': 'test@test.com-Chlorine Low',
@@ -194,11 +210,13 @@
 # ---
 # name: test_all_entities[sensor.test_test_com_last_seen-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': None,
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -212,6 +230,7 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Last seen',
     'options': dict({
     }),
     'original_device_class': <SensorDeviceClass.TIMESTAMP: 'timestamp'>,
@@ -219,6 +238,7 @@
     'original_name': 'Last seen',
     'platform': 'poolsense',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'last_seen',
     'unique_id': 'test@test.com-Last Seen',
@@ -242,11 +262,13 @@
 # ---
 # name: test_all_entities[sensor.test_test_com_ph-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': None,
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -260,6 +282,7 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'pH',
     'options': dict({
     }),
     'original_device_class': <SensorDeviceClass.PH: 'ph'>,
@@ -267,6 +290,7 @@
     'original_name': 'pH',
     'platform': 'poolsense',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': None,
     'unique_id': 'test@test.com-pH',
@@ -290,11 +314,13 @@
 # ---
 # name: test_all_entities[sensor.test_test_com_ph_high-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': None,
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -308,6 +334,7 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'pH high',
     'options': dict({
     }),
     'original_device_class': None,
@@ -315,6 +342,7 @@
     'original_name': 'pH high',
     'platform': 'poolsense',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'ph_high',
     'unique_id': 'test@test.com-pH High',
@@ -337,11 +365,13 @@
 # ---
 # name: test_all_entities[sensor.test_test_com_ph_low-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': None,
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -355,6 +385,7 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'pH low',
     'options': dict({
     }),
     'original_device_class': None,
@@ -362,6 +393,7 @@
     'original_name': 'pH low',
     'platform': 'poolsense',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'ph_low',
     'unique_id': 'test@test.com-pH Low',
@@ -384,11 +416,13 @@
 # ---
 # name: test_all_entities[sensor.test_test_com_temperature-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': None,
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -402,13 +436,18 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Temperature',
     'options': dict({
+      'sensor': dict({
+        'suggested_display_precision': 1,
+      }),
     }),
     'original_device_class': <SensorDeviceClass.TEMPERATURE: 'temperature'>,
     'original_icon': None,
     'original_name': 'Temperature',
     'platform': 'poolsense',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'water_temp',
     'unique_id': 'test@test.com-Water Temp',

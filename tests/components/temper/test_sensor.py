@@ -1,11 +1,11 @@
-"""The tests for the temper (USB temperature sensor) component."""
+"""The tests for the TEMPer integration."""
 
 from datetime import timedelta
 from unittest.mock import Mock, patch
 
 from homeassistant.core import HomeAssistant
 from homeassistant.setup import async_setup_component
-import homeassistant.util.dt as dt_util
+from homeassistant.util import dt as dt_util
 
 from tests.common import async_fire_time_changed
 

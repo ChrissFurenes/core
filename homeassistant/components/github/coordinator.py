@@ -1,7 +1,5 @@
 """Custom data update coordinator for the GitHub integration."""
 
-from __future__ import annotations
-
 from typing import Any
 
 from aiogithubapi import (
@@ -13,6 +11,7 @@ from aiogithubapi import (
     GitHubResponseModel,
 )
 
+from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import EVENT_HOMEASSISTANT_STOP
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
@@ -77,6 +76,12 @@ query ($owner: String!, $repository: String!) {
         number
       }
     }
+    merged_pull_request: pullRequests(
+      first:1
+      states: MERGED
+    ) {
+      total: totalCount
+    }
     release: latestRelease {
       name
       url
@@ -98,13 +103,18 @@ query ($owner: String!, $repository: String!) {
 }
 """
 
+type GithubConfigEntry = ConfigEntry[dict[str, GitHubDataUpdateCoordinator]]
+
 
 class GitHubDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
     """Data update coordinator for the GitHub integration."""
 
+    config_entry: GithubConfigEntry
+
     def __init__(
         self,
         hass: HomeAssistant,
+        config_entry: GithubConfigEntry,
         client: GitHubAPI,
         repository: str,
     ) -> None:
@@ -118,6 +128,7 @@ class GitHubDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         super().__init__(
             hass,
             LOGGER,
+            config_entry=config_entry,
             name=repository,
             update_interval=FALLBACK_UPDATE_INTERVAL,
         )
@@ -160,6 +171,6 @@ class GitHubDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         )
         self.hass.bus.async_listen_once(EVENT_HOMEASSISTANT_STOP, self.unsubscribe)
 
-    def unsubscribe(self, *args) -> None:
+    def unsubscribe(self, *args: Any) -> None:
         """Unsubscribe to repository events."""
         self._client.repos.events.unsubscribe(subscription_id=self._subscription_id)

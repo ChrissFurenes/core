@@ -1,7 +1,5 @@
 """Config flow to configure the SimpliSafe component."""
 
-from __future__ import annotations
-
 from collections.abc import Mapping
 from typing import Any, NamedTuple
 
@@ -14,19 +12,19 @@ from simplipy.util.auth import (
 )
 import voluptuous as vol
 
-from homeassistant.config_entries import (
-    ConfigEntry,
-    ConfigFlow,
-    ConfigFlowResult,
-    OptionsFlow,
-)
+from homeassistant.config_entries import ConfigFlow, ConfigFlowResult, OptionsFlow
 from homeassistant.const import CONF_CODE, CONF_TOKEN, CONF_URL, CONF_USERNAME
 from homeassistant.core import callback
 from homeassistant.helpers import aiohttp_client, config_validation as cv
 
+from . import SimpliSafeConfigEntry
 from .const import DOMAIN, LOGGER
 
 CONF_AUTH_CODE = "auth_code"
+CONF_DOCUMENTATION_URL = "documentation_url"
+DOCUMENTATION_URL = (
+    "https://home-assistant.io/integrations/simplisafe#getting-an-authorization-code"
+)
 
 STEP_USER_SCHEMA = vol.Schema(
     {
@@ -64,12 +62,14 @@ class SimpliSafeFlowHandler(ConfigFlow, domain=DOMAIN):
     @staticmethod
     @callback
     def async_get_options_flow(
-        config_entry: ConfigEntry,
+        config_entry: SimpliSafeConfigEntry,
     ) -> SimpliSafeOptionsFlowHandler:
         """Define the config flow to handle options."""
-        return SimpliSafeOptionsFlowHandler(config_entry)
+        return SimpliSafeOptionsFlowHandler()
 
-    async def async_step_reauth(self, config: Mapping[str, Any]) -> ConfigFlowResult:
+    async def async_step_reauth(
+        self, entry_data: Mapping[str, Any]
+    ) -> ConfigFlowResult:
         """Handle configuration by re-auth."""
         self._reauth = True
         return await self.async_step_user()
@@ -82,7 +82,10 @@ class SimpliSafeFlowHandler(ConfigFlow, domain=DOMAIN):
             return self.async_show_form(
                 step_id="user",
                 data_schema=STEP_USER_SCHEMA,
-                description_placeholders={CONF_URL: self._oauth_values.auth_url},
+                description_placeholders={
+                    CONF_URL: self._oauth_values.auth_url,
+                    CONF_DOCUMENTATION_URL: DOCUMENTATION_URL,
+                },
             )
 
         auth_code = user_input[CONF_AUTH_CODE]
@@ -100,7 +103,10 @@ class SimpliSafeFlowHandler(ConfigFlow, domain=DOMAIN):
                 step_id="user",
                 data_schema=STEP_USER_SCHEMA,
                 errors={CONF_AUTH_CODE: "invalid_auth_code_length"},
-                description_placeholders={CONF_URL: self._oauth_values.auth_url},
+                description_placeholders={
+                    CONF_URL: self._oauth_values.auth_url,
+                    CONF_DOCUMENTATION_URL: DOCUMENTATION_URL,
+                },
             )
 
         errors = {}
@@ -122,7 +128,10 @@ class SimpliSafeFlowHandler(ConfigFlow, domain=DOMAIN):
                 step_id="user",
                 data_schema=STEP_USER_SCHEMA,
                 errors=errors,
-                description_placeholders={CONF_URL: self._oauth_values.auth_url},
+                description_placeholders={
+                    CONF_URL: self._oauth_values.auth_url,
+                    CONF_DOCUMENTATION_URL: DOCUMENTATION_URL,
+                },
             )
 
         simplisafe_user_id = str(simplisafe.user_id)
@@ -150,10 +159,6 @@ class SimpliSafeFlowHandler(ConfigFlow, domain=DOMAIN):
 
 class SimpliSafeOptionsFlowHandler(OptionsFlow):
     """Handle a SimpliSafe options flow."""
-
-    def __init__(self, config_entry: ConfigEntry) -> None:
-        """Initialize."""
-        self.config_entry = config_entry
 
     async def async_step_init(
         self, user_input: dict[str, Any] | None = None

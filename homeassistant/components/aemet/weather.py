@@ -25,18 +25,17 @@ from homeassistant.const import (
     UnitOfTemperature,
 )
 from homeassistant.core import HomeAssistant, callback
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
-from . import AemetConfigEntry
 from .const import CONDITIONS_MAP
-from .coordinator import WeatherUpdateCoordinator
+from .coordinator import AemetConfigEntry, WeatherUpdateCoordinator
 from .entity import AemetEntity
 
 
 async def async_setup_entry(
     hass: HomeAssistant,
     config_entry: AemetConfigEntry,
-    async_add_entities: AddEntitiesCallback,
+    async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up AEMET OpenData weather entity based on a config entry."""
     domain_data = config_entry.runtime_data
@@ -75,7 +74,7 @@ class AemetWeather(
         self._attr_unique_id = unique_id
 
     @property
-    def condition(self):
+    def condition(self) -> str | None:
         """Return the current condition."""
         cond = self.get_aemet_value([AOD_WEATHER, AOD_CONDITION])
         return CONDITIONS_MAP.get(cond)
@@ -91,31 +90,31 @@ class AemetWeather(
         return self.get_aemet_forecast(AOD_FORECAST_HOURLY)
 
     @property
-    def humidity(self):
+    def humidity(self) -> float | None:
         """Return the humidity."""
         return self.get_aemet_value([AOD_WEATHER, AOD_HUMIDITY])
 
     @property
-    def native_pressure(self):
+    def native_pressure(self) -> float | None:
         """Return the pressure."""
         return self.get_aemet_value([AOD_WEATHER, AOD_PRESSURE])
 
     @property
-    def native_temperature(self):
+    def native_temperature(self) -> float | None:
         """Return the temperature."""
         return self.get_aemet_value([AOD_WEATHER, AOD_TEMP])
 
     @property
-    def wind_bearing(self):
+    def wind_bearing(self) -> float | None:
         """Return the wind bearing."""
         return self.get_aemet_value([AOD_WEATHER, AOD_WIND_DIRECTION])
 
     @property
-    def native_wind_gust_speed(self):
+    def native_wind_gust_speed(self) -> float | None:
         """Return the wind gust speed in native units."""
         return self.get_aemet_value([AOD_WEATHER, AOD_WIND_SPEED_MAX])
 
     @property
-    def native_wind_speed(self):
+    def native_wind_speed(self) -> float | None:
         """Return the wind speed."""
         return self.get_aemet_value([AOD_WEATHER, AOD_WIND_SPEED])

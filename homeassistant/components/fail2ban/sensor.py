@@ -1,11 +1,10 @@
 """Support for displaying IPs banned by fail2ban."""
 
-from __future__ import annotations
-
 from datetime import timedelta
 import logging
 import os
 import re
+from typing import Any
 
 import voluptuous as vol
 
@@ -15,7 +14,7 @@ from homeassistant.components.sensor import (
 )
 from homeassistant.const import CONF_FILE_PATH, CONF_NAME
 from homeassistant.core import HomeAssistant
-import homeassistant.helpers.config_validation as cv
+from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
 
@@ -76,7 +75,7 @@ class BanSensor(SensorEntity):
         return self._name
 
     @property
-    def extra_state_attributes(self):
+    def extra_state_attributes(self) -> dict[str, Any]:
         """Return the state attributes of the fail2ban sensor."""
         return self.ban_dict
 
@@ -129,5 +128,5 @@ class BanLogParser:
             with open(self.log_file, encoding="utf-8") as file_data:
                 self.data = self.ip_regex[jail].findall(file_data.read())
 
-        except (IndexError, FileNotFoundError, IsADirectoryError, UnboundLocalError):
+        except IndexError, FileNotFoundError, IsADirectoryError, UnboundLocalError:
             _LOGGER.warning("File not present: %s", os.path.basename(self.log_file))

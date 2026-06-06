@@ -1,7 +1,5 @@
 """Support for the Meraki CMX location service."""
 
-from __future__ import annotations
-
 from http import HTTPStatus
 import json
 import logging
@@ -15,7 +13,7 @@ from homeassistant.components.device_tracker import (
 )
 from homeassistant.components.http import KEY_HASS, HomeAssistantView
 from homeassistant.core import HomeAssistant, callback
-import homeassistant.helpers.config_validation as cv
+from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
 
 CONF_VALIDATOR = "validator"

@@ -1,14 +1,16 @@
 # serializer version: 1
 # name: test_all_entities[water_heater.model0_domestic_hot_water-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': dict({
       'max_temp': 60,
       'min_temp': 10,
     }),
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -22,6 +24,7 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Domestic hot water',
     'options': dict({
     }),
     'original_device_class': None,
@@ -29,9 +32,10 @@
     'original_name': 'Domestic hot water',
     'platform': 'vicare',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': <WaterHeaterEntityFeature: 1>,
     'translation_key': 'domestic_hot_water',
-    'unique_id': 'gateway0-0',
+    'unique_id': 'gateway0_deviceSerialVitodens300W-0',
     'unit_of_measurement': None,
   })
 # ---
@@ -57,14 +61,16 @@
 # ---
 # name: test_all_entities[water_heater.model0_domestic_hot_water_2-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': dict({
       'max_temp': 60,
       'min_temp': 10,
     }),
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -78,6 +84,7 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Domestic hot water',
     'options': dict({
     }),
     'original_device_class': None,
@@ -85,9 +92,10 @@
     'original_name': 'Domestic hot water',
     'platform': 'vicare',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': <WaterHeaterEntityFeature: 1>,
     'translation_key': 'domestic_hot_water',
-    'unique_id': 'gateway0-1',
+    'unique_id': 'gateway0_deviceSerialVitodens300W-1',
     'unit_of_measurement': None,
   })
 # ---

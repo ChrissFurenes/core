@@ -3,20 +3,19 @@
 Data is fetched from DWD:
 https://rcccm.dwd.de/DE/wetter/warnungen_aktuell/objekt_einbindung/objekteinbindung.html
 
-Warnungen vor extremem Unwetter (Stufe 4)  # codespell:ignore vor
+Warnungen vor extremem Unwetter (Stufe 4)  # codespell:ignore vor,extremem
 Unwetterwarnungen (Stufe 3)
 Warnungen vor markantem Wetter (Stufe 2)  # codespell:ignore vor
 Wetterwarnungen (Stufe 1)
 """
 
-from __future__ import annotations
-
+from datetime import UTC, datetime
 from typing import Any
 
 from homeassistant.components.sensor import SensorEntity, SensorEntityDescription
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.device_registry import DeviceEntryType, DeviceInfo
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .const import (
@@ -55,7 +54,7 @@ SENSOR_TYPES: tuple[SensorEntityDescription, ...] = (
 async def async_setup_entry(
     hass: HomeAssistant,
     entry: DwdWeatherWarningsConfigEntry,
-    async_add_entities: AddEntitiesCallback,
+    async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up entities from config entry."""
     coordinator = entry.runtime_data
@@ -95,13 +94,25 @@ class DwdWeatherWarningsSensor(
             entry_type=DeviceEntryType.SERVICE,
         )
 
+    def _filter_expired_warnings(
+        self, warnings: list[dict[str, Any]] | None
+    ) -> list[dict[str, Any]]:
+        if warnings is None:
+            return []
+
+        now = datetime.now(UTC)
+        return [warning for warning in warnings if warning[API_ATTR_WARNING_END] > now]
+
     @property
     def native_value(self) -> int | None:
         """Return the state of the sensor."""
         if self.entity_description.key == CURRENT_WARNING_SENSOR:
-            return self.coordinator.api.current_warning_level
+            warnings = self.coordinator.api.current_warnings
+        else:
+            warnings = self.coordinator.api.expected_warnings
 
-        return self.coordinator.api.expected_warning_level
+        warnings = self._filter_expired_warnings(warnings)
+        return max((w.get(API_ATTR_WARNING_LEVEL, 0) for w in warnings), default=0)
 
     @property
     def extra_state_attributes(self) -> dict[str, Any]:
@@ -117,6 +128,7 @@ class DwdWeatherWarningsSensor(
         else:
             searched_warnings = self.coordinator.api.expected_warnings
 
+        searched_warnings = self._filter_expired_warnings(searched_warnings)
         data[ATTR_WARNING_COUNT] = len(searched_warnings)
 
         for i, warning in enumerate(searched_warnings, 1):

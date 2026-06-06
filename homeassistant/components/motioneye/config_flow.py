@@ -1,9 +1,7 @@
 """Config flow for motionEye integration."""
 
-from __future__ import annotations
-
 from collections.abc import Mapping
-from typing import Any, cast
+from typing import Any
 
 from motioneye_client.client import (
     MotionEyeClientConnectionError,
@@ -12,24 +10,25 @@ from motioneye_client.client import (
 )
 import voluptuous as vol
 
-from homeassistant.components.hassio import HassioServiceInfo
 from homeassistant.config_entries import (
     SOURCE_REAUTH,
-    ConfigEntry,
     ConfigFlow,
     ConfigFlowResult,
-    OptionsFlow,
+    OptionsFlowWithReload,
 )
-from homeassistant.const import CONF_SOURCE, CONF_URL, CONF_WEBHOOK_ID
+from homeassistant.const import CONF_URL, CONF_WEBHOOK_ID
 from homeassistant.core import callback
+from homeassistant.data_entry_flow import SectionConfig, section
 from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
+from homeassistant.helpers.service_info.hassio import HassioServiceInfo
 from homeassistant.helpers.typing import VolDictType
 
 from . import create_motioneye_client
 from .const import (
     CONF_ADMIN_PASSWORD,
     CONF_ADMIN_USERNAME,
+    CONF_MORE_OPTIONS,
     CONF_STREAM_URL_TEMPLATE,
     CONF_SURVEILLANCE_PASSWORD,
     CONF_SURVEILLANCE_USERNAME,
@@ -39,6 +38,7 @@ from .const import (
     DEFAULT_WEBHOOK_SET_OVERWRITE,
     DOMAIN,
 )
+from .coordinator import MotionEyeConfigEntry
 
 
 class MotionEyeConfigFlow(ConfigFlow, domain=DOMAIN):
@@ -53,7 +53,7 @@ class MotionEyeConfigFlow(ConfigFlow, domain=DOMAIN):
         """Handle the initial step."""
 
         def _get_form(
-            user_input: dict[str, Any], errors: dict[str, str] | None = None
+            user_input: Mapping[str, Any], errors: dict[str, str] | None = None
         ) -> ConfigFlowResult:
             """Show the form to the user."""
             url_schema: VolDictType = {}
@@ -89,16 +89,10 @@ class MotionEyeConfigFlow(ConfigFlow, domain=DOMAIN):
                 errors=errors,
             )
 
-        reauth_entry = None
-        if self.context.get("entry_id"):
-            reauth_entry = self.hass.config_entries.async_get_entry(
-                self.context["entry_id"]
-            )
-
         if user_input is None:
-            return _get_form(
-                cast(dict[str, Any], reauth_entry.data) if reauth_entry else {}
-            )
+            if self.source == SOURCE_REAUTH:
+                return _get_form(self._get_reauth_entry().data)
+            return _get_form({})
 
         if self._hassio_discovery:
             # In case of Supervisor discovery, use pushed URL
@@ -135,16 +129,13 @@ class MotionEyeConfigFlow(ConfigFlow, domain=DOMAIN):
         if errors:
             return _get_form(user_input, errors)
 
-        if self.context.get(CONF_SOURCE) == SOURCE_REAUTH and reauth_entry is not None:
+        if self.source == SOURCE_REAUTH:
+            reauth_entry = self._get_reauth_entry()
             # Persist the same webhook id across reauths.
             if CONF_WEBHOOK_ID in reauth_entry.data:
                 user_input[CONF_WEBHOOK_ID] = reauth_entry.data[CONF_WEBHOOK_ID]
-            self.hass.config_entries.async_update_entry(reauth_entry, data=user_input)
-            # Need to manually reload, as the listener won't have been
-            # installed because the initial load did not succeed (the reauth
-            # flow will not be initiated if the load succeeds).
-            await self.hass.config_entries.async_reload(reauth_entry.entry_id)
-            return self.async_abort(reason="reauth_successful")
+
+            return self.async_update_reload_and_abort(reauth_entry, data=user_input)
 
         # Search for duplicates: there isn't a useful unique_id, but
         # at least prevent entries with the same motionEye URL.
@@ -152,7 +143,7 @@ class MotionEyeConfigFlow(ConfigFlow, domain=DOMAIN):
 
         title = user_input[CONF_URL]
         if self._hassio_discovery:
-            title = "Add-on"
+            title = "App"
 
         return self.async_create_entry(
             title=title,
@@ -188,55 +179,62 @@ class MotionEyeConfigFlow(ConfigFlow, domain=DOMAIN):
 
     @staticmethod
     @callback
-    def async_get_options_flow(config_entry: ConfigEntry) -> MotionEyeOptionsFlow:
+    def async_get_options_flow(
+        config_entry: MotionEyeConfigEntry,
+    ) -> MotionEyeOptionsFlow:
         """Get the Hyperion Options flow."""
-        return MotionEyeOptionsFlow(config_entry)
+        return MotionEyeOptionsFlow()
 
 
-class MotionEyeOptionsFlow(OptionsFlow):
+class MotionEyeOptionsFlow(OptionsFlowWithReload):
     """motionEye options flow."""
-
-    def __init__(self, config_entry: ConfigEntry) -> None:
-        """Initialize a motionEye options flow."""
-        self._config_entry = config_entry
 
     async def async_step_init(
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
         """Manage the options."""
         if user_input is not None:
+            more_options = user_input.pop(CONF_MORE_OPTIONS, {})
+            user_input.update(more_options)
             return self.async_create_entry(title="", data=user_input)
 
-        schema: dict[vol.Marker, type] = {
-            vol.Required(
-                CONF_WEBHOOK_SET,
-                default=self._config_entry.options.get(
-                    CONF_WEBHOOK_SET,
-                    DEFAULT_WEBHOOK_SET,
-                ),
-            ): bool,
-            vol.Required(
-                CONF_WEBHOOK_SET_OVERWRITE,
-                default=self._config_entry.options.get(
-                    CONF_WEBHOOK_SET_OVERWRITE,
-                    DEFAULT_WEBHOOK_SET_OVERWRITE,
-                ),
-            ): bool,
-        }
+        # The input URL is not validated as being a URL, to allow for the possibility
+        # the template input won't be a valid URL until after it's rendered
+        description: dict[str, str] | None = None
+        if CONF_STREAM_URL_TEMPLATE in self.config_entry.options:
+            description = {
+                "suggested_value": self.config_entry.options[CONF_STREAM_URL_TEMPLATE]
+            }
 
-        if self.show_advanced_options:
-            # The input URL is not validated as being a URL, to allow for the possibility
-            # the template input won't be a valid URL until after it's rendered
-            description: dict[str, str] | None = None
-            if CONF_STREAM_URL_TEMPLATE in self._config_entry.options:
-                description = {
-                    "suggested_value": self._config_entry.options[
-                        CONF_STREAM_URL_TEMPLATE
-                    ]
+        return self.async_show_form(
+            step_id="init",
+            data_schema=vol.Schema(
+                {
+                    vol.Required(
+                        CONF_WEBHOOK_SET,
+                        default=self.config_entry.options.get(
+                            CONF_WEBHOOK_SET,
+                            DEFAULT_WEBHOOK_SET,
+                        ),
+                    ): bool,
+                    vol.Required(
+                        CONF_WEBHOOK_SET_OVERWRITE,
+                        default=self.config_entry.options.get(
+                            CONF_WEBHOOK_SET_OVERWRITE,
+                            DEFAULT_WEBHOOK_SET_OVERWRITE,
+                        ),
+                    ): bool,
+                    vol.Required(CONF_MORE_OPTIONS): section(
+                        vol.Schema(
+                            {
+                                vol.Optional(
+                                    CONF_STREAM_URL_TEMPLATE,
+                                    description=description,
+                                ): str,
+                            }
+                        ),
+                        SectionConfig(collapsed=True),
+                    ),
                 }
-
-            schema[vol.Optional(CONF_STREAM_URL_TEMPLATE, description=description)] = (
-                str
-            )
-
-        return self.async_show_form(step_id="init", data_schema=vol.Schema(schema))
+            ),
+        )

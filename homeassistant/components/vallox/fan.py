@@ -1,32 +1,29 @@
 """Support for the Vallox ventilation unit fan."""
 
-from __future__ import annotations
-
 from collections.abc import Mapping
 from typing import Any, NamedTuple
 
-from vallox_websocket_api import Vallox, ValloxApiException, ValloxInvalidInputException
+from vallox_websocket_api import ValloxApiException, ValloxInvalidInputException
 
 from homeassistant.components.fan import FanEntity, FanEntityFeature
-from homeassistant.config_entries import ConfigEntry
+from homeassistant.const import CONF_NAME
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import HomeAssistantError
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 from homeassistant.helpers.typing import StateType
 
-from . import ValloxEntity
 from .const import (
-    DOMAIN,
     METRIC_KEY_MODE,
     METRIC_KEY_PROFILE_FAN_SPEED_AWAY,
     METRIC_KEY_PROFILE_FAN_SPEED_BOOST,
     METRIC_KEY_PROFILE_FAN_SPEED_HOME,
     MODE_OFF,
     MODE_ON,
-    PRESET_MODE_TO_VALLOX_PROFILE_SETTABLE,
-    VALLOX_PROFILE_TO_PRESET_MODE_REPORTABLE,
+    PRESET_MODE_TO_VALLOX_PROFILE,
+    VALLOX_PROFILE_TO_PRESET_MODE,
 )
-from .coordinator import ValloxDataUpdateCoordinator
+from .coordinator import ValloxConfigEntry, ValloxDataUpdateCoordinator
+from .entity import ValloxEntity
 
 
 class ExtraStateAttributeDetails(NamedTuple):
@@ -57,18 +54,14 @@ def _convert_to_int(value: StateType) -> int | None:
 
 
 async def async_setup_entry(
-    hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback
+    hass: HomeAssistant,
+    entry: ValloxConfigEntry,
+    async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up the fan device."""
-    data = hass.data[DOMAIN][entry.entry_id]
+    coordinator = entry.runtime_data
 
-    client = data["client"]
-
-    device = ValloxFanEntity(
-        data["name"],
-        client,
-        data["coordinator"],
-    )
+    device = ValloxFanEntity(entry.data[CONF_NAME], coordinator)
 
     async_add_entities([device])
 
@@ -83,21 +76,17 @@ class ValloxFanEntity(ValloxEntity, FanEntity):
         | FanEntityFeature.TURN_OFF
         | FanEntityFeature.TURN_ON
     )
-    _enable_turn_on_off_backwards_compatibility = False
 
     def __init__(
         self,
         name: str,
-        client: Vallox,
         coordinator: ValloxDataUpdateCoordinator,
     ) -> None:
         """Initialize the fan."""
         super().__init__(name, coordinator)
 
-        self._client = client
-
         self._attr_unique_id = str(self._device_uuid)
-        self._attr_preset_modes = list(PRESET_MODE_TO_VALLOX_PROFILE_SETTABLE)
+        self._attr_preset_modes = list(PRESET_MODE_TO_VALLOX_PROFILE)
 
     @property
     def is_on(self) -> bool:
@@ -108,7 +97,7 @@ class ValloxFanEntity(ValloxEntity, FanEntity):
     def preset_mode(self) -> str | None:
         """Return the current preset mode."""
         vallox_profile = self.coordinator.data.profile
-        return VALLOX_PROFILE_TO_PRESET_MODE_REPORTABLE.get(vallox_profile)
+        return VALLOX_PROFILE_TO_PRESET_MODE.get(vallox_profile)
 
     @property
     def percentage(self) -> int | None:
@@ -135,8 +124,9 @@ class ValloxFanEntity(ValloxEntity, FanEntity):
         update_needed = await self._async_set_preset_mode_internal(preset_mode)
 
         if update_needed:
-            # This state change affects other entities like sensors. Force an immediate update that
-            # can be observed by all parties involved.
+            # This state change affects other entities like
+            # sensors. Force an immediate update that can be
+            # observed by all parties involved.
             await self.coordinator.async_request_refresh()
 
     async def async_turn_on(
@@ -160,8 +150,9 @@ class ValloxFanEntity(ValloxEntity, FanEntity):
             )
 
         if update_needed:
-            # This state change affects other entities like sensors. Force an immediate update that
-            # can be observed by all parties involved.
+            # This state change affects other entities like
+            # sensors. Force an immediate update that can be
+            # observed by all parties involved.
             await self.coordinator.async_request_refresh()
 
     async def async_turn_off(self, **kwargs: Any) -> None:
@@ -187,7 +178,7 @@ class ValloxFanEntity(ValloxEntity, FanEntity):
 
     async def _async_set_power(self, mode: bool) -> bool:
         try:
-            await self._client.set_values(
+            await self.coordinator.client.set_values(
                 {METRIC_KEY_MODE: MODE_ON if mode else MODE_OFF}
             )
         except ValloxApiException as err:
@@ -204,8 +195,8 @@ class ValloxFanEntity(ValloxEntity, FanEntity):
             return False
 
         try:
-            profile = PRESET_MODE_TO_VALLOX_PROFILE_SETTABLE[preset_mode]
-            await self._client.set_profile(profile)
+            profile = PRESET_MODE_TO_VALLOX_PROFILE[preset_mode]
+            await self.coordinator.client.set_profile(profile)
 
         except ValloxApiException as err:
             raise HomeAssistantError(f"Failed to set profile: {preset_mode}") from err
@@ -220,13 +211,13 @@ class ValloxFanEntity(ValloxEntity, FanEntity):
         Returns true if speed has been changed, false otherwise.
         """
         vallox_profile = (
-            PRESET_MODE_TO_VALLOX_PROFILE_SETTABLE[preset_mode]
+            PRESET_MODE_TO_VALLOX_PROFILE[preset_mode]
             if preset_mode is not None
             else self.coordinator.data.profile
         )
 
         try:
-            await self._client.set_fan_speed(vallox_profile, percentage)
+            await self.coordinator.client.set_fan_speed(vallox_profile, percentage)
         except ValloxInvalidInputException as err:
             # This can happen if current profile does not support setting the fan speed.
             raise ValueError(

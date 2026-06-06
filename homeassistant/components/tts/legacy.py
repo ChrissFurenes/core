@@ -1,13 +1,11 @@
 """Provide the legacy TTS service provider interface."""
 
-from __future__ import annotations
-
 from abc import abstractmethod
 from collections.abc import Coroutine, Mapping
 from functools import partial
 import logging
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, final
 
 import voluptuous as vol
 
@@ -15,7 +13,7 @@ from homeassistant.components.media_player import (
     ATTR_MEDIA_ANNOUNCE,
     ATTR_MEDIA_CONTENT_ID,
     ATTR_MEDIA_CONTENT_TYPE,
-    DOMAIN as DOMAIN_MP,
+    DOMAIN as MP_DOMAIN,
     SERVICE_PLAY_MEDIA,
     MediaType,
 )
@@ -27,8 +25,7 @@ from homeassistant.const import (
     CONF_PLATFORM,
 )
 from homeassistant.core import HomeAssistant, ServiceCall, callback
-from homeassistant.helpers import discovery
-import homeassistant.helpers.config_validation as cv
+from homeassistant.helpers import config_validation as cv, discovery
 from homeassistant.helpers.service import async_set_service_schema
 from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
 from homeassistant.setup import (
@@ -56,9 +53,6 @@ from .const import (
 )
 from .media_source import generate_media_source_id
 from .models import Voice
-
-if TYPE_CHECKING:
-    from . import SpeechManager
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -105,8 +99,6 @@ async def async_setup_legacy(
     hass: HomeAssistant, config: ConfigType
 ) -> list[Coroutine[Any, Any, None]]:
     """Set up legacy text-to-speech providers."""
-    tts: SpeechManager = hass.data[DATA_TTS_MANAGER]
-
     # Load service descriptions from tts/services.yaml
     services_yaml = Path(__file__).parent / "services.yaml"
     services_dict = await hass.async_add_executor_job(
@@ -147,7 +139,9 @@ async def async_setup_legacy(
                     _LOGGER.error("Error setting up platform: %s", p_type)
                     return
 
-                tts.async_register_legacy_engine(p_type, provider, p_config)
+                hass.data[DATA_TTS_MANAGER].async_register_legacy_engine(
+                    p_type, provider, p_config
+                )
         except Exception:
             _LOGGER.exception("Error setting up platform: %s", p_type)
             return
@@ -157,7 +151,7 @@ async def async_setup_legacy(
             entity_ids = service.data[ATTR_ENTITY_ID]
 
             await hass.services.async_call(
-                DOMAIN_MP,
+                MP_DOMAIN,
                 SERVICE_PLAY_MEDIA,
                 {
                     ATTR_ENTITY_ID: entity_ids,
@@ -211,6 +205,7 @@ class Provider:
 
     hass: HomeAssistant | None = None
     name: str | None = None
+    has_entity: bool = False
 
     @property
     def default_language(self) -> str | None:
@@ -255,3 +250,15 @@ class Provider:
         return await self.hass.async_add_executor_job(
             partial(self.get_tts_audio, message, language, options=options)
         )
+
+    @final
+    async def async_internal_get_tts_audio(
+        self, message: str, language: str, options: dict[str, Any]
+    ) -> TtsAudioType:
+        """Load tts audio file from provider.
+
+        Proxies request to mimic the entity interface.
+
+        Return a tuple of file extension and data as bytes.
+        """
+        return await self.async_get_tts_audio(message, language, options)

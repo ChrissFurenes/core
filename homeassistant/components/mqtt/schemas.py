@@ -1,6 +1,6 @@
 """Shared schemas for MQTT discovery and YAML config items."""
 
-from __future__ import annotations
+from typing import Any
 
 import voluptuous as vol
 
@@ -11,6 +11,7 @@ from homeassistant.const import (
     CONF_MODEL,
     CONF_MODEL_ID,
     CONF_NAME,
+    CONF_PLATFORM,
     CONF_UNIQUE_ID,
     CONF_VALUE_TEMPLATE,
 )
@@ -25,20 +26,27 @@ from .const import (
     CONF_AVAILABILITY_MODE,
     CONF_AVAILABILITY_TEMPLATE,
     CONF_AVAILABILITY_TOPIC,
+    CONF_COMMAND_TOPIC,
+    CONF_COMPONENTS,
     CONF_CONFIGURATION_URL,
     CONF_CONNECTIONS,
+    CONF_DEFAULT_ENTITY_ID,
     CONF_DEPRECATED_VIA_HUB,
     CONF_ENABLED_BY_DEFAULT,
+    CONF_ENCODING,
+    CONF_ENTITY_PICTURE,
     CONF_HW_VERSION,
     CONF_IDENTIFIERS,
     CONF_JSON_ATTRS_TEMPLATE,
     CONF_JSON_ATTRS_TOPIC,
     CONF_MANUFACTURER,
-    CONF_OBJECT_ID,
+    CONF_MESSAGE_EXPIRY_INTERVAL,
     CONF_ORIGIN,
     CONF_PAYLOAD_AVAILABLE,
     CONF_PAYLOAD_NOT_AVAILABLE,
+    CONF_QOS,
     CONF_SERIAL_NUMBER,
+    CONF_STATE_TOPIC,
     CONF_SUGGESTED_AREA,
     CONF_SUPPORT_URL,
     CONF_SW_VERSION,
@@ -46,10 +54,28 @@ from .const import (
     CONF_VIA_DEVICE,
     DEFAULT_PAYLOAD_AVAILABLE,
     DEFAULT_PAYLOAD_NOT_AVAILABLE,
+    ENTITY_PLATFORMS,
+    SUPPORTED_COMPONENTS,
 )
-from .util import valid_subscribe_topic
+from .util import valid_publish_topic, valid_qos_schema, valid_subscribe_topic
 
-MQTT_AVAILABILITY_SINGLE_SCHEMA = vol.Schema(
+# Device discovery options that are also available at entity component level
+SHARED_OPTIONS = [
+    CONF_AVAILABILITY,
+    CONF_AVAILABILITY_MODE,
+    CONF_AVAILABILITY_TEMPLATE,
+    CONF_AVAILABILITY_TOPIC,
+    CONF_COMMAND_TOPIC,
+    CONF_ENCODING,
+    CONF_MESSAGE_EXPIRY_INTERVAL,
+    CONF_PAYLOAD_AVAILABLE,
+    CONF_PAYLOAD_NOT_AVAILABLE,
+    CONF_STATE_TOPIC,
+    CONF_QOS,
+]
+
+
+_MQTT_AVAILABILITY_SINGLE_SCHEMA = vol.Schema(
     {
         vol.Exclusive(CONF_AVAILABILITY_TOPIC, "availability"): valid_subscribe_topic,
         vol.Optional(CONF_AVAILABILITY_TEMPLATE): cv.template,
@@ -62,7 +88,7 @@ MQTT_AVAILABILITY_SINGLE_SCHEMA = vol.Schema(
     }
 )
 
-MQTT_AVAILABILITY_LIST_SCHEMA = vol.Schema(
+_MQTT_AVAILABILITY_LIST_SCHEMA = vol.Schema(
     {
         vol.Optional(CONF_AVAILABILITY_MODE, default=AVAILABILITY_LATEST): vol.All(
             cv.string, vol.In(AVAILABILITY_MODES)
@@ -86,8 +112,8 @@ MQTT_AVAILABILITY_LIST_SCHEMA = vol.Schema(
     }
 )
 
-MQTT_AVAILABILITY_SCHEMA = MQTT_AVAILABILITY_SINGLE_SCHEMA.extend(
-    MQTT_AVAILABILITY_LIST_SCHEMA.schema
+_MQTT_AVAILABILITY_SCHEMA = _MQTT_AVAILABILITY_SINGLE_SCHEMA.extend(
+    _MQTT_AVAILABILITY_LIST_SCHEMA.schema
 )
 
 
@@ -137,16 +163,59 @@ MQTT_ORIGIN_INFO_SCHEMA = vol.All(
     ),
 )
 
-MQTT_ENTITY_COMMON_SCHEMA = MQTT_AVAILABILITY_SCHEMA.extend(
+
+def valid_message_expiry_interval(value: Any) -> int:
+    """Return Message Expiry Interval in seconds."""
+    if isinstance(value, int):
+        return cv.positive_int(value)  # type: ignore[no-any-return]
+    return int(cv.positive_time_period_dict(value).total_seconds())
+
+
+MQTT_ENTITY_COMMON_SCHEMA = _MQTT_AVAILABILITY_SCHEMA.extend(
     {
         vol.Optional(CONF_DEVICE): MQTT_ENTITY_DEVICE_INFO_SCHEMA,
+        vol.Optional(CONF_ENTITY_PICTURE): cv.url,
         vol.Optional(CONF_ORIGIN): MQTT_ORIGIN_INFO_SCHEMA,
         vol.Optional(CONF_ENABLED_BY_DEFAULT, default=True): cv.boolean,
         vol.Optional(CONF_ENTITY_CATEGORY): ENTITY_CATEGORIES_SCHEMA,
         vol.Optional(CONF_ICON): cv.icon,
         vol.Optional(CONF_JSON_ATTRS_TOPIC): valid_subscribe_topic,
         vol.Optional(CONF_JSON_ATTRS_TEMPLATE): cv.template,
-        vol.Optional(CONF_OBJECT_ID): cv.string,
+        vol.Optional(CONF_DEFAULT_ENTITY_ID): cv.string,
+        vol.Optional(CONF_MESSAGE_EXPIRY_INTERVAL): valid_message_expiry_interval,
         vol.Optional(CONF_UNIQUE_ID): cv.string,
+    }
+)
+
+_UNIQUE_ID_SCHEMA = vol.Schema(
+    {vol.Required(CONF_UNIQUE_ID): cv.string},
+).extend({}, extra=True)
+
+
+def check_unique_id(config: dict[str, Any]) -> dict[str, Any]:
+    """Check if a unique ID is set in case an entity platform is configured."""
+    platform = config[CONF_PLATFORM]
+    if platform in ENTITY_PLATFORMS and len(config.keys()) > 1:
+        _UNIQUE_ID_SCHEMA(config)
+    return config
+
+
+_COMPONENT_CONFIG_SCHEMA = vol.All(
+    vol.Schema(
+        {vol.Required(CONF_PLATFORM): vol.In(SUPPORTED_COMPONENTS)},
+    ).extend({}, extra=True),
+    check_unique_id,
+)
+
+DEVICE_DISCOVERY_SCHEMA = _MQTT_AVAILABILITY_SCHEMA.extend(
+    {
+        vol.Required(CONF_DEVICE): MQTT_ENTITY_DEVICE_INFO_SCHEMA,
+        vol.Required(CONF_COMPONENTS): vol.Schema({str: _COMPONENT_CONFIG_SCHEMA}),
+        vol.Required(CONF_ORIGIN): MQTT_ORIGIN_INFO_SCHEMA,
+        vol.Optional(CONF_STATE_TOPIC): valid_subscribe_topic,
+        vol.Optional(CONF_COMMAND_TOPIC): valid_publish_topic,
+        vol.Optional(CONF_MESSAGE_EXPIRY_INTERVAL): valid_message_expiry_interval,
+        vol.Optional(CONF_QOS): valid_qos_schema,
+        vol.Optional(CONF_ENCODING): cv.string,
     }
 )

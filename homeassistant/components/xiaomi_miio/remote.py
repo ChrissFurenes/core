@@ -1,7 +1,5 @@
 """Support for the Xiaomi IR Remote (Chuangmi IR)."""
 
-from __future__ import annotations
-
 import asyncio
 from datetime import timedelta
 import logging
@@ -77,7 +75,7 @@ async def async_setup_platform(
     token = config[CONF_TOKEN]
 
     # Create handler
-    _LOGGER.info("Initializing with host %s (token %s...)", host, token[:5])
+    _LOGGER.debug("Initializing with host %s (token %s...)", host, token[:5])
 
     # The Chuang Mi IR Remote Controller wants to be re-discovered every
     # 5 minutes. As long as polling is disabled the device should be
@@ -89,7 +87,7 @@ async def async_setup_platform(
         device_info = await hass.async_add_executor_job(device.info)
         model = device_info.model
         unique_id = f"{model}-{device_info.mac_address}"
-        _LOGGER.info(
+        _LOGGER.debug(
             "%s %s %s detected",
             model,
             device_info.firmware_version,
@@ -187,23 +185,13 @@ class XiaomiMiioRemote(RemoteEntity):
 
     def __init__(self, friendly_name, device, unique_id, slot, timeout, commands):
         """Initialize the remote."""
-        self._name = friendly_name
+        self._attr_name = friendly_name
         self._device = device
-        self._unique_id = unique_id
+        self._attr_unique_id = unique_id
         self._slot = slot
         self._timeout = timeout
         self._state = False
         self._commands = commands
-
-    @property
-    def unique_id(self):
-        """Return an unique ID."""
-        return self._unique_id
-
-    @property
-    def name(self):
-        """Return the name of the remote."""
-        return self._name
 
     @property
     def device(self):
@@ -221,7 +209,7 @@ class XiaomiMiioRemote(RemoteEntity):
         return self._timeout
 
     @property
-    def is_on(self):
+    def is_on(self) -> bool:
         """Return False if device is unreachable, else True."""
         try:
             self.device.info()

@@ -13,6 +13,7 @@ PLATFORMS = [
     Platform.BUTTON,
     Platform.DEVICE_TRACKER,
     Platform.IMAGE,
+    Platform.LIGHT,
     Platform.SENSOR,
     Platform.SWITCH,
     Platform.UPDATE,
@@ -32,6 +33,7 @@ CONF_IGNORE_WIRED_BUG = "ignore_wired_bug"
 CONF_TRACK_CLIENTS = "track_clients"
 CONF_TRACK_DEVICES = "track_devices"
 CONF_TRACK_WIRED_CLIENTS = "track_wired_clients"
+CONF_MORE_OPTIONS = "more_options"
 CONF_SSID_FILTER = "ssid_filter"
 
 DEFAULT_ALLOW_BANDWIDTH_SENSORS = False
@@ -50,17 +52,16 @@ DPI_SWITCH = "dpi"
 OUTLET_SWITCH = "outlet"
 
 DEVICE_STATES = {
-    DeviceState.DISCONNECTED: "Disconnected",
-    DeviceState.CONNECTED: "Connected",
-    DeviceState.PENDING: "Pending",
-    DeviceState.FIRMWARE_MISMATCH: "Firmware Mismatch",
-    DeviceState.UPGRADING: "Upgrading",
-    DeviceState.PROVISIONING: "Provisioning",
-    DeviceState.HEARTBEAT_MISSED: "Heartbeat Missed",
-    DeviceState.ADOPTING: "Adopting",
-    DeviceState.DELETING: "Deleting",
-    DeviceState.INFORM_ERROR: "Inform Error",
-    DeviceState.ADOPTION_FALIED: "Adoption Failed",
-    DeviceState.ISOLATED: "Isolated",
-    DeviceState.UNKNOWN: "Unknown",
+    DeviceState.DISCONNECTED: "disconnected",
+    DeviceState.CONNECTED: "connected",
+    DeviceState.PENDING: "pending",
+    DeviceState.FIRMWARE_MISMATCH: "firmware_mismatch",
+    DeviceState.UPGRADING: "upgrading",
+    DeviceState.PROVISIONING: "provisioning",
+    DeviceState.HEARTBEAT_MISSED: "heartbeat_missed",
+    DeviceState.ADOPTING: "adopting",
+    DeviceState.DELETING: "deleting",
+    DeviceState.INFORM_ERROR: "inform_error",
+    DeviceState.ADOPTION_FALIED: "adoption_failed",
+    DeviceState.ISOLATED: "isolated",
 }

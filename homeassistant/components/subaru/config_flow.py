@@ -1,7 +1,5 @@
 """Config flow for Subaru integration."""
 
-from __future__ import annotations
-
 from datetime import datetime
 import logging
 from typing import TYPE_CHECKING, Any
@@ -15,12 +13,7 @@ from subarulink import (
 from subarulink.const import COUNTRY_CAN, COUNTRY_USA
 import voluptuous as vol
 
-from homeassistant.config_entries import (
-    ConfigEntry,
-    ConfigFlow,
-    ConfigFlowResult,
-    OptionsFlow,
-)
+from homeassistant.config_entries import ConfigFlow, ConfigFlowResult, OptionsFlow
 from homeassistant.const import (
     CONF_COUNTRY,
     CONF_DEVICE_ID,
@@ -32,6 +25,7 @@ from homeassistant.core import callback
 from homeassistant.helpers import aiohttp_client, config_validation as cv
 
 from .const import CONF_UPDATE_ENABLED, DOMAIN
+from .coordinator import SubaruConfigEntry
 
 _LOGGER = logging.getLogger(__name__)
 CONF_CONTACT_METHOD = "contact_method"
@@ -103,10 +97,10 @@ class SubaruConfigFlow(ConfigFlow, domain=DOMAIN):
     @staticmethod
     @callback
     def async_get_options_flow(
-        config_entry: ConfigEntry,
+        config_entry: SubaruConfigEntry,
     ) -> OptionsFlowHandler:
         """Get the options flow for this handler."""
-        return OptionsFlowHandler(config_entry)
+        return OptionsFlowHandler()
 
     async def validate_login_creds(self, data):
         """Validate the user input allows us to connect.
@@ -217,10 +211,6 @@ class SubaruConfigFlow(ConfigFlow, domain=DOMAIN):
 
 class OptionsFlowHandler(OptionsFlow):
     """Handle a option flow for Subaru."""
-
-    def __init__(self, config_entry: ConfigEntry) -> None:
-        """Initialize options flow."""
-        self.config_entry = config_entry
 
     async def async_step_init(
         self, user_input: dict[str, Any] | None = None

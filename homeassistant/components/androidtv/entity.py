@@ -1,7 +1,5 @@
 """Base AndroidTV Entity."""
 
-from __future__ import annotations
-
 from collections.abc import Awaitable, Callable, Coroutine
 import functools
 import logging
@@ -67,7 +65,7 @@ def adb_decorator[_ADBDeviceT: AndroidTVEntity, **_P, _R](
                 return await func(self, *args, **kwargs)
             except LockNotAcquiredException:
                 # If the ADB lock could not be acquired, skip this command
-                _LOGGER.info(
+                _LOGGER.debug(
                     (
                         "ADB command %s not executed because the connection is"
                         " currently in use"
@@ -96,10 +94,9 @@ def adb_decorator[_ADBDeviceT: AndroidTVEntity, **_P, _R](
                 # it doesn't happen over and over again.
                 if self.available:
                     _LOGGER.error(
-                        (
-                            "Unexpected exception executing an ADB command. ADB connection"
-                            " re-establishing attempt in the next update. Error: %s"
-                        ),
+                        "Unexpected exception executing an ADB"
+                        " command. ADB connection re-establishing"
+                        " attempt in the next update. Error: %s",
                         err,
                     )
 
@@ -151,5 +148,5 @@ class AndroidTVEntity(Entity):
             # Using "adb_shell" (Python ADB implementation)
             self.exceptions = ADB_PYTHON_EXCEPTIONS
         else:
-            # Using "pure-python-adb" (communicate with ADB server)
+            # Communicate via ADB server
             self.exceptions = ADB_TCP_EXCEPTIONS

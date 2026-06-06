@@ -1,6 +1,7 @@
 """Support for govee ble sensors."""
 
-from __future__ import annotations
+from datetime import date, datetime
+from decimal import Decimal
 
 from govee_ble import DeviceClass, SensorUpdate, Units
 from govee_ble.parser import ERROR
@@ -18,16 +19,19 @@ from homeassistant.components.sensor import (
 )
 from homeassistant.const import (
     CONCENTRATION_MICROGRAMS_PER_CUBIC_METER,
+    CONCENTRATION_PARTS_PER_MILLION,
     PERCENTAGE,
     SIGNAL_STRENGTH_DECIBELS_MILLIWATT,
     UnitOfTemperature,
 )
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 from homeassistant.helpers.sensor import sensor_device_info_to_hass_device_info
 
 from .coordinator import GoveeBLEConfigEntry, GoveeBLEPassiveBluetoothDataProcessor
 from .device import device_key_to_bluetooth_entity_key
+
+type _SensorValueType = str | int | float | date | datetime | Decimal | None
 
 SENSOR_DESCRIPTIONS = {
     (DeviceClass.TEMPERATURE, Units.TEMP_CELSIUS): SensorEntityDescription(
@@ -67,12 +71,18 @@ SENSOR_DESCRIPTIONS = {
         native_unit_of_measurement=CONCENTRATION_MICROGRAMS_PER_CUBIC_METER,
         state_class=SensorStateClass.MEASUREMENT,
     ),
+    (DeviceClass.CO2, Units.CONCENTRATION_PARTS_PER_MILLION): SensorEntityDescription(
+        key=f"{DeviceClass.CO2}_{Units.CONCENTRATION_PARTS_PER_MILLION}",
+        device_class=SensorDeviceClass.CO2,
+        native_unit_of_measurement=CONCENTRATION_PARTS_PER_MILLION,
+        state_class=SensorStateClass.MEASUREMENT,
+    ),
 }
 
 
 def sensor_update_to_bluetooth_data_update(
     sensor_update: SensorUpdate,
-) -> PassiveBluetoothDataUpdate:
+) -> PassiveBluetoothDataUpdate[_SensorValueType]:
     """Convert a sensor update to a bluetooth data update."""
     return PassiveBluetoothDataUpdate(
         devices={
@@ -100,7 +110,7 @@ def sensor_update_to_bluetooth_data_update(
 async def async_setup_entry(
     hass: HomeAssistant,
     entry: GoveeBLEConfigEntry,
-    async_add_entities: AddEntitiesCallback,
+    async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up the Govee BLE sensors."""
     coordinator = entry.runtime_data
@@ -117,13 +127,13 @@ async def async_setup_entry(
 
 class GoveeBluetoothSensorEntity(
     PassiveBluetoothProcessorEntity[
-        PassiveBluetoothDataProcessor[float | int | str | None, SensorUpdate]
+        PassiveBluetoothDataProcessor[_SensorValueType, SensorUpdate]
     ],
     SensorEntity,
 ):
     """Representation of a govee ble sensor."""
 
-    processor: GoveeBLEPassiveBluetoothDataProcessor
+    processor: GoveeBLEPassiveBluetoothDataProcessor[_SensorValueType]
 
     @property
     def available(self) -> bool:
@@ -135,6 +145,6 @@ class GoveeBluetoothSensorEntity(
         )
 
     @property
-    def native_value(self) -> float | int | str | None:
+    def native_value(self) -> _SensorValueType:  # pylint: disable=home-assistant-return-type
         """Return the native value."""
         return self.processor.entity_data.get(self.entity_key)

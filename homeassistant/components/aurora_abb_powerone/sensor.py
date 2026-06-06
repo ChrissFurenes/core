@@ -1,7 +1,5 @@
 """Support for Aurora ABB PowerOne Solar Photovoltaic (PV) inverter."""
 
-from __future__ import annotations
-
 from collections.abc import Mapping
 import logging
 from typing import Any
@@ -14,8 +12,8 @@ from homeassistant.components.sensor import (
     SensorEntityDescription,
     SensorStateClass,
 )
-from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
+    ATTR_MODEL,
     ATTR_SERIAL_NUMBER,
     EntityCategory,
     UnitOfElectricCurrent,
@@ -27,19 +25,18 @@ from homeassistant.const import (
 )
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.device_registry import DeviceInfo
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 from homeassistant.helpers.typing import StateType
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from . import AuroraAbbDataUpdateCoordinator
 from .const import (
     ATTR_DEVICE_NAME,
     ATTR_FIRMWARE,
-    ATTR_MODEL,
     DEFAULT_DEVICE_NAME,
     DOMAIN,
     MANUFACTURER,
 )
+from .coordinator import AuroraAbbConfigEntry, AuroraAbbDataUpdateCoordinator
 
 _LOGGER = logging.getLogger(__name__)
 ALARM_STATES = list(AuroraMapping.ALARM_STATES.values())
@@ -69,6 +66,7 @@ SENSOR_TYPES = [
         entity_category=EntityCategory.DIAGNOSTIC,
         native_unit_of_measurement=UnitOfFrequency.HERTZ,
         state_class=SensorStateClass.MEASUREMENT,
+        translation_key="grid_frequency",
         entity_registry_enabled_default=False,
     ),
     SensorEntityDescription(
@@ -87,6 +85,60 @@ SENSOR_TYPES = [
         native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
         state_class=SensorStateClass.MEASUREMENT,
         translation_key="i_leak_inverter",
+        entity_registry_enabled_default=False,
+    ),
+    SensorEntityDescription(
+        key="power_in_1",
+        device_class=SensorDeviceClass.POWER,
+        entity_category=EntityCategory.DIAGNOSTIC,
+        native_unit_of_measurement=UnitOfPower.WATT,
+        state_class=SensorStateClass.MEASUREMENT,
+        translation_key="power_in_1",
+        entity_registry_enabled_default=False,
+    ),
+    SensorEntityDescription(
+        key="power_in_2",
+        device_class=SensorDeviceClass.POWER,
+        entity_category=EntityCategory.DIAGNOSTIC,
+        native_unit_of_measurement=UnitOfPower.WATT,
+        state_class=SensorStateClass.MEASUREMENT,
+        translation_key="power_in_2",
+        entity_registry_enabled_default=False,
+    ),
+    SensorEntityDescription(
+        key="voltage_in_1",
+        device_class=SensorDeviceClass.VOLTAGE,
+        entity_category=EntityCategory.DIAGNOSTIC,
+        native_unit_of_measurement=UnitOfElectricPotential.VOLT,
+        state_class=SensorStateClass.MEASUREMENT,
+        translation_key="voltage_in_1",
+        entity_registry_enabled_default=False,
+    ),
+    SensorEntityDescription(
+        key="current_in_1",
+        device_class=SensorDeviceClass.CURRENT,
+        entity_category=EntityCategory.DIAGNOSTIC,
+        native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
+        state_class=SensorStateClass.MEASUREMENT,
+        translation_key="current_in_1",
+        entity_registry_enabled_default=False,
+    ),
+    SensorEntityDescription(
+        key="voltage_in_2",
+        device_class=SensorDeviceClass.VOLTAGE,
+        entity_category=EntityCategory.DIAGNOSTIC,
+        native_unit_of_measurement=UnitOfElectricPotential.VOLT,
+        state_class=SensorStateClass.MEASUREMENT,
+        translation_key="voltage_in_2",
+        entity_registry_enabled_default=False,
+    ),
+    SensorEntityDescription(
+        key="current_in_2",
+        device_class=SensorDeviceClass.CURRENT,
+        entity_category=EntityCategory.DIAGNOSTIC,
+        native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
+        state_class=SensorStateClass.MEASUREMENT,
+        translation_key="current_in_2",
         entity_registry_enabled_default=False,
     ),
     SensorEntityDescription(
@@ -130,12 +182,12 @@ SENSOR_TYPES = [
 
 async def async_setup_entry(
     hass: HomeAssistant,
-    config_entry: ConfigEntry,
-    async_add_entities: AddEntitiesCallback,
+    config_entry: AuroraAbbConfigEntry,
+    async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up aurora_abb_powerone sensor based on a config entry."""
 
-    coordinator = hass.data[DOMAIN][config_entry.entry_id]
+    coordinator = config_entry.runtime_data
     data = config_entry.data
 
     entities = [AuroraSensor(coordinator, data, sens) for sens in SENSOR_TYPES]

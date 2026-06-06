@@ -1,7 +1,5 @@
 """The tests the cover command line platform."""
 
-from __future__ import annotations
-
 import asyncio
 from datetime import timedelta
 import os
@@ -14,7 +12,11 @@ import pytest
 from homeassistant import setup
 from homeassistant.components.command_line import DOMAIN
 from homeassistant.components.command_line.cover import CommandCover
-from homeassistant.components.cover import DOMAIN as COVER_DOMAIN, SCAN_INTERVAL
+from homeassistant.components.cover import (
+    DOMAIN as COVER_DOMAIN,
+    SCAN_INTERVAL,
+    CoverState,
+)
 from homeassistant.components.homeassistant import (
     DOMAIN as HA_DOMAIN,
     SERVICE_UPDATE_ENTITY,
@@ -24,34 +26,15 @@ from homeassistant.const import (
     SERVICE_CLOSE_COVER,
     SERVICE_OPEN_COVER,
     SERVICE_STOP_COVER,
-    STATE_OPEN,
     STATE_UNAVAILABLE,
 )
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import entity_registry as er
-import homeassistant.util.dt as dt_util
+from homeassistant.util import dt as dt_util
 
 from . import mock_asyncio_subprocess_run
 
 from tests.common import async_fire_time_changed
-
-
-async def test_setup_platform_yaml(hass: HomeAssistant) -> None:
-    """Test setting up the platform with platform yaml."""
-    await setup.async_setup_component(
-        hass,
-        "cover",
-        {
-            "cover": {
-                "platform": "command_line",
-                "command": "echo 1",
-                "payload_on": "1",
-                "payload_off": "0",
-            }
-        },
-    )
-    await hass.async_block_till_done()
-    assert len(hass.states.async_all()) == 0
 
 
 async def test_no_poll_when_cover_has_no_command_state(hass: HomeAssistant) -> None:
@@ -279,8 +262,8 @@ async def test_updating_to_often(
 
     assert not called
     assert (
-        "Updating Command Line Cover Test took longer than the scheduled update interval"
-        not in caplog.text
+        "Updating Command Line Cover Test took longer"
+        " than the scheduled update interval" not in caplog.text
     )
     async_fire_time_changed(hass, dt_util.now() + timedelta(seconds=11))
     await hass.async_block_till_done(wait_background_tasks=True)
@@ -288,8 +271,8 @@ async def test_updating_to_often(
     called.clear()
 
     assert (
-        "Updating Command Line Cover Test took longer than the scheduled update interval"
-        not in caplog.text
+        "Updating Command Line Cover Test took longer"
+        " than the scheduled update interval" not in caplog.text
     )
 
     # Simulate update takes too long
@@ -303,8 +286,8 @@ async def test_updating_to_often(
     await hass.async_block_till_done(wait_background_tasks=True)
     assert called
     assert (
-        "Updating Command Line Cover Test took longer than the scheduled update interval"
-        in caplog.text
+        "Updating Command Line Cover Test took longer"
+        " than the scheduled update interval" in caplog.text
     )
 
 
@@ -368,7 +351,9 @@ async def test_updating_manually(
                     "cover": {
                         "command_state": "echo 10",
                         "name": "Test",
-                        "availability": '{{ states("sensor.input1")=="on" }}',
+                        "value_template": "{{ value }}",
+                        "availability": '{{ "sensor.input1" | has_value }}',
+                        "icon": 'mdi:{{ states("sensor.input1") }}',
                     },
                 }
             ]
@@ -389,9 +374,10 @@ async def test_availability(
 
     entity_state = hass.states.get("cover.test")
     assert entity_state
-    assert entity_state.state == STATE_OPEN
+    assert entity_state.state == CoverState.OPEN
+    assert entity_state.attributes["icon"] == "mdi:on"
 
-    hass.states.async_set("sensor.input1", "off")
+    hass.states.async_set("sensor.input1", STATE_UNAVAILABLE)
     await hass.async_block_till_done()
     with mock_asyncio_subprocess_run(b"50\n"):
         freezer.tick(timedelta(minutes=1))
@@ -401,6 +387,19 @@ async def test_availability(
     entity_state = hass.states.get("cover.test")
     assert entity_state
     assert entity_state.state == STATE_UNAVAILABLE
+    assert "icon" not in entity_state.attributes
+
+    hass.states.async_set("sensor.input1", "off")
+    await hass.async_block_till_done()
+    with mock_asyncio_subprocess_run(b"25\n"):
+        freezer.tick(timedelta(minutes=1))
+        async_fire_time_changed(hass)
+        await hass.async_block_till_done(wait_background_tasks=True)
+
+    entity_state = hass.states.get("cover.test")
+    assert entity_state
+    assert entity_state.state == CoverState.OPEN
+    assert entity_state.attributes["icon"] == "mdi:off"
 
 
 async def test_icon_template(hass: HomeAssistant) -> None:
@@ -419,13 +418,24 @@ async def test_icon_template(hass: HomeAssistant) -> None:
                             "command_close": f"echo 0 > {path}",
                             "command_stop": f"echo 0 > {path}",
                             "name": "Test",
-                            "icon": "{% if this.state=='open' %} mdi:open {% else %} mdi:closed {% endif %}",
+                            "icon": (
+                                "{% if this.attributes.icon=="
+                                '"mdi:icon2" %} mdi:icon1'
+                                " {% else %} mdi:icon2"
+                                " {% endif %}"
+                            ),
                         }
                     }
                 ]
             },
         )
         await hass.async_block_till_done()
+        await hass.services.async_call(
+            COVER_DOMAIN,
+            SERVICE_OPEN_COVER,
+            {ATTR_ENTITY_ID: "cover.test"},
+            blocking=True,
+        )
 
         await hass.services.async_call(
             COVER_DOMAIN,
@@ -435,7 +445,7 @@ async def test_icon_template(hass: HomeAssistant) -> None:
         )
         entity_state = hass.states.get("cover.test")
         assert entity_state
-        assert entity_state.attributes.get("icon") == "mdi:closed"
+        assert entity_state.attributes.get("icon") == "mdi:icon1"
 
         await hass.services.async_call(
             COVER_DOMAIN,
@@ -445,4 +455,50 @@ async def test_icon_template(hass: HomeAssistant) -> None:
         )
         entity_state = hass.states.get("cover.test")
         assert entity_state
-        assert entity_state.attributes.get("icon") == "mdi:open"
+        assert entity_state.attributes.get("icon") == "mdi:icon2"
+
+
+@pytest.mark.parametrize(
+    "get_config",
+    [
+        {
+            "command_line": [
+                {
+                    "cover": {
+                        "command_state": "echo 10",
+                        "name": "Test",
+                        "value_template": "{{ x - 1 }}",
+                        "availability": "{{ value == '50' }}",
+                    },
+                }
+            ]
+        }
+    ],
+)
+async def test_availability_blocks_value_template(
+    hass: HomeAssistant,
+    load_yaml_integration: None,
+    freezer: FrozenDateTimeFactory,
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    """Test availability blocks value_template from rendering."""
+    error = "Error parsing value for cover.test: 'x' is undefined"
+    await hass.async_block_till_done()
+    with mock_asyncio_subprocess_run(b"51\n"):
+        freezer.tick(timedelta(minutes=1))
+        async_fire_time_changed(hass)
+        await hass.async_block_till_done(wait_background_tasks=True)
+
+    assert error not in caplog.text
+
+    entity_state = hass.states.get("cover.test")
+    assert entity_state
+    assert entity_state.state == STATE_UNAVAILABLE
+
+    await hass.async_block_till_done()
+    with mock_asyncio_subprocess_run(b"50\n"):
+        freezer.tick(timedelta(minutes=1))
+        async_fire_time_changed(hass)
+        await hass.async_block_till_done(wait_background_tasks=True)
+
+    assert error in caplog.text

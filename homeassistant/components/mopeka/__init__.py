@@ -1,7 +1,5 @@
 """The Mopeka integration."""
 
-from __future__ import annotations
-
 import logging
 
 from mopeka_iot_ble import MediumType, MopekaIOTBluetoothDeviceData
@@ -14,7 +12,7 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant
 
-from .const import CONF_MEDIUM_TYPE
+from .const import CONF_MEDIUM_TYPE, DEFAULT_MEDIUM_TYPE
 
 PLATFORMS: list[Platform] = [Platform.SENSOR]
 
@@ -29,8 +27,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: MopekaConfigEntry) -> bo
     address = entry.unique_id
     assert address is not None
 
-    # Default sensors configured prior to the intorudction of MediumType
-    medium_type_str = entry.data.get(CONF_MEDIUM_TYPE, MediumType.PROPANE.value)
+    # Default sensors configured prior to the introduction of MediumType
+    medium_type_str = entry.data.get(CONF_MEDIUM_TYPE, DEFAULT_MEDIUM_TYPE)
     data = MopekaIOTBluetoothDeviceData(MediumType(medium_type_str))
     coordinator = entry.runtime_data = PassiveBluetoothProcessorCoordinator(
         hass,

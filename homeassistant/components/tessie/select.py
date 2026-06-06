@@ -1,7 +1,5 @@
 """Select platform for Tessie integration."""
 
-from __future__ import annotations
-
 from itertools import chain
 
 from tesla_fleet_api.const import EnergyExportMode, EnergyOperationMode
@@ -9,7 +7,7 @@ from tessie_api import set_seat_cool, set_seat_heat
 
 from homeassistant.components.select import SelectEntity
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
 from . import TessieConfigEntry
 from .const import TessieSeatCoolerOptions, TessieSeatHeaterOptions
@@ -38,7 +36,7 @@ PARALLEL_UPDATES = 0
 async def async_setup_entry(
     hass: HomeAssistant,
     entry: TessieConfigEntry,
-    async_add_entities: AddEntitiesCallback,
+    async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up the Tessie select platform from a config entry."""
 
@@ -48,15 +46,13 @@ async def async_setup_entry(
                 TessieSeatHeaterSelectEntity(vehicle, key)
                 for vehicle in entry.runtime_data.vehicles
                 for key in SEAT_HEATERS
-                if key
-                in vehicle.data_coordinator.data  # not all vehicles have rear center or third row
+                if key in vehicle.data_coordinator.data
             ),
             (
                 TessieSeatCoolerSelectEntity(vehicle, key)
                 for vehicle in entry.runtime_data.vehicles
                 for key in SEAT_COOLERS
-                if key
-                in vehicle.data_coordinator.data  # not all vehicles have ventilated seats
+                if key in vehicle.data_coordinator.data
             ),
             (
                 TessieOperationSelectEntity(energysite)
@@ -168,6 +164,8 @@ class TessieExportRuleSelectEntity(TessieEnergyEntity, SelectEntity):
 
     async def async_select_option(self, option: str) -> None:
         """Change the selected option."""
-        await handle_command(self.api.grid_import_export(option))
+        await handle_command(
+            self.api.grid_import_export(customer_preferred_export_rule=option)
+        )
         self._attr_current_option = option
         self.async_write_ha_state()

@@ -1,10 +1,9 @@
 """clicksend_tts platform for notify component."""
 
-from __future__ import annotations
-
 from http import HTTPStatus
 import json
 import logging
+from typing import Any
 
 import requests
 import voluptuous as vol
@@ -15,13 +14,14 @@ from homeassistant.components.notify import (
 )
 from homeassistant.const import (
     CONF_API_KEY,
+    CONF_LANGUAGE,
     CONF_NAME,
     CONF_RECIPIENT,
     CONF_USERNAME,
     CONTENT_TYPE_JSON,
 )
 from homeassistant.core import HomeAssistant
-import homeassistant.helpers.config_validation as cv
+from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
 
 _LOGGER = logging.getLogger(__name__)
@@ -30,7 +30,6 @@ BASE_API_URL = "https://rest.clicksend.com/v3"
 
 HEADERS = {"Content-Type": CONTENT_TYPE_JSON}
 
-CONF_LANGUAGE = "language"
 CONF_VOICE = "voice"
 
 MALE_VOICE = "male"
@@ -81,7 +80,7 @@ class ClicksendNotificationService(BaseNotificationService):
         self.language = config[CONF_LANGUAGE]
         self.voice = config[CONF_VOICE]
 
-    def send_message(self, message="", **kwargs):
+    def send_message(self, message: str = "", **kwargs: Any) -> None:
         """Send a voice call to a user."""
         data = {
             "messages": [

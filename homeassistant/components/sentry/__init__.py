@@ -1,9 +1,7 @@
 """The sentry integration."""
 
-from __future__ import annotations
-
+from collections.abc import Mapping
 import re
-from types import MappingProxyType
 from typing import Any
 
 import sentry_sdk
@@ -120,7 +118,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
 def process_before_send(
     hass: HomeAssistant,
-    options: MappingProxyType[str, Any],
+    options: Mapping[str, Any],
     channel: str,
     huuid: str,
     system_info: dict[str, bool | str],

@@ -1,7 +1,5 @@
 """Support for non-delivered packages recorded in AfterShip."""
 
-from __future__ import annotations
-
 import logging
 from typing import Any, Final
 
@@ -9,12 +7,12 @@ from pyaftership import AfterShip, AfterShipException
 
 from homeassistant.components.sensor import SensorEntity
 from homeassistant.core import HomeAssistant, ServiceCall
-import homeassistant.helpers.config_validation as cv
+from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.dispatcher import (
     async_dispatcher_connect,
     async_dispatcher_send,
 )
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 from homeassistant.util import Throttle
 
 from . import AfterShipConfigEntry
@@ -42,7 +40,7 @@ PLATFORM_SCHEMA: Final = cv.removed(DOMAIN, raise_if_present=False)
 async def async_setup_entry(
     hass: HomeAssistant,
     config_entry: AfterShipConfigEntry,
-    async_add_entities: AddEntitiesCallback,
+    async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up AfterShip sensor entities based on a config entry."""
     aftership = config_entry.runtime_data
@@ -58,6 +56,7 @@ async def async_setup_entry(
         )
         async_dispatcher_send(hass, UPDATE_TOPIC)
 
+    # pylint: disable-next=home-assistant-service-registered-in-setup-entry
     hass.services.async_register(
         DOMAIN,
         SERVICE_ADD_TRACKING,
@@ -73,6 +72,7 @@ async def async_setup_entry(
         )
         async_dispatcher_send(hass, UPDATE_TOPIC)
 
+    # pylint: disable-next=home-assistant-service-registered-in-setup-entry
     hass.services.async_register(
         DOMAIN,
         SERVICE_REMOVE_TRACKING,

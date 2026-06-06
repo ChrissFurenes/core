@@ -1,7 +1,5 @@
 """Support for the Airly sensor service."""
 
-from __future__ import annotations
-
 from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Any
@@ -21,10 +19,9 @@ from homeassistant.const import (
 )
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.device_registry import DeviceEntryType, DeviceInfo
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from . import AirlyConfigEntry, AirlyDataUpdateCoordinator
 from .const import (
     ATTR_ADVICE,
     ATTR_API_ADVICE,
@@ -52,6 +49,7 @@ from .const import (
     SUFFIX_PERCENT,
     URL,
 )
+from .coordinator import AirlyConfigEntry, AirlyDataUpdateCoordinator
 
 PARALLEL_UPDATES = 1
 
@@ -127,7 +125,7 @@ SENSOR_TYPES: tuple[AirlySensorEntityDescription, ...] = (
     ),
     AirlySensorEntityDescription(
         key=ATTR_API_CO,
-        translation_key="co",
+        device_class=SensorDeviceClass.CO,
         native_unit_of_measurement=CONCENTRATION_MICROGRAMS_PER_CUBIC_METER,
         state_class=SensorStateClass.MEASUREMENT,
         suggested_display_precision=0,
@@ -175,10 +173,10 @@ SENSOR_TYPES: tuple[AirlySensorEntityDescription, ...] = (
 async def async_setup_entry(
     hass: HomeAssistant,
     entry: AirlyConfigEntry,
-    async_add_entities: AddEntitiesCallback,
+    async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up Airly sensor entities based on a config entry."""
-    name = entry.data[CONF_NAME]
+    name = entry.data.get(CONF_NAME) or entry.title
 
     coordinator = entry.runtime_data
 
@@ -186,7 +184,8 @@ async def async_setup_entry(
         (
             AirlySensor(coordinator, name, description)
             for description in SENSOR_TYPES
-            # When we use the nearest method, we are not sure which sensors are available
+            # When we use the nearest method, we are not sure
+            # which sensors are available
             if coordinator.data.get(description.key)
         ),
         False,

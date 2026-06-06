@@ -1,7 +1,5 @@
 """Module for SIA Binary Sensors."""
 
-from __future__ import annotations
-
 from collections.abc import Iterable
 from dataclasses import dataclass
 import logging
@@ -16,7 +14,7 @@ from homeassistant.components.binary_sensor import (
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import STATE_OFF, STATE_ON, STATE_UNAVAILABLE, EntityCategory
 from homeassistant.core import HomeAssistant, State, callback
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
 from .const import (
     CONF_ACCOUNT,
@@ -28,7 +26,7 @@ from .const import (
     KEY_SMOKE,
     SIA_HUB_ZONE,
 )
-from .sia_entity_base import SIABaseEntity, SIAEntityDescription
+from .entity import SIABaseEntity, SIAEntityDescription
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -105,7 +103,7 @@ def generate_binary_sensors(entry: ConfigEntry) -> Iterable[SIABinarySensor]:
 async def async_setup_entry(
     hass: HomeAssistant,
     entry: ConfigEntry,
-    async_add_entities: AddEntitiesCallback,
+    async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up SIA binary sensors from a config entry."""
     async_add_entities(generate_binary_sensors(entry))

@@ -1,7 +1,5 @@
 """Support for ZHA controls using the select platform."""
 
-from __future__ import annotations
-
 import functools
 import logging
 from typing import Any
@@ -11,7 +9,7 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import STATE_UNAVAILABLE, STATE_UNKNOWN, Platform
 from homeassistant.core import HomeAssistant, State, callback
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
 from .entity import ZHAEntity
 from .helpers import (
@@ -28,7 +26,7 @@ _LOGGER = logging.getLogger(__name__)
 async def async_setup_entry(
     hass: HomeAssistant,
     config_entry: ConfigEntry,
-    async_add_entities: AddEntitiesCallback,
+    async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up the Zigbee Home Automation siren from config entry."""
     zha_data = get_zha_data(hass)
@@ -60,7 +58,7 @@ class ZHAEnumSelectEntity(ZHAEntity, SelectEntity):
         """Return the selected entity option to represent the entity state."""
         return self.entity_data.entity.current_option
 
-    @convert_zha_error_to_ha_error
+    @convert_zha_error_to_ha_error()
     async def async_select_option(self, option: str) -> None:
         """Change the selected option."""
         await self.entity_data.entity.async_select_option(option=option)

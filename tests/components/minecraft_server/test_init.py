@@ -6,7 +6,7 @@ from mcstatus import JavaServer
 import pytest
 
 from homeassistant.components.binary_sensor import DOMAIN as BINARY_SENSOR_DOMAIN
-from homeassistant.components.minecraft_server.const import DEFAULT_NAME, DOMAIN
+from homeassistant.components.minecraft_server.const import DOMAIN
 from homeassistant.components.sensor import DOMAIN as SENSOR_DOMAIN
 from homeassistant.config_entries import ConfigEntryState
 from homeassistant.const import CONF_ADDRESS, CONF_HOST, CONF_NAME, CONF_PORT
@@ -22,6 +22,8 @@ from .const import (
 )
 
 from tests.common import MockConfigEntry
+
+DEFAULT_NAME = "Minecraft Server"
 
 TEST_UNIQUE_ID = f"{TEST_HOST}-{TEST_PORT}"
 
@@ -206,7 +208,7 @@ async def test_entry_migration(
     entity_registry: er.EntityRegistry,
     v1_mock_config_entry: MockConfigEntry,
 ) -> None:
-    """Test entry migration from version 1 to 3, where host and port is required for the connection to the server."""
+    """Test entry migration v1 to v3, where host and port are required."""
     v1_mock_config_entry.add_to_hass(hass)
 
     device_entry_id = create_v1_mock_device_entry(hass, v1_mock_config_entry.entry_id)
@@ -262,16 +264,16 @@ async def test_entry_migration(
     entity_entry = entity_registry.async_get(
         binary_sensor_entity_id_key_mapping["entity_id"]
     )
-    assert (
-        entity_entry.unique_id
-        == f"{migrated_config_entry.entry_id}-{binary_sensor_entity_id_key_mapping['key']}"
+    expected_uid = (
+        f"{migrated_config_entry.entry_id}-{binary_sensor_entity_id_key_mapping['key']}"
     )
+    assert entity_entry.unique_id == expected_uid
 
 
 async def test_entry_migration_host_only(
     hass: HomeAssistant, v1_mock_config_entry: MockConfigEntry
 ) -> None:
-    """Test entry migration from version 1 to 3, where host alone is sufficient for the connection to the server."""
+    """Test entry migration v1 to v3, where host alone is sufficient."""
     v1_mock_config_entry.add_to_hass(hass)
 
     device_entry_id = create_v1_mock_device_entry(hass, v1_mock_config_entry.entry_id)

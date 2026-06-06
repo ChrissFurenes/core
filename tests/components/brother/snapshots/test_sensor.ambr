@@ -1,13 +1,15 @@
 # serializer version: 1
 # name: test_sensors[sensor.hl_l2340dw_b_w_pages-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': dict({
       'state_class': <SensorStateClass.MEASUREMENT: 'measurement'>,
     }),
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -21,6 +23,7 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'B/W pages',
     'options': dict({
     }),
     'original_device_class': None,
@@ -28,10 +31,11 @@
     'original_name': 'B/W pages',
     'platform': 'brother',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'bw_pages',
     'unique_id': '0123456789_bw_counter',
-    'unit_of_measurement': 'p',
+    'unit_of_measurement': 'pages',
   })
 # ---
 # name: test_sensors[sensor.hl_l2340dw_b_w_pages-state]
@@ -39,7 +43,7 @@
     'attributes': ReadOnlyDict({
       'friendly_name': 'HL-L2340DW B/W pages',
       'state_class': <SensorStateClass.MEASUREMENT: 'measurement'>,
-      'unit_of_measurement': 'p',
+      'unit_of_measurement': 'pages',
     }),
     'context': <ANY>,
     'entity_id': 'sensor.hl_l2340dw_b_w_pages',
@@ -51,13 +55,15 @@
 # ---
 # name: test_sensors[sensor.hl_l2340dw_belt_unit_remaining_lifetime-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': dict({
       'state_class': <SensorStateClass.MEASUREMENT: 'measurement'>,
     }),
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -71,6 +77,7 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Belt unit remaining lifetime',
     'options': dict({
     }),
     'original_device_class': None,
@@ -78,6 +85,7 @@
     'original_name': 'Belt unit remaining lifetime',
     'platform': 'brother',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'belt_unit_remaining_life',
     'unique_id': '0123456789_belt_unit_remaining_life',
@@ -101,13 +109,15 @@
 # ---
 # name: test_sensors[sensor.hl_l2340dw_black_drum_page_counter-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': dict({
       'state_class': <SensorStateClass.MEASUREMENT: 'measurement'>,
     }),
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -121,6 +131,7 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Black drum page counter',
     'options': dict({
     }),
     'original_device_class': None,
@@ -128,10 +139,11 @@
     'original_name': 'Black drum page counter',
     'platform': 'brother',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'black_drum_page_counter',
     'unique_id': '0123456789_black_drum_counter',
-    'unit_of_measurement': 'p',
+    'unit_of_measurement': 'pages',
   })
 # ---
 # name: test_sensors[sensor.hl_l2340dw_black_drum_page_counter-state]
@@ -139,7 +151,7 @@
     'attributes': ReadOnlyDict({
       'friendly_name': 'HL-L2340DW Black drum page counter',
       'state_class': <SensorStateClass.MEASUREMENT: 'measurement'>,
-      'unit_of_measurement': 'p',
+      'unit_of_measurement': 'pages',
     }),
     'context': <ANY>,
     'entity_id': 'sensor.hl_l2340dw_black_drum_page_counter',
@@ -151,13 +163,15 @@
 # ---
 # name: test_sensors[sensor.hl_l2340dw_black_drum_remaining_lifetime-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': dict({
       'state_class': <SensorStateClass.MEASUREMENT: 'measurement'>,
     }),
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -171,6 +185,7 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Black drum remaining lifetime',
     'options': dict({
     }),
     'original_device_class': None,
@@ -178,6 +193,7 @@
     'original_name': 'Black drum remaining lifetime',
     'platform': 'brother',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'black_drum_remaining_life',
     'unique_id': '0123456789_black_drum_remaining_life',
@@ -201,13 +217,15 @@
 # ---
 # name: test_sensors[sensor.hl_l2340dw_black_drum_remaining_pages-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': dict({
       'state_class': <SensorStateClass.MEASUREMENT: 'measurement'>,
     }),
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -221,6 +239,7 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Black drum remaining pages',
     'options': dict({
     }),
     'original_device_class': None,
@@ -228,10 +247,11 @@
     'original_name': 'Black drum remaining pages',
     'platform': 'brother',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'black_drum_remaining_pages',
     'unique_id': '0123456789_black_drum_remaining_pages',
-    'unit_of_measurement': 'p',
+    'unit_of_measurement': 'pages',
   })
 # ---
 # name: test_sensors[sensor.hl_l2340dw_black_drum_remaining_pages-state]
@@ -239,7 +259,7 @@
     'attributes': ReadOnlyDict({
       'friendly_name': 'HL-L2340DW Black drum remaining pages',
       'state_class': <SensorStateClass.MEASUREMENT: 'measurement'>,
-      'unit_of_measurement': 'p',
+      'unit_of_measurement': 'pages',
     }),
     'context': <ANY>,
     'entity_id': 'sensor.hl_l2340dw_black_drum_remaining_pages',
@@ -251,13 +271,15 @@
 # ---
 # name: test_sensors[sensor.hl_l2340dw_black_toner_remaining-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': dict({
       'state_class': <SensorStateClass.MEASUREMENT: 'measurement'>,
     }),
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -271,6 +293,7 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Black toner remaining',
     'options': dict({
     }),
     'original_device_class': None,
@@ -278,6 +301,7 @@
     'original_name': 'Black toner remaining',
     'platform': 'brother',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'black_toner_remaining',
     'unique_id': '0123456789_black_toner_remaining',
@@ -301,13 +325,15 @@
 # ---
 # name: test_sensors[sensor.hl_l2340dw_color_pages-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': dict({
       'state_class': <SensorStateClass.MEASUREMENT: 'measurement'>,
     }),
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -321,6 +347,7 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Color pages',
     'options': dict({
     }),
     'original_device_class': None,
@@ -328,10 +355,11 @@
     'original_name': 'Color pages',
     'platform': 'brother',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'color_pages',
     'unique_id': '0123456789_color_counter',
-    'unit_of_measurement': 'p',
+    'unit_of_measurement': 'pages',
   })
 # ---
 # name: test_sensors[sensor.hl_l2340dw_color_pages-state]
@@ -339,7 +367,7 @@
     'attributes': ReadOnlyDict({
       'friendly_name': 'HL-L2340DW Color pages',
       'state_class': <SensorStateClass.MEASUREMENT: 'measurement'>,
-      'unit_of_measurement': 'p',
+      'unit_of_measurement': 'pages',
     }),
     'context': <ANY>,
     'entity_id': 'sensor.hl_l2340dw_color_pages',
@@ -351,13 +379,15 @@
 # ---
 # name: test_sensors[sensor.hl_l2340dw_cyan_drum_page_counter-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': dict({
       'state_class': <SensorStateClass.MEASUREMENT: 'measurement'>,
     }),
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -371,6 +401,7 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Cyan drum page counter',
     'options': dict({
     }),
     'original_device_class': None,
@@ -378,10 +409,11 @@
     'original_name': 'Cyan drum page counter',
     'platform': 'brother',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'cyan_drum_page_counter',
     'unique_id': '0123456789_cyan_drum_counter',
-    'unit_of_measurement': 'p',
+    'unit_of_measurement': 'pages',
   })
 # ---
 # name: test_sensors[sensor.hl_l2340dw_cyan_drum_page_counter-state]
@@ -389,7 +421,7 @@
     'attributes': ReadOnlyDict({
       'friendly_name': 'HL-L2340DW Cyan drum page counter',
       'state_class': <SensorStateClass.MEASUREMENT: 'measurement'>,
-      'unit_of_measurement': 'p',
+      'unit_of_measurement': 'pages',
     }),
     'context': <ANY>,
     'entity_id': 'sensor.hl_l2340dw_cyan_drum_page_counter',
@@ -401,13 +433,15 @@
 # ---
 # name: test_sensors[sensor.hl_l2340dw_cyan_drum_remaining_lifetime-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': dict({
       'state_class': <SensorStateClass.MEASUREMENT: 'measurement'>,
     }),
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -421,6 +455,7 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Cyan drum remaining lifetime',
     'options': dict({
     }),
     'original_device_class': None,
@@ -428,6 +463,7 @@
     'original_name': 'Cyan drum remaining lifetime',
     'platform': 'brother',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'cyan_drum_remaining_life',
     'unique_id': '0123456789_cyan_drum_remaining_life',
@@ -451,13 +487,15 @@
 # ---
 # name: test_sensors[sensor.hl_l2340dw_cyan_drum_remaining_pages-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': dict({
       'state_class': <SensorStateClass.MEASUREMENT: 'measurement'>,
     }),
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -471,6 +509,7 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Cyan drum remaining pages',
     'options': dict({
     }),
     'original_device_class': None,
@@ -478,10 +517,11 @@
     'original_name': 'Cyan drum remaining pages',
     'platform': 'brother',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'cyan_drum_remaining_pages',
     'unique_id': '0123456789_cyan_drum_remaining_pages',
-    'unit_of_measurement': 'p',
+    'unit_of_measurement': 'pages',
   })
 # ---
 # name: test_sensors[sensor.hl_l2340dw_cyan_drum_remaining_pages-state]
@@ -489,7 +529,7 @@
     'attributes': ReadOnlyDict({
       'friendly_name': 'HL-L2340DW Cyan drum remaining pages',
       'state_class': <SensorStateClass.MEASUREMENT: 'measurement'>,
-      'unit_of_measurement': 'p',
+      'unit_of_measurement': 'pages',
     }),
     'context': <ANY>,
     'entity_id': 'sensor.hl_l2340dw_cyan_drum_remaining_pages',
@@ -501,13 +541,15 @@
 # ---
 # name: test_sensors[sensor.hl_l2340dw_cyan_toner_remaining-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': dict({
       'state_class': <SensorStateClass.MEASUREMENT: 'measurement'>,
     }),
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -521,6 +563,7 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Cyan toner remaining',
     'options': dict({
     }),
     'original_device_class': None,
@@ -528,6 +571,7 @@
     'original_name': 'Cyan toner remaining',
     'platform': 'brother',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'cyan_toner_remaining',
     'unique_id': '0123456789_cyan_toner_remaining',
@@ -551,13 +595,15 @@
 # ---
 # name: test_sensors[sensor.hl_l2340dw_drum_page_counter-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': dict({
       'state_class': <SensorStateClass.MEASUREMENT: 'measurement'>,
     }),
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -571,6 +617,7 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Drum page counter',
     'options': dict({
     }),
     'original_device_class': None,
@@ -578,10 +625,11 @@
     'original_name': 'Drum page counter',
     'platform': 'brother',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'drum_page_counter',
     'unique_id': '0123456789_drum_counter',
-    'unit_of_measurement': 'p',
+    'unit_of_measurement': 'pages',
   })
 # ---
 # name: test_sensors[sensor.hl_l2340dw_drum_page_counter-state]
@@ -589,7 +637,7 @@
     'attributes': ReadOnlyDict({
       'friendly_name': 'HL-L2340DW Drum page counter',
       'state_class': <SensorStateClass.MEASUREMENT: 'measurement'>,
-      'unit_of_measurement': 'p',
+      'unit_of_measurement': 'pages',
     }),
     'context': <ANY>,
     'entity_id': 'sensor.hl_l2340dw_drum_page_counter',
@@ -601,13 +649,15 @@
 # ---
 # name: test_sensors[sensor.hl_l2340dw_drum_remaining_lifetime-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': dict({
       'state_class': <SensorStateClass.MEASUREMENT: 'measurement'>,
     }),
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -621,6 +671,7 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Drum remaining lifetime',
     'options': dict({
     }),
     'original_device_class': None,
@@ -628,6 +679,7 @@
     'original_name': 'Drum remaining lifetime',
     'platform': 'brother',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'drum_remaining_life',
     'unique_id': '0123456789_drum_remaining_life',
@@ -651,13 +703,15 @@
 # ---
 # name: test_sensors[sensor.hl_l2340dw_drum_remaining_pages-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': dict({
       'state_class': <SensorStateClass.MEASUREMENT: 'measurement'>,
     }),
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -671,6 +725,7 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Drum remaining pages',
     'options': dict({
     }),
     'original_device_class': None,
@@ -678,10 +733,11 @@
     'original_name': 'Drum remaining pages',
     'platform': 'brother',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'drum_remaining_pages',
     'unique_id': '0123456789_drum_remaining_pages',
-    'unit_of_measurement': 'p',
+    'unit_of_measurement': 'pages',
   })
 # ---
 # name: test_sensors[sensor.hl_l2340dw_drum_remaining_pages-state]
@@ -689,7 +745,7 @@
     'attributes': ReadOnlyDict({
       'friendly_name': 'HL-L2340DW Drum remaining pages',
       'state_class': <SensorStateClass.MEASUREMENT: 'measurement'>,
-      'unit_of_measurement': 'p',
+      'unit_of_measurement': 'pages',
     }),
     'context': <ANY>,
     'entity_id': 'sensor.hl_l2340dw_drum_remaining_pages',
@@ -701,13 +757,15 @@
 # ---
 # name: test_sensors[sensor.hl_l2340dw_duplex_unit_page_counter-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': dict({
       'state_class': <SensorStateClass.MEASUREMENT: 'measurement'>,
     }),
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -721,6 +779,7 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Duplex unit page counter',
     'options': dict({
     }),
     'original_device_class': None,
@@ -728,10 +787,11 @@
     'original_name': 'Duplex unit page counter',
     'platform': 'brother',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'duplex_unit_page_counter',
     'unique_id': '0123456789_duplex_unit_pages_counter',
-    'unit_of_measurement': 'p',
+    'unit_of_measurement': 'pages',
   })
 # ---
 # name: test_sensors[sensor.hl_l2340dw_duplex_unit_page_counter-state]
@@ -739,7 +799,7 @@
     'attributes': ReadOnlyDict({
       'friendly_name': 'HL-L2340DW Duplex unit page counter',
       'state_class': <SensorStateClass.MEASUREMENT: 'measurement'>,
-      'unit_of_measurement': 'p',
+      'unit_of_measurement': 'pages',
     }),
     'context': <ANY>,
     'entity_id': 'sensor.hl_l2340dw_duplex_unit_page_counter',
@@ -751,13 +811,15 @@
 # ---
 # name: test_sensors[sensor.hl_l2340dw_fuser_remaining_lifetime-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': dict({
       'state_class': <SensorStateClass.MEASUREMENT: 'measurement'>,
     }),
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -771,6 +833,7 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Fuser remaining lifetime',
     'options': dict({
     }),
     'original_device_class': None,
@@ -778,6 +841,7 @@
     'original_name': 'Fuser remaining lifetime',
     'platform': 'brother',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'fuser_remaining_life',
     'unique_id': '0123456789_fuser_remaining_life',
@@ -799,62 +863,17 @@
     'state': '97',
   })
 # ---
-# name: test_sensors[sensor.hl_l2340dw_last_restart-entry]
-  EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
-    'area_id': None,
-    'capabilities': None,
-    'config_entry_id': <ANY>,
-    'device_class': None,
-    'device_id': <ANY>,
-    'disabled_by': None,
-    'domain': 'sensor',
-    'entity_category': <EntityCategory.DIAGNOSTIC: 'diagnostic'>,
-    'entity_id': 'sensor.hl_l2340dw_last_restart',
-    'has_entity_name': True,
-    'hidden_by': None,
-    'icon': None,
-    'id': <ANY>,
-    'labels': set({
-    }),
-    'name': None,
-    'options': dict({
-    }),
-    'original_device_class': <SensorDeviceClass.TIMESTAMP: 'timestamp'>,
-    'original_icon': None,
-    'original_name': 'Last restart',
-    'platform': 'brother',
-    'previous_unique_id': None,
-    'supported_features': 0,
-    'translation_key': 'last_restart',
-    'unique_id': '0123456789_uptime',
-    'unit_of_measurement': None,
-  })
-# ---
-# name: test_sensors[sensor.hl_l2340dw_last_restart-state]
-  StateSnapshot({
-    'attributes': ReadOnlyDict({
-      'device_class': 'timestamp',
-      'friendly_name': 'HL-L2340DW Last restart',
-    }),
-    'context': <ANY>,
-    'entity_id': 'sensor.hl_l2340dw_last_restart',
-    'last_changed': <ANY>,
-    'last_reported': <ANY>,
-    'last_updated': <ANY>,
-    'state': '2024-03-03T15:04:24+00:00',
-  })
-# ---
 # name: test_sensors[sensor.hl_l2340dw_magenta_drum_page_counter-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': dict({
       'state_class': <SensorStateClass.MEASUREMENT: 'measurement'>,
     }),
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -868,6 +887,7 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Magenta drum page counter',
     'options': dict({
     }),
     'original_device_class': None,
@@ -875,10 +895,11 @@
     'original_name': 'Magenta drum page counter',
     'platform': 'brother',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'magenta_drum_page_counter',
     'unique_id': '0123456789_magenta_drum_counter',
-    'unit_of_measurement': 'p',
+    'unit_of_measurement': 'pages',
   })
 # ---
 # name: test_sensors[sensor.hl_l2340dw_magenta_drum_page_counter-state]
@@ -886,7 +907,7 @@
     'attributes': ReadOnlyDict({
       'friendly_name': 'HL-L2340DW Magenta drum page counter',
       'state_class': <SensorStateClass.MEASUREMENT: 'measurement'>,
-      'unit_of_measurement': 'p',
+      'unit_of_measurement': 'pages',
     }),
     'context': <ANY>,
     'entity_id': 'sensor.hl_l2340dw_magenta_drum_page_counter',
@@ -898,13 +919,15 @@
 # ---
 # name: test_sensors[sensor.hl_l2340dw_magenta_drum_remaining_lifetime-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': dict({
       'state_class': <SensorStateClass.MEASUREMENT: 'measurement'>,
     }),
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -918,6 +941,7 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Magenta drum remaining lifetime',
     'options': dict({
     }),
     'original_device_class': None,
@@ -925,6 +949,7 @@
     'original_name': 'Magenta drum remaining lifetime',
     'platform': 'brother',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'magenta_drum_remaining_life',
     'unique_id': '0123456789_magenta_drum_remaining_life',
@@ -948,13 +973,15 @@
 # ---
 # name: test_sensors[sensor.hl_l2340dw_magenta_drum_remaining_pages-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': dict({
       'state_class': <SensorStateClass.MEASUREMENT: 'measurement'>,
     }),
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -968,6 +995,7 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Magenta drum remaining pages',
     'options': dict({
     }),
     'original_device_class': None,
@@ -975,10 +1003,11 @@
     'original_name': 'Magenta drum remaining pages',
     'platform': 'brother',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'magenta_drum_remaining_pages',
     'unique_id': '0123456789_magenta_drum_remaining_pages',
-    'unit_of_measurement': 'p',
+    'unit_of_measurement': 'pages',
   })
 # ---
 # name: test_sensors[sensor.hl_l2340dw_magenta_drum_remaining_pages-state]
@@ -986,7 +1015,7 @@
     'attributes': ReadOnlyDict({
       'friendly_name': 'HL-L2340DW Magenta drum remaining pages',
       'state_class': <SensorStateClass.MEASUREMENT: 'measurement'>,
-      'unit_of_measurement': 'p',
+      'unit_of_measurement': 'pages',
     }),
     'context': <ANY>,
     'entity_id': 'sensor.hl_l2340dw_magenta_drum_remaining_pages',
@@ -998,13 +1027,15 @@
 # ---
 # name: test_sensors[sensor.hl_l2340dw_magenta_toner_remaining-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': dict({
       'state_class': <SensorStateClass.MEASUREMENT: 'measurement'>,
     }),
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -1018,6 +1049,7 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Magenta toner remaining',
     'options': dict({
     }),
     'original_device_class': None,
@@ -1025,6 +1057,7 @@
     'original_name': 'Magenta toner remaining',
     'platform': 'brother',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'magenta_toner_remaining',
     'unique_id': '0123456789_magenta_toner_remaining',
@@ -1048,13 +1081,15 @@
 # ---
 # name: test_sensors[sensor.hl_l2340dw_page_counter-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': dict({
       'state_class': <SensorStateClass.MEASUREMENT: 'measurement'>,
     }),
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -1068,6 +1103,7 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Page counter',
     'options': dict({
     }),
     'original_device_class': None,
@@ -1075,10 +1111,11 @@
     'original_name': 'Page counter',
     'platform': 'brother',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'page_counter',
     'unique_id': '0123456789_page_counter',
-    'unit_of_measurement': 'p',
+    'unit_of_measurement': 'pages',
   })
 # ---
 # name: test_sensors[sensor.hl_l2340dw_page_counter-state]
@@ -1086,7 +1123,7 @@
     'attributes': ReadOnlyDict({
       'friendly_name': 'HL-L2340DW Page counter',
       'state_class': <SensorStateClass.MEASUREMENT: 'measurement'>,
-      'unit_of_measurement': 'p',
+      'unit_of_measurement': 'pages',
     }),
     'context': <ANY>,
     'entity_id': 'sensor.hl_l2340dw_page_counter',
@@ -1098,13 +1135,15 @@
 # ---
 # name: test_sensors[sensor.hl_l2340dw_pf_kit_1_remaining_lifetime-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': dict({
       'state_class': <SensorStateClass.MEASUREMENT: 'measurement'>,
     }),
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -1118,6 +1157,7 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'PF Kit 1 remaining lifetime',
     'options': dict({
     }),
     'original_device_class': None,
@@ -1125,6 +1165,7 @@
     'original_name': 'PF Kit 1 remaining lifetime',
     'platform': 'brother',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'pf_kit_1_remaining_life',
     'unique_id': '0123456789_pf_kit_1_remaining_life',
@@ -1148,11 +1189,13 @@
 # ---
 # name: test_sensors[sensor.hl_l2340dw_status-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': None,
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -1166,6 +1209,7 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Status',
     'options': dict({
     }),
     'original_device_class': None,
@@ -1173,6 +1217,7 @@
     'original_name': 'Status',
     'platform': 'brother',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'status',
     'unique_id': '0123456789_status',
@@ -1192,15 +1237,68 @@
     'state': 'waiting',
   })
 # ---
+# name: test_sensors[sensor.hl_l2340dw_uptime-entry]
+  EntityRegistryEntrySnapshot({
+    'aliases': list([
+      None,
+    ]),
+    'area_id': None,
+    'capabilities': None,
+    'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
+    'device_class': None,
+    'device_id': <ANY>,
+    'disabled_by': None,
+    'domain': 'sensor',
+    'entity_category': <EntityCategory.DIAGNOSTIC: 'diagnostic'>,
+    'entity_id': 'sensor.hl_l2340dw_uptime',
+    'has_entity_name': True,
+    'hidden_by': None,
+    'icon': None,
+    'id': <ANY>,
+    'labels': set({
+    }),
+    'name': None,
+    'object_id_base': 'Uptime',
+    'options': dict({
+    }),
+    'original_device_class': <SensorDeviceClass.UPTIME: 'uptime'>,
+    'original_icon': None,
+    'original_name': 'Uptime',
+    'platform': 'brother',
+    'previous_unique_id': None,
+    'suggested_object_id': None,
+    'supported_features': 0,
+    'translation_key': None,
+    'unique_id': '0123456789_uptime',
+    'unit_of_measurement': None,
+  })
+# ---
+# name: test_sensors[sensor.hl_l2340dw_uptime-state]
+  StateSnapshot({
+    'attributes': ReadOnlyDict({
+      'device_class': 'uptime',
+      'friendly_name': 'HL-L2340DW Uptime',
+    }),
+    'context': <ANY>,
+    'entity_id': 'sensor.hl_l2340dw_uptime',
+    'last_changed': <ANY>,
+    'last_reported': <ANY>,
+    'last_updated': <ANY>,
+    'state': '2024-03-03T15:04:24+00:00',
+  })
+# ---
 # name: test_sensors[sensor.hl_l2340dw_yellow_drum_page_counter-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': dict({
       'state_class': <SensorStateClass.MEASUREMENT: 'measurement'>,
     }),
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -1214,6 +1312,7 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Yellow drum page counter',
     'options': dict({
     }),
     'original_device_class': None,
@@ -1221,10 +1320,11 @@
     'original_name': 'Yellow drum page counter',
     'platform': 'brother',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'yellow_drum_page_counter',
     'unique_id': '0123456789_yellow_drum_counter',
-    'unit_of_measurement': 'p',
+    'unit_of_measurement': 'pages',
   })
 # ---
 # name: test_sensors[sensor.hl_l2340dw_yellow_drum_page_counter-state]
@@ -1232,7 +1332,7 @@
     'attributes': ReadOnlyDict({
       'friendly_name': 'HL-L2340DW Yellow drum page counter',
       'state_class': <SensorStateClass.MEASUREMENT: 'measurement'>,
-      'unit_of_measurement': 'p',
+      'unit_of_measurement': 'pages',
     }),
     'context': <ANY>,
     'entity_id': 'sensor.hl_l2340dw_yellow_drum_page_counter',
@@ -1244,13 +1344,15 @@
 # ---
 # name: test_sensors[sensor.hl_l2340dw_yellow_drum_remaining_lifetime-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': dict({
       'state_class': <SensorStateClass.MEASUREMENT: 'measurement'>,
     }),
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -1264,6 +1366,7 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Yellow drum remaining lifetime',
     'options': dict({
     }),
     'original_device_class': None,
@@ -1271,6 +1374,7 @@
     'original_name': 'Yellow drum remaining lifetime',
     'platform': 'brother',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'yellow_drum_remaining_life',
     'unique_id': '0123456789_yellow_drum_remaining_life',
@@ -1294,13 +1398,15 @@
 # ---
 # name: test_sensors[sensor.hl_l2340dw_yellow_drum_remaining_pages-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': dict({
       'state_class': <SensorStateClass.MEASUREMENT: 'measurement'>,
     }),
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -1314,6 +1420,7 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Yellow drum remaining pages',
     'options': dict({
     }),
     'original_device_class': None,
@@ -1321,10 +1428,11 @@
     'original_name': 'Yellow drum remaining pages',
     'platform': 'brother',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'yellow_drum_remaining_pages',
     'unique_id': '0123456789_yellow_drum_remaining_pages',
-    'unit_of_measurement': 'p',
+    'unit_of_measurement': 'pages',
   })
 # ---
 # name: test_sensors[sensor.hl_l2340dw_yellow_drum_remaining_pages-state]
@@ -1332,7 +1440,7 @@
     'attributes': ReadOnlyDict({
       'friendly_name': 'HL-L2340DW Yellow drum remaining pages',
       'state_class': <SensorStateClass.MEASUREMENT: 'measurement'>,
-      'unit_of_measurement': 'p',
+      'unit_of_measurement': 'pages',
     }),
     'context': <ANY>,
     'entity_id': 'sensor.hl_l2340dw_yellow_drum_remaining_pages',
@@ -1344,13 +1452,15 @@
 # ---
 # name: test_sensors[sensor.hl_l2340dw_yellow_toner_remaining-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': dict({
       'state_class': <SensorStateClass.MEASUREMENT: 'measurement'>,
     }),
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -1364,6 +1474,7 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Yellow toner remaining',
     'options': dict({
     }),
     'original_device_class': None,
@@ -1371,6 +1482,7 @@
     'original_name': 'Yellow toner remaining',
     'platform': 'brother',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'yellow_toner_remaining',
     'unique_id': '0123456789_yellow_toner_remaining',

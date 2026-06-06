@@ -4,8 +4,6 @@ For more details on this platform, please refer to the documentation
 at https://home-assistant.io/components/zha.climate/
 """
 
-from __future__ import annotations
-
 from collections.abc import Mapping
 import functools
 from typing import Any
@@ -30,7 +28,7 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import PRECISION_TENTHS, Platform, UnitOfTemperature
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
 from .entity import ZHAEntity
 from .helpers import (
@@ -66,7 +64,7 @@ ZHA_TO_HA_HVAC_ACTION = {
 async def async_setup_entry(
     hass: HomeAssistant,
     config_entry: ConfigEntry,
-    async_add_entities: AddEntitiesCallback,
+    async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up the Zigbee Home Automation sensor from config entry."""
     zha_data = get_zha_data(hass)
@@ -88,7 +86,6 @@ class Thermostat(ZHAEntity, ClimateEntity):
     _attr_precision = PRECISION_TENTHS
     _attr_temperature_unit = UnitOfTemperature.CELSIUS
     _attr_translation_key: str = "thermostat"
-    _enable_turn_on_off_backwards_compatibility = False
 
     def __init__(self, entity_data: EntityData, **kwargs: Any) -> None:
         """Initialize the ZHA thermostat entity."""
@@ -120,8 +117,6 @@ class Thermostat(ZHAEntity, ClimateEntity):
             features |= ClimateEntityFeature.FAN_MODE
         if ZHAClimateEntityFeature.SWING_MODE in zha_features:
             features |= ClimateEntityFeature.SWING_MODE
-        if ZHAClimateEntityFeature.AUX_HEAT in zha_features:
-            features |= ClimateEntityFeature.AUX_HEAT
         if ZHAClimateEntityFeature.TURN_OFF in zha_features:
             features |= ClimateEntityFeature.TURN_OFF
         if ZHAClimateEntityFeature.TURN_ON in zha_features:
@@ -208,25 +203,25 @@ class Thermostat(ZHAEntity, ClimateEntity):
         )
         super()._handle_entity_events(event)
 
-    @convert_zha_error_to_ha_error
+    @convert_zha_error_to_ha_error()
     async def async_set_fan_mode(self, fan_mode: str) -> None:
         """Set fan mode."""
         await self.entity_data.entity.async_set_fan_mode(fan_mode=fan_mode)
         self.async_write_ha_state()
 
-    @convert_zha_error_to_ha_error
+    @convert_zha_error_to_ha_error()
     async def async_set_hvac_mode(self, hvac_mode: HVACMode) -> None:
         """Set new target operation mode."""
         await self.entity_data.entity.async_set_hvac_mode(hvac_mode=hvac_mode)
         self.async_write_ha_state()
 
-    @convert_zha_error_to_ha_error
+    @convert_zha_error_to_ha_error()
     async def async_set_preset_mode(self, preset_mode: str) -> None:
         """Set new preset mode."""
         await self.entity_data.entity.async_set_preset_mode(preset_mode=preset_mode)
         self.async_write_ha_state()
 
-    @convert_zha_error_to_ha_error
+    @convert_zha_error_to_ha_error()
     async def async_set_temperature(self, **kwargs: Any) -> None:
         """Set new target temperature."""
         await self.entity_data.entity.async_set_temperature(

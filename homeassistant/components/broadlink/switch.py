@@ -1,6 +1,5 @@
 """Support for Broadlink switches."""
-
-from __future__ import annotations
+# pylint: disable=home-assistant-use-runtime-data  # Uses legacy hass.data[DOMAIN] pattern
 
 from abc import ABC, abstractmethod
 import logging
@@ -29,8 +28,11 @@ from homeassistant.const import (
 )
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import PlatformNotReady
-import homeassistant.helpers.config_validation as cv
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers import config_validation as cv
+from homeassistant.helpers.entity_platform import (
+    AddConfigEntryEntitiesCallback,
+    AddEntitiesCallback,
+)
 from homeassistant.helpers.restore_state import RestoreEntity
 from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
 
@@ -85,7 +87,7 @@ async def async_setup_platform(
 
     if switches := config.get(CONF_SWITCHES):
         platform_data = hass.data[DOMAIN].platforms.get(Platform.SWITCH, {})
-        async_add_entities_config_entry: AddEntitiesCallback
+        async_add_entities_config_entry: AddConfigEntryEntitiesCallback
         device: BroadlinkDevice
         async_add_entities_config_entry, device = platform_data.get(
             mac_addr, (None, None)
@@ -111,7 +113,7 @@ async def async_setup_platform(
 async def async_setup_entry(
     hass: HomeAssistant,
     config_entry: ConfigEntry,
-    async_add_entities: AddEntitiesCallback,
+    async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up the Broadlink switch."""
     device = hass.data[DOMAIN].devices[config_entry.entry_id]

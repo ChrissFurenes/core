@@ -1,17 +1,19 @@
 # serializer version: 1
-# name: test_entity_and_device_data[site_payload0-device_payload0][update.device_1-entry]
+# name: test_entity_and_device_data[site_payload0-device_payload0][update.device_1_firmware-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': None,
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
     'domain': 'update',
     'entity_category': <EntityCategory.CONFIG: 'config'>,
-    'entity_id': 'update.device_1',
+    'entity_id': 'update.device_1_firmware',
     'has_entity_name': True,
     'hidden_by': None,
     'icon': None,
@@ -19,26 +21,29 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Firmware',
     'options': dict({
     }),
     'original_device_class': <UpdateDeviceClass.FIRMWARE: 'firmware'>,
     'original_icon': None,
-    'original_name': None,
+    'original_name': 'Firmware',
     'platform': 'unifi',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': <UpdateEntityFeature: 5>,
     'translation_key': None,
     'unique_id': 'device_update-00:00:00:00:01:01',
     'unit_of_measurement': None,
   })
 # ---
-# name: test_entity_and_device_data[site_payload0-device_payload0][update.device_1-state]
+# name: test_entity_and_device_data[site_payload0-device_payload0][update.device_1_firmware-state]
   StateSnapshot({
     'attributes': ReadOnlyDict({
       'auto_update': False,
       'device_class': 'firmware',
-      'entity_picture': 'https://brands.home-assistant.io/_/unifi/icon.png',
-      'friendly_name': 'Device 1',
+      'display_precision': 0,
+      'entity_picture': '/api/brands/integration/unifi/icon.png',
+      'friendly_name': 'Device 1 Firmware',
       'in_progress': False,
       'installed_version': '4.0.42.10433',
       'latest_version': '4.3.17.11279',
@@ -47,28 +52,31 @@
       'skipped_version': None,
       'supported_features': <UpdateEntityFeature: 5>,
       'title': None,
+      'update_percentage': None,
     }),
     'context': <ANY>,
-    'entity_id': 'update.device_1',
+    'entity_id': 'update.device_1_firmware',
     'last_changed': <ANY>,
     'last_reported': <ANY>,
     'last_updated': <ANY>,
     'state': 'on',
   })
 # ---
-# name: test_entity_and_device_data[site_payload0-device_payload0][update.device_2-entry]
+# name: test_entity_and_device_data[site_payload0-device_payload0][update.device_2_firmware-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': None,
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
     'domain': 'update',
     'entity_category': <EntityCategory.CONFIG: 'config'>,
-    'entity_id': 'update.device_2',
+    'entity_id': 'update.device_2_firmware',
     'has_entity_name': True,
     'hidden_by': None,
     'icon': None,
@@ -76,26 +84,29 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Firmware',
     'options': dict({
     }),
     'original_device_class': <UpdateDeviceClass.FIRMWARE: 'firmware'>,
     'original_icon': None,
-    'original_name': None,
+    'original_name': 'Firmware',
     'platform': 'unifi',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': <UpdateEntityFeature: 5>,
     'translation_key': None,
     'unique_id': 'device_update-00:00:00:00:01:02',
     'unit_of_measurement': None,
   })
 # ---
-# name: test_entity_and_device_data[site_payload0-device_payload0][update.device_2-state]
+# name: test_entity_and_device_data[site_payload0-device_payload0][update.device_2_firmware-state]
   StateSnapshot({
     'attributes': ReadOnlyDict({
       'auto_update': False,
       'device_class': 'firmware',
-      'entity_picture': 'https://brands.home-assistant.io/_/unifi/icon.png',
-      'friendly_name': 'Device 2',
+      'display_precision': 0,
+      'entity_picture': '/api/brands/integration/unifi/icon.png',
+      'friendly_name': 'Device 2 Firmware',
       'in_progress': False,
       'installed_version': '4.0.42.10433',
       'latest_version': '4.0.42.10433',
@@ -104,28 +115,31 @@
       'skipped_version': None,
       'supported_features': <UpdateEntityFeature: 5>,
       'title': None,
+      'update_percentage': None,
     }),
     'context': <ANY>,
-    'entity_id': 'update.device_2',
+    'entity_id': 'update.device_2_firmware',
     'last_changed': <ANY>,
     'last_reported': <ANY>,
     'last_updated': <ANY>,
     'state': 'off',
   })
 # ---
-# name: test_entity_and_device_data[site_payload1-device_payload0][update.device_1-entry]
+# name: test_entity_and_device_data[site_payload1-device_payload0][update.device_1_firmware-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': None,
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
     'domain': 'update',
     'entity_category': <EntityCategory.CONFIG: 'config'>,
-    'entity_id': 'update.device_1',
+    'entity_id': 'update.device_1_firmware',
     'has_entity_name': True,
     'hidden_by': None,
     'icon': None,
@@ -133,26 +147,29 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Firmware',
     'options': dict({
     }),
     'original_device_class': <UpdateDeviceClass.FIRMWARE: 'firmware'>,
     'original_icon': None,
-    'original_name': None,
+    'original_name': 'Firmware',
     'platform': 'unifi',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': <UpdateEntityFeature: 4>,
     'translation_key': None,
     'unique_id': 'device_update-00:00:00:00:01:01',
     'unit_of_measurement': None,
   })
 # ---
-# name: test_entity_and_device_data[site_payload1-device_payload0][update.device_1-state]
+# name: test_entity_and_device_data[site_payload1-device_payload0][update.device_1_firmware-state]
   StateSnapshot({
     'attributes': ReadOnlyDict({
       'auto_update': False,
       'device_class': 'firmware',
-      'entity_picture': 'https://brands.home-assistant.io/_/unifi/icon.png',
-      'friendly_name': 'Device 1',
+      'display_precision': 0,
+      'entity_picture': '/api/brands/integration/unifi/icon.png',
+      'friendly_name': 'Device 1 Firmware',
       'in_progress': False,
       'installed_version': '4.0.42.10433',
       'latest_version': '4.3.17.11279',
@@ -161,28 +178,31 @@
       'skipped_version': None,
       'supported_features': <UpdateEntityFeature: 4>,
       'title': None,
+      'update_percentage': None,
     }),
     'context': <ANY>,
-    'entity_id': 'update.device_1',
+    'entity_id': 'update.device_1_firmware',
     'last_changed': <ANY>,
     'last_reported': <ANY>,
     'last_updated': <ANY>,
     'state': 'on',
   })
 # ---
-# name: test_entity_and_device_data[site_payload1-device_payload0][update.device_2-entry]
+# name: test_entity_and_device_data[site_payload1-device_payload0][update.device_2_firmware-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': None,
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
     'domain': 'update',
     'entity_category': <EntityCategory.CONFIG: 'config'>,
-    'entity_id': 'update.device_2',
+    'entity_id': 'update.device_2_firmware',
     'has_entity_name': True,
     'hidden_by': None,
     'icon': None,
@@ -190,26 +210,29 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Firmware',
     'options': dict({
     }),
     'original_device_class': <UpdateDeviceClass.FIRMWARE: 'firmware'>,
     'original_icon': None,
-    'original_name': None,
+    'original_name': 'Firmware',
     'platform': 'unifi',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': <UpdateEntityFeature: 4>,
     'translation_key': None,
     'unique_id': 'device_update-00:00:00:00:01:02',
     'unit_of_measurement': None,
   })
 # ---
-# name: test_entity_and_device_data[site_payload1-device_payload0][update.device_2-state]
+# name: test_entity_and_device_data[site_payload1-device_payload0][update.device_2_firmware-state]
   StateSnapshot({
     'attributes': ReadOnlyDict({
       'auto_update': False,
       'device_class': 'firmware',
-      'entity_picture': 'https://brands.home-assistant.io/_/unifi/icon.png',
-      'friendly_name': 'Device 2',
+      'display_precision': 0,
+      'entity_picture': '/api/brands/integration/unifi/icon.png',
+      'friendly_name': 'Device 2 Firmware',
       'in_progress': False,
       'installed_version': '4.0.42.10433',
       'latest_version': '4.0.42.10433',
@@ -218,9 +241,10 @@
       'skipped_version': None,
       'supported_features': <UpdateEntityFeature: 4>,
       'title': None,
+      'update_percentage': None,
     }),
     'context': <ANY>,
-    'entity_id': 'update.device_2',
+    'entity_id': 'update.device_2_firmware',
     'last_changed': <ANY>,
     'last_reported': <ANY>,
     'last_updated': <ANY>,

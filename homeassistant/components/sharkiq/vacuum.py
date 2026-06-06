@@ -1,39 +1,29 @@
 """Shark IQ Wrapper."""
 
-from __future__ import annotations
-
 from collections.abc import Iterable
 from typing import Any
 
 from sharkiq import OperatingModes, PowerModes, Properties, SharkIqVacuum
-import voluptuous as vol
 
 from homeassistant.components.vacuum import (
-    STATE_CLEANING,
-    STATE_DOCKED,
-    STATE_IDLE,
-    STATE_PAUSED,
-    STATE_RETURNING,
     StateVacuumEntity,
+    VacuumActivity,
     VacuumEntityFeature,
 )
-from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ServiceValidationError
-from homeassistant.helpers import entity_platform
-import homeassistant.helpers.config_validation as cv
 from homeassistant.helpers.device_registry import DeviceInfo
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from .const import DOMAIN, LOGGER, SERVICE_CLEAN_ROOM, SHARK
-from .coordinator import SharkIqUpdateCoordinator
+from .const import ATTR_ROOMS, DOMAIN, LOGGER, SHARK
+from .coordinator import SharkIqConfigEntry, SharkIqUpdateCoordinator
 
 OPERATING_STATE_MAP = {
-    OperatingModes.PAUSE: STATE_PAUSED,
-    OperatingModes.START: STATE_CLEANING,
-    OperatingModes.STOP: STATE_IDLE,
-    OperatingModes.RETURN: STATE_RETURNING,
+    OperatingModes.PAUSE: VacuumActivity.PAUSED,
+    OperatingModes.START: VacuumActivity.CLEANING,
+    OperatingModes.STOP: VacuumActivity.IDLE,
+    OperatingModes.RETURN: VacuumActivity.RETURNING,
 }
 
 FAN_SPEEDS_MAP = {
@@ -49,16 +39,15 @@ ATTR_ERROR_CODE = "last_error_code"
 ATTR_ERROR_MSG = "last_error_message"
 ATTR_LOW_LIGHT = "low_light"
 ATTR_RECHARGE_RESUME = "recharge_and_resume"
-ATTR_ROOMS = "rooms"
 
 
 async def async_setup_entry(
     hass: HomeAssistant,
-    config_entry: ConfigEntry,
-    async_add_entities: AddEntitiesCallback,
+    config_entry: SharkIqConfigEntry,
+    async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up the Shark IQ vacuum cleaner."""
-    coordinator: SharkIqUpdateCoordinator = hass.data[DOMAIN][config_entry.entry_id]
+    coordinator = config_entry.runtime_data
     devices: Iterable[SharkIqVacuum] = coordinator.shark_vacs.values()
     device_names = [d.name for d in devices]
     LOGGER.debug(
@@ -67,17 +56,6 @@ async def async_setup_entry(
         ", ".join([d.name for d in devices]),
     )
     async_add_entities([SharkVacuumEntity(d, coordinator) for d in devices])
-
-    platform = entity_platform.async_get_current_platform()
-    platform.async_register_entity_service(
-        SERVICE_CLEAN_ROOM,
-        {
-            vol.Required(ATTR_ROOMS): vol.All(
-                cv.ensure_list, vol.Length(min=1), [cv.string]
-            ),
-        },
-        "async_clean_room",
-    )
 
 
 class SharkVacuumEntity(CoordinatorEntity[SharkIqUpdateCoordinator], StateVacuumEntity):
@@ -151,27 +129,23 @@ class SharkVacuumEntity(CoordinatorEntity[SharkIqUpdateCoordinator], StateVacuum
         return self.sharkiq.error_text
 
     @property
-    def operating_mode(self) -> str | None:
-        """Operating mode."""
-        op_mode = self.sharkiq.get_property_value(Properties.OPERATING_MODE)
-        return OPERATING_STATE_MAP.get(op_mode)
-
-    @property
     def recharging_to_resume(self) -> int | None:
         """Return True if vacuum set to recharge and resume cleaning."""
         return self.sharkiq.get_property_value(Properties.RECHARGING_TO_RESUME)
 
     @property
-    def state(self) -> str | None:
+    def activity(self) -> VacuumActivity | None:
         """Get the current vacuum state.
 
-        NB: Currently, we do not return an error state because they can be very, very stale.
-        In the app, these are (usually) handled by showing the robot as stopped and sending the
-        user a notification.
+        NB: Currently, we do not return an error state
+        because they can be very, very stale. In the app,
+        these are (usually) handled by showing the robot as
+        stopped and sending the user a notification.
         """
         if self.sharkiq.get_property_value(Properties.CHARGING_STATUS):
-            return STATE_DOCKED
-        return self.operating_mode
+            return VacuumActivity.DOCKED
+        op_mode = self.sharkiq.get_property_value(Properties.OPERATING_MODE)
+        return OPERATING_STATE_MAP.get(op_mode)
 
     @property
     def available(self) -> bool:

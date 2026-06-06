@@ -1,11 +1,9 @@
 """Tests for the Tankerkoening integration."""
 
-from __future__ import annotations
-
 from unittest.mock import AsyncMock
 
 import pytest
-from syrupy import SnapshotAssertion
+from syrupy.assertion import SnapshotAssertion
 
 from homeassistant.components.tankerkoenig import DOMAIN
 from homeassistant.core import HomeAssistant

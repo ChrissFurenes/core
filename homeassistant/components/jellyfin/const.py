@@ -74,14 +74,15 @@ MEDIA_CLASS_MAP = {
     "MusicAlbum": MediaClass.ALBUM,
     "MusicArtist": MediaClass.ARTIST,
     "Audio": MediaClass.MUSIC,
-    "Series": MediaClass.DIRECTORY,
+    "Series": MediaClass.TV_SHOW,
     "Movie": MediaClass.MOVIE,
     "CollectionFolder": MediaClass.DIRECTORY,
+    "AggregateFolder": MediaClass.DIRECTORY,
     "Folder": MediaClass.DIRECTORY,
     "BoxSet": MediaClass.DIRECTORY,
     "Episode": MediaClass.EPISODE,
     "Season": MediaClass.SEASON,
 }
 
-PLATFORMS = [Platform.MEDIA_PLAYER, Platform.SENSOR]
+PLATFORMS = [Platform.MEDIA_PLAYER, Platform.REMOTE, Platform.SENSOR]
 LOGGER = logging.getLogger(__package__)

@@ -11,8 +11,10 @@ from freezegun.api import FrozenDateTimeFactory
 import pytest
 
 from homeassistant.components.feedreader.const import DOMAIN
+from homeassistant.config_entries import ConfigEntryState
 from homeassistant.core import Event, HomeAssistant
-import homeassistant.util.dt as dt_util
+from homeassistant.helpers import device_registry as dr
+from homeassistant.util import dt as dt_util
 
 from . import async_setup_config_entry, create_mock_entry
 from .const import (
@@ -51,6 +53,23 @@ async def test_setup(
     assert not events
 
 
+async def test_setup_error(
+    hass: HomeAssistant,
+    feed_one_event,
+) -> None:
+    """Test setup error."""
+    entry = create_mock_entry(VALID_CONFIG_DEFAULT)
+    entry.add_to_hass(hass)
+    with patch(
+        "homeassistant.components.feedreader.coordinator.feedparser.http.get"
+    ) as feedreader:
+        feedreader.side_effect = urllib.error.URLError("Test")
+        feedreader.return_value = feed_one_event
+        await hass.config_entries.async_setup(entry.entry_id)
+
+    assert entry.state is ConfigEntryState.SETUP_RETRY
+
+
 async def test_storage_data_writing(
     hass: HomeAssistant,
     events: list[Event],
@@ -66,6 +85,7 @@ async def test_storage_data_writing(
         assert await async_setup_config_entry(
             hass, VALID_CONFIG_DEFAULT, return_value=feed_one_event
         )
+        await hass.async_block_till_done()
 
     # one new event
     assert len(events) == 1
@@ -325,8 +345,9 @@ async def test_feed_errors(
         async_fire_time_changed(hass)
         await hass.async_block_till_done(wait_background_tasks=True)
         assert (
-            "Error fetching feed data from http://some.rss.local/rss_feed.xml : <urlopen error Test>"
-            in caplog.text
+            "Error fetching feed data from"
+            " http://some.rss.local/rss_feed.xml"
+            " : <urlopen error Test>" in caplog.text
         )
 
         # success
@@ -357,3 +378,23 @@ async def test_feed_errors(
         freezer.tick(timedelta(hours=1, seconds=1))
         async_fire_time_changed(hass)
         await hass.async_block_till_done(wait_background_tasks=True)
+
+
+async def test_feed_atom_htmlentities(
+    hass: HomeAssistant, feed_atom_htmlentities, device_registry: dr.DeviceRegistry
+) -> None:
+    """Test ATOM feed author with HTML Entities."""
+
+    entry = create_mock_entry(VALID_CONFIG_DEFAULT)
+    entry.add_to_hass(hass)
+    with patch(
+        "homeassistant.components.feedreader.coordinator.feedparser.http.get",
+        side_effect=[feed_atom_htmlentities],
+    ):
+        assert await hass.config_entries.async_setup(entry.entry_id)
+        await hass.async_block_till_done()
+
+        device_entry = device_registry.async_get_device(
+            identifiers={(DOMAIN, entry.entry_id)}
+        )
+        assert device_entry.manufacturer == "Juan Pérez"

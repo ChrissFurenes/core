@@ -2,7 +2,7 @@
 
 from unittest.mock import patch
 
-from aiolivisi import errors as livisi_errors
+from livisi import errors as livisi_errors
 import pytest
 
 from homeassistant.components.livisi.const import DOMAIN
@@ -47,7 +47,7 @@ async def test_create_entry(hass: HomeAssistant) -> None:
 async def test_create_entity_after_login_error(
     hass: HomeAssistant, exception: livisi_errors.LivisiException, expected_reason: str
 ) -> None:
-    """Test the LIVISI integration can create an entity after the user had login errors."""
+    """Test LIVISI can create an entity after user login errors."""
     with patch(
         "homeassistant.components.livisi.config_flow.AioLivisi.async_set_token",
         side_effect=exception,

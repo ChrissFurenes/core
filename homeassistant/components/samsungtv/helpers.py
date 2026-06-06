@@ -1,15 +1,13 @@
 """Helper functions for Samsung TV."""
 
-from __future__ import annotations
-
 from homeassistant.config_entries import ConfigEntryState
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers import device_registry as dr, entity_registry as er
 from homeassistant.helpers.device_registry import DeviceEntry
 
-from . import SamsungTVConfigEntry
 from .bridge import SamsungTVBridge
 from .const import DOMAIN
+from .coordinator import SamsungTVConfigEntry
 
 
 @callback

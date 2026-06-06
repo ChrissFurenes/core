@@ -1,6 +1,6 @@
 """Tests for the Switch as X Lock platform."""
 
-from homeassistant.components.lock import DOMAIN as LOCK_DOMAIN
+from homeassistant.components.lock import DOMAIN as LOCK_DOMAIN, LockState
 from homeassistant.components.switch import DOMAIN as SWITCH_DOMAIN
 from homeassistant.components.switch_as_x.config_flow import SwitchAsXConfigFlowHandler
 from homeassistant.components.switch_as_x.const import (
@@ -15,10 +15,8 @@ from homeassistant.const import (
     SERVICE_TURN_OFF,
     SERVICE_TURN_ON,
     SERVICE_UNLOCK,
-    STATE_LOCKED,
     STATE_OFF,
     STATE_ON,
-    STATE_UNLOCKED,
     Platform,
 )
 from homeassistant.core import HomeAssistant
@@ -70,7 +68,7 @@ async def test_service_calls(hass: HomeAssistant) -> None:
     assert await hass.config_entries.async_setup(config_entry.entry_id)
     await hass.async_block_till_done()
 
-    assert hass.states.get("lock.decorative_lights").state == STATE_UNLOCKED
+    assert hass.states.get("lock.decorative_lights").state == LockState.UNLOCKED
 
     await hass.services.async_call(
         LOCK_DOMAIN,
@@ -78,9 +76,10 @@ async def test_service_calls(hass: HomeAssistant) -> None:
         {CONF_ENTITY_ID: "lock.decorative_lights"},
         blocking=True,
     )
+    await hass.async_block_till_done()
 
     assert hass.states.get("switch.decorative_lights").state == STATE_OFF
-    assert hass.states.get("lock.decorative_lights").state == STATE_LOCKED
+    assert hass.states.get("lock.decorative_lights").state == LockState.LOCKED
 
     await hass.services.async_call(
         LOCK_DOMAIN,
@@ -88,9 +87,10 @@ async def test_service_calls(hass: HomeAssistant) -> None:
         {CONF_ENTITY_ID: "lock.decorative_lights"},
         blocking=True,
     )
+    await hass.async_block_till_done()
 
     assert hass.states.get("switch.decorative_lights").state == STATE_ON
-    assert hass.states.get("lock.decorative_lights").state == STATE_UNLOCKED
+    assert hass.states.get("lock.decorative_lights").state == LockState.UNLOCKED
 
     await hass.services.async_call(
         SWITCH_DOMAIN,
@@ -98,9 +98,10 @@ async def test_service_calls(hass: HomeAssistant) -> None:
         {CONF_ENTITY_ID: "switch.decorative_lights"},
         blocking=True,
     )
+    await hass.async_block_till_done()
 
     assert hass.states.get("switch.decorative_lights").state == STATE_OFF
-    assert hass.states.get("lock.decorative_lights").state == STATE_LOCKED
+    assert hass.states.get("lock.decorative_lights").state == LockState.LOCKED
 
     await hass.services.async_call(
         SWITCH_DOMAIN,
@@ -108,9 +109,10 @@ async def test_service_calls(hass: HomeAssistant) -> None:
         {CONF_ENTITY_ID: "switch.decorative_lights"},
         blocking=True,
     )
+    await hass.async_block_till_done()
 
     assert hass.states.get("switch.decorative_lights").state == STATE_ON
-    assert hass.states.get("lock.decorative_lights").state == STATE_UNLOCKED
+    assert hass.states.get("lock.decorative_lights").state == LockState.UNLOCKED
 
     await hass.services.async_call(
         SWITCH_DOMAIN,
@@ -118,9 +120,10 @@ async def test_service_calls(hass: HomeAssistant) -> None:
         {CONF_ENTITY_ID: "switch.decorative_lights"},
         blocking=True,
     )
+    await hass.async_block_till_done()
 
     assert hass.states.get("switch.decorative_lights").state == STATE_OFF
-    assert hass.states.get("lock.decorative_lights").state == STATE_LOCKED
+    assert hass.states.get("lock.decorative_lights").state == LockState.LOCKED
 
 
 async def test_service_calls_inverted(hass: HomeAssistant) -> None:
@@ -143,7 +146,7 @@ async def test_service_calls_inverted(hass: HomeAssistant) -> None:
     assert await hass.config_entries.async_setup(config_entry.entry_id)
     await hass.async_block_till_done()
 
-    assert hass.states.get("lock.decorative_lights").state == STATE_LOCKED
+    assert hass.states.get("lock.decorative_lights").state == LockState.LOCKED
 
     await hass.services.async_call(
         LOCK_DOMAIN,
@@ -151,9 +154,10 @@ async def test_service_calls_inverted(hass: HomeAssistant) -> None:
         {CONF_ENTITY_ID: "lock.decorative_lights"},
         blocking=True,
     )
+    await hass.async_block_till_done()
 
     assert hass.states.get("switch.decorative_lights").state == STATE_ON
-    assert hass.states.get("lock.decorative_lights").state == STATE_LOCKED
+    assert hass.states.get("lock.decorative_lights").state == LockState.LOCKED
 
     await hass.services.async_call(
         LOCK_DOMAIN,
@@ -161,9 +165,10 @@ async def test_service_calls_inverted(hass: HomeAssistant) -> None:
         {CONF_ENTITY_ID: "lock.decorative_lights"},
         blocking=True,
     )
+    await hass.async_block_till_done()
 
     assert hass.states.get("switch.decorative_lights").state == STATE_OFF
-    assert hass.states.get("lock.decorative_lights").state == STATE_UNLOCKED
+    assert hass.states.get("lock.decorative_lights").state == LockState.UNLOCKED
 
     await hass.services.async_call(
         SWITCH_DOMAIN,
@@ -171,9 +176,10 @@ async def test_service_calls_inverted(hass: HomeAssistant) -> None:
         {CONF_ENTITY_ID: "switch.decorative_lights"},
         blocking=True,
     )
+    await hass.async_block_till_done()
 
     assert hass.states.get("switch.decorative_lights").state == STATE_OFF
-    assert hass.states.get("lock.decorative_lights").state == STATE_UNLOCKED
+    assert hass.states.get("lock.decorative_lights").state == LockState.UNLOCKED
 
     await hass.services.async_call(
         SWITCH_DOMAIN,
@@ -181,9 +187,10 @@ async def test_service_calls_inverted(hass: HomeAssistant) -> None:
         {CONF_ENTITY_ID: "switch.decorative_lights"},
         blocking=True,
     )
+    await hass.async_block_till_done()
 
     assert hass.states.get("switch.decorative_lights").state == STATE_ON
-    assert hass.states.get("lock.decorative_lights").state == STATE_LOCKED
+    assert hass.states.get("lock.decorative_lights").state == LockState.LOCKED
 
     await hass.services.async_call(
         SWITCH_DOMAIN,
@@ -191,6 +198,7 @@ async def test_service_calls_inverted(hass: HomeAssistant) -> None:
         {CONF_ENTITY_ID: "switch.decorative_lights"},
         blocking=True,
     )
+    await hass.async_block_till_done()
 
     assert hass.states.get("switch.decorative_lights").state == STATE_OFF
-    assert hass.states.get("lock.decorative_lights").state == STATE_UNLOCKED
+    assert hass.states.get("lock.decorative_lights").state == LockState.UNLOCKED

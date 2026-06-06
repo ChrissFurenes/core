@@ -21,7 +21,7 @@ from homeassistant.const import (
 from homeassistant.core import Context, HomeAssistant, ServiceCall
 from homeassistant.helpers import entity_registry as er
 from homeassistant.setup import async_setup_component
-import homeassistant.util.dt as dt_util
+from homeassistant.util import dt as dt_util
 
 from tests.common import assert_setup_component, async_fire_time_changed, mock_component
 
@@ -988,7 +988,9 @@ async def test_template_string(
                 "trigger": {
                     "platform": "numeric_state",
                     "entity_id": "test.entity",
-                    "value_template": "{{ state.attributes.test_attribute | multiply(10) }}",
+                    "value_template": (
+                        "{{ state.attributes.test_attribute | multiply(10) }}"
+                    ),
                     "below": below,
                 },
                 "action": {
@@ -1770,8 +1772,7 @@ async def test_if_fires_on_entities_change_overlap_for_template(
                     "entity_id": ["test.entity_1", "test.entity_2"],
                     "above": above,
                     "below": below,
-                    "for": '{{ 5 if trigger.entity_id == "test.entity_1"'
-                    "   else 10 }}",
+                    "for": '{{ 5 if trigger.entity_id == "test.entity_1" else 10 }}',
                 },
                 "action": {
                     "service": "test.automation",
@@ -1938,8 +1939,7 @@ async def test_variables_priority(
                     "entity_id": ["test.entity_1", "test.entity_2"],
                     "above": above,
                     "below": below,
-                    "for": '{{ 5 if trigger.entity_id == "test.entity_1"'
-                    "   else 10 }}",
+                    "for": '{{ 5 if trigger.entity_id == "test.entity_1" else 10 }}',
                 },
                 "action": {
                     "service": "test.automation",
@@ -1990,7 +1990,9 @@ async def test_template_variable(
                 "trigger": {
                     "platform": "numeric_state",
                     "entity_id": "test.entity",
-                    "value_template": "{{ state.attributes.test_attribute[2] * multiplier}}",
+                    "value_template": (
+                        "{{ state.attributes.test_attribute[2] * multiplier}}"
+                    ),
                     "below": 10,
                 },
                 "action": {"service": "test.automation"},

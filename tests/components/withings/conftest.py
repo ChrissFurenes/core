@@ -9,6 +9,7 @@ from aiowithings.models import NotificationConfiguration
 import pytest
 
 from homeassistant.components.application_credentials import (
+    DOMAIN as APPLICATION_CREDENTIALS_DOMAIN,
     ClientCredential,
     async_import_client_credential,
 )
@@ -48,7 +49,7 @@ def mock_scopes() -> list[str]:
 @pytest.fixture(autouse=True)
 async def setup_credentials(hass: HomeAssistant) -> None:
     """Fixture to setup credentials."""
-    assert await async_setup_component(hass, "application_credentials", {})
+    assert await async_setup_component(hass, APPLICATION_CREDENTIALS_DOMAIN, {})
     await async_import_client_credential(
         hass,
         DOMAIN,
@@ -133,6 +134,29 @@ def polling_config_entry(expires_at: int, scopes: list[str]) -> MockConfigEntry:
     )
 
 
+@pytest.fixture
+def second_polling_config_entry(expires_at: int, scopes: list[str]) -> MockConfigEntry:
+    """Create Withings entry in Home Assistant."""
+    return MockConfigEntry(
+        domain=DOMAIN,
+        title="Not Henk",
+        unique_id="54321",
+        data={
+            "auth_implementation": DOMAIN,
+            "token": {
+                "status": 0,
+                "userid": "54321",
+                "access_token": "mock-access-token",
+                "refresh_token": "mock-refresh-token",
+                "expires_at": expires_at,
+                "scope": ",".join(scopes),
+            },
+            "profile": TITLE,
+            "webhook_id": WEBHOOK_ID,
+        },
+    )
+
+
 @pytest.fixture(name="withings")
 def mock_withings():
     """Mock withings."""
@@ -172,9 +196,7 @@ def mock_withings():
 
 @pytest.fixture(name="disable_webhook_delay", autouse=True)
 def disable_webhook_delay():
-    """Disable webhook delay."""
-
-    mock = AsyncMock()
+    """Disable webhook delays for faster tests."""
     with (
         patch(
             "homeassistant.components.withings.SUBSCRIBE_DELAY",
@@ -184,5 +206,9 @@ def disable_webhook_delay():
             "homeassistant.components.withings.UNSUBSCRIBE_DELAY",
             timedelta(seconds=0),
         ),
+        patch(
+            "homeassistant.components.withings.WEBHOOK_REGISTER_DELAY",
+            0,
+        ),
     ):
-        yield mock
+        yield

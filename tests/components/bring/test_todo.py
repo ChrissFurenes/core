@@ -1,12 +1,13 @@
 """Test for todo platform of the Bring! integration."""
 
-import re
-from unittest.mock import AsyncMock
+from collections.abc import Generator
+from unittest.mock import AsyncMock, patch
 
-from bring_api import BringItemOperation, BringRequestException
+from bring_api import BringItemOperation, BringItemsResponse, BringRequestException
 import pytest
 from syrupy.assertion import SnapshotAssertion
 
+from homeassistant.components.bring.const import DOMAIN
 from homeassistant.components.todo import (
     ATTR_DESCRIPTION,
     ATTR_ITEM,
@@ -15,12 +16,22 @@ from homeassistant.components.todo import (
     TodoServices,
 )
 from homeassistant.config_entries import ConfigEntryState
-from homeassistant.const import ATTR_ENTITY_ID
+from homeassistant.const import ATTR_ENTITY_ID, Platform
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers import entity_registry as er
 
-from tests.common import MockConfigEntry, snapshot_platform
+from tests.common import MockConfigEntry, async_load_fixture, snapshot_platform
+
+
+@pytest.fixture(autouse=True)
+def todo_only() -> Generator[None]:
+    """Enable only the todo platform."""
+    with patch(
+        "homeassistant.components.bring.PLATFORMS",
+        [Platform.TODO],
+    ):
+        yield
 
 
 @pytest.mark.usefixtures("mock_bring_client")
@@ -29,9 +40,17 @@ async def test_todo(
     bring_config_entry: MockConfigEntry,
     snapshot: SnapshotAssertion,
     entity_registry: er.EntityRegistry,
+    mock_bring_client: AsyncMock,
 ) -> None:
     """Snapshot test states of todo platform."""
-
+    mock_bring_client.get_list.side_effect = [
+        BringItemsResponse.from_json(
+            await async_load_fixture(hass, "items.json", DOMAIN)
+        ),
+        BringItemsResponse.from_json(
+            await async_load_fixture(hass, "items2.json", DOMAIN)
+        ),
+    ]
     bring_config_entry.add_to_hass(hass)
     await hass.config_entries.async_setup(bring_config_entry.entry_id)
     await hass.async_block_till_done()
@@ -87,9 +106,7 @@ async def test_add_item_exception(
     assert bring_config_entry.state is ConfigEntryState.LOADED
 
     mock_bring_client.save_item.side_effect = BringRequestException
-    with pytest.raises(
-        HomeAssistantError, match="Failed to save item Äpfel to Bring! list"
-    ):
+    with pytest.raises(HomeAssistantError) as err:
         await hass.services.async_call(
             TODO_DOMAIN,
             TodoServices.ADD_ITEM,
@@ -97,6 +114,8 @@ async def test_add_item_exception(
             target={ATTR_ENTITY_ID: "todo.einkauf"},
             blocking=True,
         )
+    assert err.value.translation_key == "todo_save_item_failed"
+    assert err.value.translation_placeholders == {"name": "Äpfel"}
 
 
 @pytest.mark.usefixtures("mock_uuid")
@@ -150,9 +169,7 @@ async def test_update_item_exception(
     assert bring_config_entry.state is ConfigEntryState.LOADED
 
     mock_bring_client.batch_update_list.side_effect = BringRequestException
-    with pytest.raises(
-        HomeAssistantError, match="Failed to update item Paprika to Bring! list"
-    ):
+    with pytest.raises(HomeAssistantError) as err:
         await hass.services.async_call(
             TODO_DOMAIN,
             TodoServices.UPDATE_ITEM,
@@ -164,6 +181,8 @@ async def test_update_item_exception(
             target={ATTR_ENTITY_ID: "todo.einkauf"},
             blocking=True,
         )
+    assert err.value.translation_key == "todo_update_item_failed"
+    assert err.value.translation_placeholders == {"name": "Paprika"}
 
 
 @pytest.mark.usefixtures("mock_uuid")
@@ -225,9 +244,7 @@ async def test_rename_item_exception(
     assert bring_config_entry.state is ConfigEntryState.LOADED
 
     mock_bring_client.batch_update_list.side_effect = BringRequestException
-    with pytest.raises(
-        HomeAssistantError, match="Failed to rename item Gurke to Bring! list"
-    ):
+    with pytest.raises(HomeAssistantError) as err:
         await hass.services.async_call(
             TODO_DOMAIN,
             TodoServices.UPDATE_ITEM,
@@ -239,6 +256,8 @@ async def test_rename_item_exception(
             target={ATTR_ENTITY_ID: "todo.einkauf"},
             blocking=True,
         )
+    assert err.value.translation_key == "todo_rename_item_failed"
+    assert err.value.translation_placeholders == {"name": "Gurke"}
 
 
 @pytest.mark.usefixtures("mock_uuid")
@@ -289,10 +308,7 @@ async def test_delete_items_exception(
 
     assert bring_config_entry.state is ConfigEntryState.LOADED
     mock_bring_client.batch_update_list.side_effect = BringRequestException
-    with pytest.raises(
-        HomeAssistantError,
-        match=re.escape("Failed to delete 1 item(s) from Bring! list"),
-    ):
+    with pytest.raises(HomeAssistantError) as err:
         await hass.services.async_call(
             TODO_DOMAIN,
             TodoServices.REMOVE_ITEM,
@@ -300,3 +316,6 @@ async def test_delete_items_exception(
             target={ATTR_ENTITY_ID: "todo.einkauf"},
             blocking=True,
         )
+
+    assert err.value.translation_key == "todo_delete_item_failed"
+    assert err.value.translation_placeholders == {"count": "1"}

@@ -1,8 +1,8 @@
 """Support for the QNAP QSW sensors."""
 
-from __future__ import annotations
-
+from collections.abc import Callable
 from dataclasses import dataclass, replace
+from datetime import datetime
 from typing import Final
 
 from aioqsw.const import (
@@ -25,7 +25,7 @@ from aioqsw.const import (
     QSD_TEMP_MAX,
     QSD_TX_OCTETS,
     QSD_TX_SPEED,
-    QSD_UPTIME_SECONDS,
+    QSD_UPTIME_TIMESTAMP,
 )
 
 from homeassistant.components.sensor import (
@@ -34,20 +34,19 @@ from homeassistant.components.sensor import (
     SensorEntityDescription,
     SensorStateClass,
 )
-from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
     EntityCategory,
     UnitOfDataRate,
     UnitOfInformation,
     UnitOfTemperature,
-    UnitOfTime,
 )
 from homeassistant.core import HomeAssistant, callback
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
-from homeassistant.helpers.typing import UNDEFINED
+from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
+from homeassistant.helpers.typing import UNDEFINED, StateType
+from homeassistant.util import dt as dt_util
 
-from .const import ATTR_MAX, DOMAIN, QSW_COORD_DATA, RPM
-from .coordinator import QswDataCoordinator
+from .const import ATTR_MAX, RPM
+from .coordinator import QnapQswConfigEntry, QswDataCoordinator
 from .entity import QswEntityDescription, QswEntityType, QswSensorEntity
 
 
@@ -58,6 +57,7 @@ class QswSensorEntityDescription(SensorEntityDescription, QswEntityDescription):
     attributes: dict[str, list[str]] | None = None
     qsw_type: QswEntityType | None = None
     sep_key: str = "_"
+    value_fn: Callable[[str], datetime | StateType] = lambda value: value
 
 
 SENSOR_TYPES: Final[tuple[QswSensorEntityDescription, ...]] = (
@@ -140,12 +140,12 @@ SENSOR_TYPES: Final[tuple[QswSensorEntityDescription, ...]] = (
         subkey=QSD_TX_SPEED,
     ),
     QswSensorEntityDescription(
-        translation_key="uptime",
+        translation_key="uptime_timestamp",
         key=QSD_SYSTEM_TIME,
+        device_class=SensorDeviceClass.TIMESTAMP,
         entity_category=EntityCategory.DIAGNOSTIC,
-        native_unit_of_measurement=UnitOfTime.SECONDS,
-        state_class=SensorStateClass.TOTAL_INCREASING,
-        subkey=QSD_UPTIME_SECONDS,
+        subkey=QSD_UPTIME_TIMESTAMP,
+        value_fn=dt_util.parse_datetime,
     ),
 )
 
@@ -283,10 +283,12 @@ PORT_SENSOR_TYPES: Final[tuple[QswSensorEntityDescription, ...]] = (
 
 
 async def async_setup_entry(
-    hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback
+    hass: HomeAssistant,
+    entry: QnapQswConfigEntry,
+    async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Add QNAP QSW sensors from a config_entry."""
-    coordinator: QswDataCoordinator = hass.data[DOMAIN][entry.entry_id][QSW_COORD_DATA]
+    coordinator = entry.runtime_data.data_coordinator
 
     entities: list[QswSensor] = [
         QswSensor(coordinator, description, entry)
@@ -349,13 +351,13 @@ class QswSensor(QswSensorEntity, SensorEntity):
         self,
         coordinator: QswDataCoordinator,
         description: QswSensorEntityDescription,
-        entry: ConfigEntry,
+        entry: QnapQswConfigEntry,
         type_id: int | None = None,
     ) -> None:
         """Initialize."""
         super().__init__(coordinator, entry, type_id)
 
-        if description.name == UNDEFINED:
+        if description.name is UNDEFINED:
             self._attr_has_entity_name = True
         else:
             self._attr_name = f"{self.product} {description.name}"
@@ -374,5 +376,5 @@ class QswSensor(QswSensorEntity, SensorEntity):
             self.entity_description.subkey,
             self.entity_description.qsw_type,
         )
-        self._attr_native_value = value
+        self._attr_native_value = self.entity_description.value_fn(value)
         super()._async_update_attrs()

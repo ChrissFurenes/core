@@ -5,6 +5,7 @@ import logging
 from ayla_iot_unofficial import AylaApi, AylaAuthError
 from ayla_iot_unofficial.fujitsu_hvac import FujitsuHVAC
 
+from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryAuthFailed
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
@@ -13,15 +14,22 @@ from .const import API_REFRESH
 
 _LOGGER = logging.getLogger(__name__)
 
+type FGLairConfigEntry = ConfigEntry[FGLairCoordinator]
+
 
 class FGLairCoordinator(DataUpdateCoordinator[dict[str, FujitsuHVAC]]):
     """Coordinator for Fujitsu HVAC integration."""
 
-    def __init__(self, hass: HomeAssistant, api: AylaApi) -> None:
+    config_entry: FGLairConfigEntry
+
+    def __init__(
+        self, hass: HomeAssistant, config_entry: FGLairConfigEntry, api: AylaApi
+    ) -> None:
         """Initialize coordinator for Fujitsu HVAC integration."""
         super().__init__(
             hass,
             _LOGGER,
+            config_entry=config_entry,
             name="Fujitsu HVAC data",
             update_interval=API_REFRESH,
         )
@@ -47,12 +55,18 @@ class FGLairCoordinator(DataUpdateCoordinator[dict[str, FujitsuHVAC]]):
         except AylaAuthError as e:
             raise ConfigEntryAuthFailed("Credentials expired for Ayla IoT API") from e
 
-        if len(listening_entities) == 0:
-            devices = list(filter(lambda x: isinstance(x, FujitsuHVAC), devices))
+        if not listening_entities:
+            devices = [
+                dev
+                for dev in devices
+                if isinstance(dev, FujitsuHVAC) and dev.is_online()
+            ]
         else:
-            devices = list(
-                filter(lambda x: x.device_serial_number in listening_entities, devices)
-            )
+            devices = [
+                dev
+                for dev in devices
+                if dev.device_serial_number in listening_entities and dev.is_online()
+            ]
 
         try:
             for dev in devices:

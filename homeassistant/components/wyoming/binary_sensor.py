@@ -1,42 +1,35 @@
 """Binary sensor for Wyoming."""
 
-from __future__ import annotations
-
-from typing import TYPE_CHECKING
-
 from homeassistant.components.binary_sensor import (
     BinarySensorEntity,
     BinarySensorEntityDescription,
 )
-from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant, callback
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
-from .const import DOMAIN
 from .entity import WyomingSatelliteEntity
-
-if TYPE_CHECKING:
-    from .models import DomainDataItem
+from .models import WyomingConfigEntry
 
 
 async def async_setup_entry(
     hass: HomeAssistant,
-    config_entry: ConfigEntry,
-    async_add_entities: AddEntitiesCallback,
+    config_entry: WyomingConfigEntry,
+    async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up binary sensor entities."""
-    item: DomainDataItem = hass.data[DOMAIN][config_entry.entry_id]
+    item = config_entry.runtime_data
 
     # Setup is only forwarded for satellites
-    assert item.satellite is not None
+    assert item.device is not None
 
-    async_add_entities([WyomingSatelliteAssistInProgress(item.satellite.device)])
+    async_add_entities([WyomingSatelliteAssistInProgress(item.device)])
 
 
 class WyomingSatelliteAssistInProgress(WyomingSatelliteEntity, BinarySensorEntity):
     """Entity to represent Assist is in progress for satellite."""
 
     entity_description = BinarySensorEntityDescription(
+        entity_registry_enabled_default=False,
         key="assist_in_progress",
         translation_key="assist_in_progress",
     )

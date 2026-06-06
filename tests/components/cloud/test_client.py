@@ -1,5 +1,6 @@
 """Test the cloud.iot module."""
 
+from collections.abc import Callable, Coroutine
 from datetime import timedelta
 from typing import Any
 from unittest.mock import AsyncMock, MagicMock, Mock, PropertyMock, patch
@@ -103,7 +104,6 @@ async def test_handler_google_actions(hass: HomeAssistant) -> None:
     """Test handler Google Actions."""
     hass.states.async_set("switch.test", "on", {"friendly_name": "Test switch"})
     hass.states.async_set("switch.test2", "on", {"friendly_name": "Test switch 2"})
-    hass.states.async_set("group.all_locks", "on", {"friendly_name": "Evil locks"})
 
     await mock_cloud(
         hass,
@@ -181,6 +181,59 @@ async def test_handler_google_actions_disabled(
 
     assert resp["requestId"] == reqid
     assert resp["payload"] == response_payload
+
+
+async def test_handler_ice_servers(
+    hass: HomeAssistant,
+    cloud: MagicMock,
+    set_cloud_prefs: Callable[[dict[str, Any]], Coroutine[Any, Any, None]],
+) -> None:
+    """Test handler ICE servers."""
+    assert await async_setup_component(hass, "cloud", {"cloud": {}})
+    await hass.async_block_till_done()
+    # make sure that preferences will not be reset
+    await cloud.client.prefs.async_set_username(cloud.username)
+    await set_cloud_prefs(
+        {
+            "alexa_enabled": False,
+            "google_enabled": False,
+        }
+    )
+
+    await cloud.login("test-user", "test-pass")
+    await cloud.client.cloud_connected()
+
+    assert cloud.client._cloud_ice_servers_listener is not None
+    assert cloud.client._cloud_ice_servers_listener() == "mock-unregister"
+
+
+async def test_handler_ice_servers_disabled(
+    hass: HomeAssistant,
+    cloud: MagicMock,
+    set_cloud_prefs: Callable[[dict[str, Any]], Coroutine[Any, Any, None]],
+) -> None:
+    """Test handler ICE servers when user has disabled it."""
+    assert await async_setup_component(hass, "cloud", {"cloud": {}})
+    await hass.async_block_till_done()
+    # make sure that preferences will not be reset
+    await cloud.client.prefs.async_set_username(cloud.username)
+    await set_cloud_prefs(
+        {
+            "alexa_enabled": False,
+            "google_enabled": False,
+        }
+    )
+
+    await cloud.login("test-user", "test-pass")
+    await cloud.client.cloud_connected()
+
+    await set_cloud_prefs(
+        {
+            "cloud_ice_servers_enabled": False,
+        }
+    )
+
+    assert cloud.client._cloud_ice_servers_listener is None
 
 
 async def test_webhook_msg(
@@ -262,6 +315,51 @@ async def test_webhook_msg(
     assert '{"nonexisting": "payload"}' in caplog.text
 
 
+async def test_webhook_msg_local_only(hass: HomeAssistant) -> None:
+    """Test a cloudhook for a local_only webhook does not fire the handler."""
+    with patch("hass_nabucasa.Cloud.initialize"):
+        setup = await async_setup_component(hass, "cloud", {"cloud": {}})
+        assert setup
+    cloud = hass.data[DATA_CLOUD]
+
+    await cloud.client.prefs.async_initialize()
+    await cloud.client.prefs.async_update(
+        cloudhooks={
+            "mock-webhook-id": {
+                "webhook_id": "mock-webhook-id",
+                "cloudhook_id": "mock-cloud-id",
+            },
+        }
+    )
+
+    received = []
+
+    async def handler(
+        hass: HomeAssistant, webhook_id: str, request: web.Request
+    ) -> web.Response:
+        """Handle a webhook."""
+        received.append(request)
+        return web.json_response({"from": "handler"})
+
+    webhook.async_register(
+        hass, "test", "Test", "mock-webhook-id", handler, local_only=True
+    )
+
+    response = await cloud.client.async_webhook_message(
+        {
+            "cloudhook_id": "mock-cloud-id",
+            "body": '{"hello": "world"}',
+            "headers": {"content-type": CONTENT_TYPE_JSON},
+            "method": "POST",
+            "query": None,
+        }
+    )
+
+    assert response["status"] == 200
+    # Handler not called because cloudhooks are not considered local
+    assert len(received) == 0
+
+
 @pytest.mark.usefixtures("mock_cloud_setup", "mock_cloud_login")
 async def test_google_config_expose_entity(
     hass: HomeAssistant,
@@ -279,14 +377,13 @@ async def test_google_config_expose_entity(
     )
 
     cloud_client = hass.data[DATA_CLOUD].client
-    state = State(entity_entry.entity_id, "on")
     gconf = await cloud_client.get_google_config()
 
-    assert gconf.should_expose(state)
+    assert gconf.should_expose(entity_entry.entity_id)
 
     async_expose_entity(hass, "cloud.google_assistant", entity_entry.entity_id, False)
 
-    assert not gconf.should_expose(state)
+    assert not gconf.should_expose(entity_entry.entity_id)
 
 
 @pytest.mark.usefixtures("mock_cloud_setup", "mock_cloud_login")
@@ -387,6 +484,7 @@ async def test_cloud_connection_info(hass: HomeAssistant) -> None:
 
     assert response == {
         "instance_id": "12345678901234567890",
+        "name": "test home",
         "remote": {
             "alias": None,
             "can_enable": True,
@@ -413,7 +511,10 @@ async def test_async_create_repair_issue_known(
     await cloud.client.async_create_repair_issue(
         identifier=identifier,
         translation_key=translation_key,
-        placeholders={"custom_domains": "example.com"},
+        placeholders={
+            "account_url": "http://example.org",
+            "custom_domains": "example.com",
+        },
         severity="warning",
     )
     issue = issue_registry.async_get_issue(domain=DOMAIN, issue_id=identifier)
@@ -424,19 +525,53 @@ async def test_async_create_repair_issue_unknown(
     cloud: MagicMock,
     mock_cloud_setup: None,
     issue_registry: ir.IssueRegistry,
+    caplog: pytest.LogCaptureFixture,
 ) -> None:
     """Test not creating repair issue for unknown repairs."""
     identifier = "abc123"
-    with pytest.raises(
-        ValueError,
-        match="Invalid translation key unknown_translation_key",
-    ):
-        await cloud.client.async_create_repair_issue(
-            identifier=identifier,
-            translation_key="unknown_translation_key",
-            placeholders={"custom_domains": "example.com"},
-            severity="error",
-        )
+    await cloud.client.async_create_repair_issue(
+        identifier=identifier,
+        translation_key="unknown_translation_key",
+        placeholders={"custom_domains": "example.com"},
+        severity="error",
+    )
+    assert (
+        "Invalid translation key unknown_translation_key for repair issue abc123"
+        in caplog.text
+    )
+    issue = issue_registry.async_get_issue(domain=DOMAIN, issue_id=identifier)
+    assert issue is None
+
+
+async def test_async_delete_repair_issue(
+    cloud: MagicMock,
+    mock_cloud_setup: None,
+    issue_registry: ir.IssueRegistry,
+) -> None:
+    """Test delete repair issue."""
+    identifier = "test_identifier"
+    issue_registry.issues[(DOMAIN, identifier)] = ir.IssueEntry(
+        active=True,
+        breaks_in_ha_version=None,
+        created=dt_util.utcnow(),
+        data={},
+        dismissed_version=None,
+        domain=DOMAIN,
+        is_fixable=False,
+        is_persistent=True,
+        issue_domain=None,
+        issue_id=identifier,
+        learn_more_url=None,
+        severity="warning",
+        translation_key="test_translation_key",
+        translation_placeholders=None,
+    )
+
+    issue = issue_registry.async_get_issue(domain=DOMAIN, issue_id=identifier)
+    assert issue is not None
+
+    await cloud.client.async_delete_repair_issue(identifier=identifier)
+
     issue = issue_registry.async_get_issue(domain=DOMAIN, issue_id=identifier)
     assert issue is None
 
@@ -475,13 +610,16 @@ async def test_logged_out(
     await cloud.client.cloud_connected()
     await hass.async_block_till_done()
 
+    assert cloud.client._cloud_ice_servers_listener is not None
+
     # Simulate logged out
     await cloud.logout()
     await hass.async_block_till_done()
 
-    # Check we clean up Alexa and Google
+    # Check we clean up Alexa, Google and ICE servers
     assert cloud.client._alexa_config is None
     assert cloud.client._google_config is None
+    assert cloud.client._cloud_ice_servers_listener is None
     google_config_mock.async_deinitialize.assert_called_once_with()
     alexa_config_mock.async_deinitialize.assert_called_once_with()
 

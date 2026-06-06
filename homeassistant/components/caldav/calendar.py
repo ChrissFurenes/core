@@ -1,21 +1,23 @@
 """Support for WebDav Calendar."""
 
-from __future__ import annotations
-
 from datetime import datetime
+from functools import partial
 import logging
+from typing import Any
 
 import caldav
+from caldav.lib.error import DAVError
+import requests
 import voluptuous as vol
 
 from homeassistant.components.calendar import (
     ENTITY_ID_FORMAT,
     PLATFORM_SCHEMA as CALENDAR_PLATFORM_SCHEMA,
     CalendarEntity,
+    CalendarEntityFeature,
     CalendarEvent,
     is_offset_reached,
 )
-from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
     CONF_NAME,
     CONF_PASSWORD,
@@ -24,14 +26,19 @@ from homeassistant.const import (
     CONF_VERIFY_SSL,
 )
 from homeassistant.core import HomeAssistant, callback
-import homeassistant.helpers.config_validation as cv
+from homeassistant.exceptions import HomeAssistantError
+from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.entity import async_generate_entity_id
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.entity_platform import (
+    AddConfigEntryEntitiesCallback,
+    AddEntitiesCallback,
+)
 from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
+from . import CalDavConfigEntry
 from .api import async_get_calendars
-from .const import DOMAIN
+from .const import TIMEOUT
 from .coordinator import CalDavUpdateCoordinator
 
 _LOGGER = logging.getLogger(__name__)
@@ -85,7 +92,12 @@ async def async_setup_platform(
     days = config[CONF_DAYS]
 
     client = caldav.DAVClient(
-        url, None, username, password, ssl_verify_cert=config[CONF_VERIFY_SSL]
+        url,
+        None,
+        username,
+        password,
+        ssl_verify_cert=config[CONF_VERIFY_SSL],
+        timeout=TIMEOUT,
     )
 
     calendars = await async_get_calendars(hass, client, SUPPORTED_COMPONENT)
@@ -110,6 +122,7 @@ async def async_setup_platform(
             entity_id = async_generate_entity_id(ENTITY_ID_FORMAT, device_id, hass=hass)
             coordinator = CalDavUpdateCoordinator(
                 hass,
+                None,
                 calendar=calendar,
                 days=days,
                 include_all_day=True,
@@ -127,6 +140,7 @@ async def async_setup_platform(
             entity_id = async_generate_entity_id(ENTITY_ID_FORMAT, device_id, hass=hass)
             coordinator = CalDavUpdateCoordinator(
                 hass,
+                None,
                 calendar=calendar,
                 days=days,
                 include_all_day=False,
@@ -141,12 +155,11 @@ async def async_setup_platform(
 
 async def async_setup_entry(
     hass: HomeAssistant,
-    entry: ConfigEntry,
-    async_add_entities: AddEntitiesCallback,
+    entry: CalDavConfigEntry,
+    async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up the CalDav calendar platform for a config entry."""
-    client: caldav.DAVClient = hass.data[DOMAIN][entry.entry_id]
-    calendars = await async_get_calendars(hass, client, SUPPORTED_COMPONENT)
+    calendars = await async_get_calendars(hass, entry.runtime_data, SUPPORTED_COMPONENT)
     async_add_entities(
         (
             WebDavCalendarEntity(
@@ -154,6 +167,7 @@ async def async_setup_entry(
                 async_generate_entity_id(ENTITY_ID_FORMAT, calendar.name, hass=hass),
                 CalDavUpdateCoordinator(
                     hass,
+                    entry,
                     calendar=calendar,
                     days=CONFIG_ENTRY_DEFAULT_DAYS,
                     include_all_day=True,
@@ -171,9 +185,11 @@ async def async_setup_entry(
 class WebDavCalendarEntity(CoordinatorEntity[CalDavUpdateCoordinator], CalendarEntity):
     """A device for getting the next Task from a WebDav Calendar."""
 
+    _attr_supported_features = CalendarEntityFeature.CREATE_EVENT
+
     def __init__(
         self,
-        name: str,
+        name: str | None,
         entity_id: str,
         coordinator: CalDavUpdateCoordinator,
         unique_id: str | None = None,
@@ -199,6 +215,31 @@ class WebDavCalendarEntity(CoordinatorEntity[CalDavUpdateCoordinator], CalendarE
         """Get all events in a specific time frame."""
         return await self.coordinator.async_get_events(hass, start_date, end_date)
 
+    async def async_create_event(self, **kwargs: Any) -> None:
+        """Create a new event in the calendar."""
+        _LOGGER.debug("Event: %s", kwargs)
+
+        item_data: dict[str, Any] = {
+            "summary": kwargs["summary"],
+            "dtstart": kwargs["dtstart"],
+            "dtend": kwargs["dtend"],
+        }
+        if description := kwargs.get("description"):
+            item_data["description"] = description
+        if location := kwargs.get("location"):
+            item_data["location"] = location
+        if rrule := kwargs.get("rrule"):
+            item_data["rrule"] = rrule
+
+        _LOGGER.debug("ICS data %s", item_data)
+
+        try:
+            await self.hass.async_add_executor_job(
+                partial(self.coordinator.calendar.add_event, **item_data),
+            )
+        except (requests.ConnectionError, requests.Timeout, DAVError) as err:
+            raise HomeAssistantError(f"CalDAV save error: {err}") from err
+
     @callback
     def _handle_coordinator_update(self) -> None:
         """Update event data."""
@@ -206,7 +247,8 @@ class WebDavCalendarEntity(CoordinatorEntity[CalDavUpdateCoordinator], CalendarE
         if self._supports_offset:
             self._attr_extra_state_attributes = {
                 "offset_reached": is_offset_reached(
-                    self._event.start_datetime_local, self.coordinator.offset
+                    self._event.start_datetime_local,
+                    self.coordinator.offset,  # type: ignore[arg-type]
                 )
                 if self._event
                 else False

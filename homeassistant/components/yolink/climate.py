@@ -1,7 +1,5 @@
 """YoLink Thermostat."""
 
-from __future__ import annotations
-
 from typing import Any
 
 from yolink.const import ATTR_DEVICE_THERMOSTAT
@@ -19,13 +17,11 @@ from homeassistant.components.climate import (
     HVACAction,
     HVACMode,
 )
-from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import UnitOfTemperature
 from homeassistant.core import HomeAssistant, callback
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
-from .const import DOMAIN
-from .coordinator import YoLinkCoordinator
+from .coordinator import YoLinkConfigEntry, YoLinkCoordinator
 from .entity import YoLinkEntity
 
 YOLINK_MODEL_2_HA = {
@@ -46,11 +42,11 @@ YOLINK_ACTION_2_HA = {
 
 async def async_setup_entry(
     hass: HomeAssistant,
-    config_entry: ConfigEntry,
-    async_add_entities: AddEntitiesCallback,
+    config_entry: YoLinkConfigEntry,
+    async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up YoLink Thermostat from a config entry."""
-    device_coordinators = hass.data[DOMAIN][config_entry.entry_id].device_coordinators
+    device_coordinators = config_entry.runtime_data.device_coordinators
     entities = [
         YoLinkClimateEntity(config_entry, device_coordinator)
         for device_coordinator in device_coordinators.values()
@@ -63,11 +59,10 @@ class YoLinkClimateEntity(YoLinkEntity, ClimateEntity):
     """YoLink Climate Entity."""
 
     _attr_name = None
-    _enable_turn_on_off_backwards_compatibility = False
 
     def __init__(
         self,
-        config_entry: ConfigEntry,
+        config_entry: YoLinkConfigEntry,
         coordinator: YoLinkCoordinator,
     ) -> None:
         """Init YoLink Thermostat."""

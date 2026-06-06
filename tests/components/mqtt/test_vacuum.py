@@ -2,9 +2,8 @@
 
 from copy import deepcopy
 import json
-import logging
 from typing import Any
-from unittest.mock import patch
+from unittest.mock import call, patch
 
 import pytest
 
@@ -18,25 +17,27 @@ from homeassistant.components.mqtt.vacuum import (
     services_to_strings,
 )
 from homeassistant.components.vacuum import (
-    ATTR_BATTERY_ICON,
-    ATTR_BATTERY_LEVEL,
     ATTR_FAN_SPEED,
     ATTR_FAN_SPEED_LIST,
-    DOMAIN,
     SERVICE_CLEAN_SPOT,
     SERVICE_LOCATE,
     SERVICE_PAUSE,
     SERVICE_RETURN_TO_BASE,
     SERVICE_START,
     SERVICE_STOP,
-    STATE_CLEANING,
-    STATE_DOCKED,
+    VacuumActivity,
 )
-from homeassistant.const import CONF_NAME, ENTITY_MATCH_ALL, STATE_UNKNOWN
+from homeassistant.const import (
+    ATTR_SUPPORTED_FEATURES,
+    CONF_NAME,
+    ENTITY_MATCH_ALL,
+    STATE_UNKNOWN,
+)
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import HomeAssistantError
+from homeassistant.helpers import entity_registry as er, issue_registry as ir
 
-from .test_common import (
+from .common import (
     help_custom_config,
     help_test_availability_when_connection_lost,
     help_test_availability_without_topic,
@@ -68,7 +69,11 @@ from .test_common import (
 
 from tests.common import async_fire_mqtt_message
 from tests.components.vacuum import common
-from tests.typing import MqttMockHAClientGenerator, MqttMockPahoClient
+from tests.typing import (
+    MqttMockHAClientGenerator,
+    MqttMockPahoClient,
+    WebSocketGenerator,
+)
 
 COMMAND_TOPIC = "vacuum/command"
 SEND_COMMAND_TOPIC = "vacuum/send_command"
@@ -83,6 +88,17 @@ DEFAULT_CONFIG = {
             CONF_STATE_TOPIC: STATE_TOPIC,
             mqttvacuum.CONF_SET_FAN_SPEED_TOPIC: "vacuum/set_fan_speed",
             mqttvacuum.CONF_FAN_SPEED_LIST: ["min", "medium", "high", "max"],
+        }
+    }
+}
+
+CONFIG_CLEAN_SEGMENTS = {
+    mqtt.DOMAIN: {
+        vacuum.DOMAIN: {
+            CONF_NAME: "test",
+            CONF_STATE_TOPIC: STATE_TOPIC,
+            "unique_id": "veryunique",
+            mqttvacuum.CONF_CLEAN_SEGMENTS_COMMAND_TOPIC: "vacuum/clean_segment",
         }
     }
 }
@@ -102,32 +118,6 @@ CONFIG_ALL_SERVICES = help_custom_config(
 )
 
 
-async def test_warning_schema_option(
-    hass: HomeAssistant,
-    mqtt_mock_entry: MqttMockHAClientGenerator,
-    caplog: pytest.LogCaptureFixture,
-) -> None:
-    """Test the warning on use of deprecated schema option."""
-    await mqtt_mock_entry()
-    # Send discovery message with deprecated schema option
-    async_fire_mqtt_message(
-        hass,
-        f"homeassistant/{vacuum.DOMAIN}/bla/config",
-        '{"name": "test", "schema": "state", "o": {"name": "Bla2MQTT", "sw": "0.99", "url":"https://example.com/support"}}',
-    )
-    await hass.async_block_till_done()
-    await hass.async_block_till_done(wait_background_tasks=True)
-
-    state = hass.states.get("vacuum.test")
-    # We do not fail if the schema option is still in the payload, but we log an error
-    assert state is not None
-    with caplog.at_level(logging.WARNING):
-        assert (
-            "The 'schema' option has been removed, "
-            "please remove it from your configuration" in caplog.text
-        )
-
-
 @pytest.mark.parametrize("hass_config", [DEFAULT_CONFIG])
 async def test_default_supported_features(
     hass: HomeAssistant, mqtt_mock_entry: MqttMockHAClientGenerator
@@ -137,7 +127,7 @@ async def test_default_supported_features(
     entity = hass.states.get("vacuum.mqtttest")
     entity_features = entity.attributes.get(mqttvacuum.CONF_SUPPORTED_FEATURES, 0)
     assert sorted(services_to_strings(entity_features, SERVICE_TO_STRING)) == sorted(
-        ["start", "stop", "return_home", "battery", "clean_spot"]
+        ["start", "stop", "return_home", "clean_spot"]
     )
 
 
@@ -149,54 +139,68 @@ async def test_all_commands(
     mqtt_mock = await mqtt_mock_entry()
 
     await hass.services.async_call(
-        DOMAIN, SERVICE_START, {"entity_id": ENTITY_MATCH_ALL}, blocking=True
-    )
-    mqtt_mock.async_publish.assert_called_once_with(COMMAND_TOPIC, "start", 0, False)
-    mqtt_mock.async_publish.reset_mock()
-
-    await hass.services.async_call(
-        DOMAIN, SERVICE_STOP, {"entity_id": ENTITY_MATCH_ALL}, blocking=True
-    )
-    mqtt_mock.async_publish.assert_called_once_with(COMMAND_TOPIC, "stop", 0, False)
-    mqtt_mock.async_publish.reset_mock()
-
-    await hass.services.async_call(
-        DOMAIN, SERVICE_PAUSE, {"entity_id": ENTITY_MATCH_ALL}, blocking=True
-    )
-    mqtt_mock.async_publish.assert_called_once_with(COMMAND_TOPIC, "pause", 0, False)
-    mqtt_mock.async_publish.reset_mock()
-
-    await hass.services.async_call(
-        DOMAIN, SERVICE_LOCATE, {"entity_id": ENTITY_MATCH_ALL}, blocking=True
-    )
-    mqtt_mock.async_publish.assert_called_once_with(COMMAND_TOPIC, "locate", 0, False)
-    mqtt_mock.async_publish.reset_mock()
-
-    await hass.services.async_call(
-        DOMAIN, SERVICE_CLEAN_SPOT, {"entity_id": ENTITY_MATCH_ALL}, blocking=True
+        vacuum.DOMAIN, SERVICE_START, {"entity_id": ENTITY_MATCH_ALL}, blocking=True
     )
     mqtt_mock.async_publish.assert_called_once_with(
-        COMMAND_TOPIC, "clean_spot", 0, False
+        COMMAND_TOPIC, "start", 0, False, message_expiry_interval=None
     )
     mqtt_mock.async_publish.reset_mock()
 
     await hass.services.async_call(
-        DOMAIN, SERVICE_RETURN_TO_BASE, {"entity_id": ENTITY_MATCH_ALL}, blocking=True
+        vacuum.DOMAIN, SERVICE_STOP, {"entity_id": ENTITY_MATCH_ALL}, blocking=True
     )
     mqtt_mock.async_publish.assert_called_once_with(
-        COMMAND_TOPIC, "return_to_base", 0, False
+        COMMAND_TOPIC, "stop", 0, False, message_expiry_interval=None
+    )
+    mqtt_mock.async_publish.reset_mock()
+
+    await hass.services.async_call(
+        vacuum.DOMAIN, SERVICE_PAUSE, {"entity_id": ENTITY_MATCH_ALL}, blocking=True
+    )
+    mqtt_mock.async_publish.assert_called_once_with(
+        COMMAND_TOPIC, "pause", 0, False, message_expiry_interval=None
+    )
+    mqtt_mock.async_publish.reset_mock()
+
+    await hass.services.async_call(
+        vacuum.DOMAIN, SERVICE_LOCATE, {"entity_id": ENTITY_MATCH_ALL}, blocking=True
+    )
+    mqtt_mock.async_publish.assert_called_once_with(
+        COMMAND_TOPIC, "locate", 0, False, message_expiry_interval=None
+    )
+    mqtt_mock.async_publish.reset_mock()
+
+    await hass.services.async_call(
+        vacuum.DOMAIN,
+        SERVICE_CLEAN_SPOT,
+        {"entity_id": ENTITY_MATCH_ALL},
+        blocking=True,
+    )
+    mqtt_mock.async_publish.assert_called_once_with(
+        COMMAND_TOPIC, "clean_spot", 0, False, message_expiry_interval=None
+    )
+    mqtt_mock.async_publish.reset_mock()
+
+    await hass.services.async_call(
+        vacuum.DOMAIN,
+        SERVICE_RETURN_TO_BASE,
+        {"entity_id": ENTITY_MATCH_ALL},
+        blocking=True,
+    )
+    mqtt_mock.async_publish.assert_called_once_with(
+        COMMAND_TOPIC, "return_to_base", 0, False, message_expiry_interval=None
     )
     mqtt_mock.async_publish.reset_mock()
 
     await common.async_set_fan_speed(hass, "medium", "vacuum.mqtttest")
     mqtt_mock.async_publish.assert_called_once_with(
-        "vacuum/set_fan_speed", "medium", 0, False
+        "vacuum/set_fan_speed", "medium", 0, False, message_expiry_interval=None
     )
     mqtt_mock.async_publish.reset_mock()
 
     await common.async_send_command(hass, "44 FE 93", entity_id="vacuum.mqtttest")
     mqtt_mock.async_publish.assert_called_once_with(
-        "vacuum/send_command", "44 FE 93", 0, False
+        "vacuum/send_command", "44 FE 93", 0, False, message_expiry_interval=None
     )
     mqtt_mock.async_publish.reset_mock()
 
@@ -232,37 +236,43 @@ async def test_commands_without_supported_features(
     mqtt_mock = await mqtt_mock_entry()
 
     await hass.services.async_call(
-        DOMAIN, SERVICE_START, {"entity_id": ENTITY_MATCH_ALL}, blocking=True
+        vacuum.DOMAIN, SERVICE_START, {"entity_id": ENTITY_MATCH_ALL}, blocking=True
     )
     mqtt_mock.async_publish.assert_not_called()
     mqtt_mock.async_publish.reset_mock()
 
     await hass.services.async_call(
-        DOMAIN, SERVICE_PAUSE, {"entity_id": ENTITY_MATCH_ALL}, blocking=True
+        vacuum.DOMAIN, SERVICE_PAUSE, {"entity_id": ENTITY_MATCH_ALL}, blocking=True
     )
     mqtt_mock.async_publish.assert_not_called()
     mqtt_mock.async_publish.reset_mock()
 
     await hass.services.async_call(
-        DOMAIN, SERVICE_STOP, {"entity_id": ENTITY_MATCH_ALL}, blocking=True
+        vacuum.DOMAIN, SERVICE_STOP, {"entity_id": ENTITY_MATCH_ALL}, blocking=True
     )
     mqtt_mock.async_publish.assert_not_called()
     mqtt_mock.async_publish.reset_mock()
 
     await hass.services.async_call(
-        DOMAIN, SERVICE_RETURN_TO_BASE, {"entity_id": ENTITY_MATCH_ALL}, blocking=True
+        vacuum.DOMAIN,
+        SERVICE_RETURN_TO_BASE,
+        {"entity_id": ENTITY_MATCH_ALL},
+        blocking=True,
     )
     mqtt_mock.async_publish.assert_not_called()
     mqtt_mock.async_publish.reset_mock()
 
     await hass.services.async_call(
-        DOMAIN, SERVICE_LOCATE, {"entity_id": ENTITY_MATCH_ALL}, blocking=True
+        vacuum.DOMAIN, SERVICE_LOCATE, {"entity_id": ENTITY_MATCH_ALL}, blocking=True
     )
     mqtt_mock.async_publish.assert_not_called()
     mqtt_mock.async_publish.reset_mock()
 
     await hass.services.async_call(
-        DOMAIN, SERVICE_CLEAN_SPOT, {"entity_id": ENTITY_MATCH_ALL}, blocking=True
+        vacuum.DOMAIN,
+        SERVICE_CLEAN_SPOT,
+        {"entity_id": ENTITY_MATCH_ALL},
+        blocking=True,
     )
     mqtt_mock.async_publish.assert_not_called()
     mqtt_mock.async_publish.reset_mock()
@@ -308,9 +318,341 @@ async def test_command_without_command_topic(
     mqtt_mock.async_publish.assert_not_called()
     mqtt_mock.async_publish.reset_mock()
 
-    await common.async_send_command(hass, "some command", "vacuum.test")
+    await common.async_send_command(hass, "some command", entity_id="vacuum.test")
     mqtt_mock.async_publish.assert_not_called()
     mqtt_mock.async_publish.reset_mock()
+
+
+@pytest.mark.parametrize("hass_config", [CONFIG_CLEAN_SEGMENTS])
+async def test_clean_segments_initial_setup_without_repair_issue(
+    hass: HomeAssistant,
+    mqtt_mock_entry: MqttMockHAClientGenerator,
+) -> None:
+    """Test setup does not fire repair after segments are received."""
+    await mqtt_mock_entry()
+    # Receive a valid state
+    state = hass.states.get("vacuum.test")
+    assert state.state == STATE_UNKNOWN
+
+    message = """{
+        "battery_level": 54,
+        "state": "cleaning",
+        "segments":{
+            "1":"Livingroom",
+            "2":"Kitchen",
+            "3":"Diningroom"
+        }
+    }"""
+    async_fire_mqtt_message(hass, "vacuum/state", message)
+    await hass.async_block_till_done()
+    state = hass.states.get("vacuum.test")
+    assert state.state == VacuumActivity.CLEANING
+    assert (
+        state.attributes.get(ATTR_SUPPORTED_FEATURES)
+        & vacuum.VacuumEntityFeature.CLEAN_AREA
+    )
+    issue_registry = ir.async_get(hass)
+    assert len(issue_registry.issues) == 0
+
+
+@pytest.mark.parametrize("hass_config", [CONFIG_CLEAN_SEGMENTS])
+async def test_clean_segments_command(
+    hass: HomeAssistant,
+    hass_ws_client: WebSocketGenerator,
+    entity_registry: er.EntityRegistry,
+    mqtt_mock_entry: MqttMockHAClientGenerator,
+) -> None:
+    """Test cleaning segments and repair flow."""
+    config_entry = hass.config_entries.async_entries(mqtt.DOMAIN)[0]
+    entity_registry.async_get_or_create(
+        vacuum.DOMAIN,
+        mqtt.DOMAIN,
+        "veryunique",
+        config_entry=config_entry,
+        suggested_object_id="test",
+    )
+    entity_registry.async_update_entity_options(
+        "vacuum.test",
+        vacuum.DOMAIN,
+        {
+            "area_mapping": {"Nabu Casa": ["1", "2"]},
+            "last_seen_segments": [
+                {"id": "1", "name": "Livingroom"},
+                {"id": "2", "name": "Kitchen"},
+            ],
+        },
+    )
+    mqtt_mock = await mqtt_mock_entry()
+    await hass.async_block_till_done()
+    message = """{
+        "battery_level": 54,
+        "state": "idle",
+        "segments":{
+            "1":"Livingroom",
+            "2":"Kitchen"
+        }
+    }"""
+    async_fire_mqtt_message(hass, "vacuum/state", message)
+    await hass.async_block_till_done()
+    state = hass.states.get("vacuum.test")
+    assert state.state == VacuumActivity.IDLE
+    assert (
+        state.attributes.get(ATTR_SUPPORTED_FEATURES)
+        & vacuum.VacuumEntityFeature.CLEAN_AREA
+    )
+
+    issue_registry = ir.async_get(hass)
+    # We do not expect a repair flow as the segments did not change
+    assert len(issue_registry.issues) == 0
+
+    await common.async_clean_area(hass, ["Nabu Casa"], entity_id="vacuum.test")
+    assert (
+        call(
+            "vacuum/clean_segment", '["1","2"]', 0, False, message_expiry_interval=None
+        )
+        in mqtt_mock.async_publish.mock_calls
+    )
+    await hass.async_block_till_done()
+    message = """{
+        "battery_level": 54,
+        "state": "cleaning",
+        "segments":{
+            "1":"Livingroom",
+            "2":"Kitchen",
+            "3": "Diningroom"
+        }
+    }"""
+    async_fire_mqtt_message(hass, "vacuum/state", message)
+    await hass.async_block_till_done()
+    # We expect a repair issue now as the available segments have changed
+    assert len(issue_registry.issues) == 1
+
+    client = await hass_ws_client(hass)
+    await client.send_json_auto_id(
+        {"type": "vacuum/get_segments", "entity_id": "vacuum.test"}
+    )
+    msg = await client.receive_json()
+    assert msg["success"]
+    assert msg["result"]["segments"] == [
+        {"id": "1", "name": "Livingroom", "group": None},
+        {"id": "2", "name": "Kitchen", "group": None},
+        {"id": "3", "name": "Diningroom", "group": None},
+    ]
+
+
+@pytest.mark.parametrize(
+    "hass_config",
+    [
+        help_custom_config(
+            vacuum.DOMAIN,
+            CONFIG_CLEAN_SEGMENTS,
+            ({"clean_segments_command_template": "{{ ';'.join(value) }}"},),
+        )
+    ],
+)
+async def test_clean_segments_command_template(
+    hass: HomeAssistant,
+    hass_ws_client: WebSocketGenerator,
+    entity_registry: er.EntityRegistry,
+    mqtt_mock_entry: MqttMockHAClientGenerator,
+) -> None:
+    """Test clean segments with command template."""
+    mqtt_mock = await mqtt_mock_entry()
+    entity_registry.async_update_entity_options(
+        "vacuum.test",
+        vacuum.DOMAIN,
+        {
+            "area_mapping": {"Livingroom": ["1"], "Kitchen": ["2"]},
+            "last_seen_segments": [
+                {"id": "1", "name": "Livingroom"},
+                {"id": "2", "name": "Kitchen"},
+            ],
+        },
+    )
+    await hass.async_block_till_done()
+    message = """{
+        "battery_level": 54,
+        "state": "idle",
+        "segments":{
+            "1":"Livingroom",
+            "2":"Kitchen"
+        }
+    }"""
+    async_fire_mqtt_message(hass, "vacuum/state", message)
+    await hass.async_block_till_done()
+    state = hass.states.get("vacuum.test")
+    assert state.state == VacuumActivity.IDLE
+    assert (
+        state.attributes.get(ATTR_SUPPORTED_FEATURES)
+        & vacuum.VacuumEntityFeature.CLEAN_AREA
+    )
+
+    await common.async_clean_area(
+        hass, ["Livingroom", "Kitchen"], entity_id="vacuum.test"
+    )
+    assert (
+        call("vacuum/clean_segment", "1;2", 0, False, message_expiry_interval=None)
+        in mqtt_mock.async_publish.mock_calls
+    )
+
+    client = await hass_ws_client(hass)
+    await client.send_json_auto_id(
+        {"type": "vacuum/get_segments", "entity_id": "vacuum.test"}
+    )
+    msg = await client.receive_json()
+    assert msg["success"]
+    assert msg["result"]["segments"] == [
+        {"id": "1", "name": "Livingroom", "group": None},
+        {"id": "2", "name": "Kitchen", "group": None},
+    ]
+
+
+@pytest.mark.usefixtures("hass")
+@pytest.mark.parametrize(
+    ("hass_config", "error_message"),
+    [
+        (
+            help_custom_config(
+                vacuum.DOMAIN,
+                DEFAULT_CONFIG,
+                (
+                    {
+                        "clean_segments_command_topic": "test-topic",
+                    },
+                ),
+            ),
+            (
+                "Option `clean_segments_command_topic`"
+                " requires `unique_id` to be configured"
+            ),
+        ),
+    ],
+)
+async def test_clean_segments_config_validation(
+    mqtt_mock_entry: MqttMockHAClientGenerator,
+    error_message: str,
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    """Test status clean segment config validation."""
+    await mqtt_mock_entry()
+    assert error_message in caplog.text
+
+
+async def test_removing_clean_segments_command_topic_resets_feature(
+    hass: HomeAssistant,
+    mqtt_mock_entry: MqttMockHAClientGenerator,
+) -> None:
+    """Test the clean area feature is reset if the vacuum is reconfigured.
+
+    The `clean_segments_command_topic` is required to support clean area support.
+    When this option is removed, the clean area feature should be reset.
+    """
+    await mqtt_mock_entry()
+
+    config_with_clean_segments_command_topic = CONFIG_CLEAN_SEGMENTS[mqtt.DOMAIN][
+        vacuum.DOMAIN
+    ]
+    async_fire_mqtt_message(
+        hass,
+        "homeassistant/vacuum/bla/config",
+        json.dumps(config_with_clean_segments_command_topic),
+    )
+    await hass.async_block_till_done()
+    message = """{
+        "battery_level": 54,
+        "state": "idle",
+        "segments":{
+            "1":"Livingroom",
+            "2":"Kitchen"
+        }
+    }"""
+    async_fire_mqtt_message(hass, "vacuum/state", message)
+    await hass.async_block_till_done()
+    state = hass.states.get("vacuum.test")
+    assert state.state == VacuumActivity.IDLE
+    assert (
+        state.attributes.get(ATTR_SUPPORTED_FEATURES)
+        & vacuum.VacuumEntityFeature.CLEAN_AREA
+    )
+
+    config_without_clean_segments_command_topic = (
+        config_with_clean_segments_command_topic.copy()
+    )
+    config_without_clean_segments_command_topic.pop(
+        mqttvacuum.CONF_CLEAN_SEGMENTS_COMMAND_TOPIC
+    )
+    async_fire_mqtt_message(
+        hass,
+        "homeassistant/vacuum/bla/config",
+        json.dumps(config_without_clean_segments_command_topic),
+    )
+    await hass.async_block_till_done()
+    message = """{
+        "battery_level": 30,
+        "state": "cleaning",
+        "segments":{
+            "1":"Livingroom",
+            "2":"Kitchen"
+        }
+    }"""
+    async_fire_mqtt_message(hass, "vacuum/state", message)
+    await hass.async_block_till_done()
+    state = hass.states.get("vacuum.test")
+    assert state.state == VacuumActivity.CLEANING
+    assert not (
+        state.attributes.get(ATTR_SUPPORTED_FEATURES)
+        & vacuum.VacuumEntityFeature.CLEAN_AREA
+    )
+
+
+async def test_clean_area_feature_preserved_on_config_update(
+    hass: HomeAssistant,
+    mqtt_mock_entry: MqttMockHAClientGenerator,
+) -> None:
+    """Test clean area is preserved when config is updated.
+
+    When a new config arrives that still has `clean_segments_command_topic` and
+    segments were previously received from state, the CLEAN_AREA feature should
+    be preserved without needing another state message.
+    """
+    await mqtt_mock_entry()
+
+    config = CONFIG_CLEAN_SEGMENTS[mqtt.DOMAIN][vacuum.DOMAIN]
+    async_fire_mqtt_message(
+        hass,
+        "homeassistant/vacuum/bla/config",
+        json.dumps(config),
+    )
+    await hass.async_block_till_done()
+    message = """{
+        "battery_level": 54,
+        "state": "idle",
+        "segments":{
+            "1":"Livingroom",
+            "2":"Kitchen"
+        }
+    }"""
+    async_fire_mqtt_message(hass, "vacuum/state", message)
+    await hass.async_block_till_done()
+    state = hass.states.get("vacuum.test")
+    assert (
+        state.attributes.get(ATTR_SUPPORTED_FEATURES)
+        & vacuum.VacuumEntityFeature.CLEAN_AREA
+    )
+
+    updated_config = config.copy()
+    updated_config["name"] = "renamed"
+    async_fire_mqtt_message(
+        hass,
+        "homeassistant/vacuum/bla/config",
+        json.dumps(updated_config),
+    )
+    await hass.async_block_till_done()
+    state = hass.states.get("vacuum.test")
+    assert (
+        state.attributes.get(ATTR_SUPPORTED_FEATURES)
+        & vacuum.VacuumEntityFeature.CLEAN_AREA
+    )
 
 
 @pytest.mark.parametrize("hass_config", [CONFIG_ALL_SERVICES])
@@ -329,9 +671,7 @@ async def test_status(
     }"""
     async_fire_mqtt_message(hass, "vacuum/state", message)
     state = hass.states.get("vacuum.mqtttest")
-    assert state.state == STATE_CLEANING
-    assert state.attributes.get(ATTR_BATTERY_LEVEL) == 54
-    assert state.attributes.get(ATTR_BATTERY_ICON) == "mdi:battery-50"
+    assert state.state == VacuumActivity.CLEANING
     assert state.attributes.get(ATTR_FAN_SPEED) == "max"
 
     message = """{
@@ -342,9 +682,7 @@ async def test_status(
 
     async_fire_mqtt_message(hass, "vacuum/state", message)
     state = hass.states.get("vacuum.mqtttest")
-    assert state.state == STATE_DOCKED
-    assert state.attributes.get(ATTR_BATTERY_ICON) == "mdi:battery-charging-60"
-    assert state.attributes.get(ATTR_BATTERY_LEVEL) == 61
+    assert state.state == VacuumActivity.DOCKED
     assert state.attributes.get(ATTR_FAN_SPEED) == "min"
     assert state.attributes.get(ATTR_FAN_SPEED_LIST) == ["min", "medium", "high", "max"]
 
@@ -363,7 +701,9 @@ async def test_status(
             (
                 {
                     mqttvacuum.CONF_SUPPORTED_FEATURES: services_to_strings(
-                        mqttvacuum.DEFAULT_SERVICES, SERVICE_TO_STRING
+                        mqttvacuum.DEFAULT_SERVICES
+                        | vacuum.VacuumEntityFeature.BATTERY,
+                        SERVICE_TO_STRING,
                     )
                 },
             ),
@@ -382,11 +722,9 @@ async def test_no_fan_vacuum(
     }"""
     async_fire_mqtt_message(hass, "vacuum/state", message)
     state = hass.states.get("vacuum.mqtttest")
-    assert state.state == STATE_CLEANING
+    assert state.state == VacuumActivity.CLEANING
     assert state.attributes.get(ATTR_FAN_SPEED) is None
     assert state.attributes.get(ATTR_FAN_SPEED_LIST) is None
-    assert state.attributes.get(ATTR_BATTERY_LEVEL) == 54
-    assert state.attributes.get(ATTR_BATTERY_ICON) == "mdi:battery-50"
 
     message = """{
         "battery_level": 54,
@@ -396,12 +734,9 @@ async def test_no_fan_vacuum(
     async_fire_mqtt_message(hass, "vacuum/state", message)
     state = hass.states.get("vacuum.mqtttest")
 
-    assert state.state == STATE_CLEANING
+    assert state.state == VacuumActivity.CLEANING
     assert state.attributes.get(ATTR_FAN_SPEED) is None
     assert state.attributes.get(ATTR_FAN_SPEED_LIST) is None
-
-    assert state.attributes.get(ATTR_BATTERY_LEVEL) == 54
-    assert state.attributes.get(ATTR_BATTERY_ICON) == "mdi:battery-50"
 
     message = """{
         "battery_level": 61,
@@ -410,9 +745,7 @@ async def test_no_fan_vacuum(
 
     async_fire_mqtt_message(hass, "vacuum/state", message)
     state = hass.states.get("vacuum.mqtttest")
-    assert state.state == STATE_DOCKED
-    assert state.attributes.get(ATTR_BATTERY_ICON) == "mdi:battery-charging-60"
-    assert state.attributes.get(ATTR_BATTERY_LEVEL) == 61
+    assert state.state == VacuumActivity.DOCKED
 
 
 @pytest.mark.parametrize("hass_config", [CONFIG_ALL_SERVICES])
@@ -704,7 +1037,6 @@ async def test_publishing_with_custom_encoding(
     domain = vacuum.DOMAIN
     config = deepcopy(DEFAULT_CONFIG)
     config[mqtt.DOMAIN][domain]["supported_features"] = [
-        "battery",
         "clean_spot",
         "fan_speed",
         "locate",
@@ -813,7 +1145,6 @@ async def test_setup_manual_entity_from_yaml(
         ("availability-topic", "online", "offline"),
         ("json-attributes-topic", '{"attr1": "val1"}', '{"attr1": "val2"}'),
         ("vacuum/state", '{"state": "cleaning"}', '{"state": "docked"}'),
-        ("vacuum/state", '{"battery_level": 71}', '{"battery_level": 60}'),
         ("vacuum/state", '{"fan_speed": "max"}', '{"fan_speed": "min"}'),
     ],
 )

@@ -1,7 +1,5 @@
 """Provides core stream functionality."""
 
-from __future__ import annotations
-
 import asyncio
 from collections import deque
 from collections.abc import Callable, Coroutine, Iterable
@@ -9,7 +7,7 @@ from dataclasses import dataclass, field
 import datetime
 from enum import IntEnum
 import logging
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, cast
 
 from aiohttp import web
 import numpy as np
@@ -27,7 +25,7 @@ from .const import (
 )
 
 if TYPE_CHECKING:
-    from av import CodecContext, Packet
+    from av import Packet, VideoCodecContext
 
     from homeassistant.components.camera import DynamicStreamSettings
 
@@ -166,7 +164,7 @@ class Segment:
                 self.hls_playlist_parts.append(
                     f"#EXT-X-PART:DURATION={part.duration:.3f},URI="
                     f'"./segment/{self.sequence}.{part_num}.m4s"'
-                    f'{",INDEPENDENT=YES" if part.has_keyframe else ""}'
+                    f"{',INDEPENDENT=YES' if part.has_keyframe else ''}"
                 )
         if self.complete:
             # Construct the final playlist_template. The placeholder will share a
@@ -200,7 +198,7 @@ class Segment:
     def render_hls(
         self, last_stream_id: int, render_parts: bool, add_hint: bool
     ) -> str:
-        """Render the HLS playlist section for the Segment including a hint if requested."""
+        """Render the Segment HLS playlist, optionally including parts and a hint."""
         playlist_template = self._render_hls_template(last_stream_id, render_parts)
         playlist = playlist_template.format(
             self.hls_playlist_parts[0] if render_parts else ""
@@ -234,10 +232,12 @@ class IdleTimer:
         hass: HomeAssistant,
         timeout: int,
         idle_callback: Callable[[], Coroutine[Any, Any, None]],
+        startup_timeout: int | None = None,
     ) -> None:
         """Initialize IdleTimer."""
         self._hass = hass
         self._timeout = timeout
+        self._startup_timeout = startup_timeout or timeout
         self._callback = idle_callback
         self._unsub: CALLBACK_TYPE | None = None
         self.idle = False
@@ -246,7 +246,7 @@ class IdleTimer:
         """Start the idle timer if not already started."""
         self.idle = False
         if self._unsub is None:
-            self._unsub = async_call_later(self._hass, self._timeout, self.fire)
+            self._unsub = async_call_later(self._hass, self._startup_timeout, self.fire)
 
     def awake(self) -> None:
         """Keep the idle time alive by resetting the timeout."""
@@ -417,15 +417,17 @@ TRANSFORM_IMAGE_FUNCTION = (
 
 
 class KeyFrameConverter:
-    """Enables generating and getting an image from the last keyframe seen in the stream.
+    """Generate and get an image from the last keyframe.
 
     An overview of the thread and state interaction:
         the worker thread sets a packet
         get_image is called from the main asyncio loop
-        get_image schedules _generate_image in an executor thread
-        _generate_image will try to create an image from the packet
-        _generate_image will clear the packet, so there will only be one attempt per packet
-    If successful, self._image will be updated and returned by get_image
+        get_image schedules _generate_image in an executor
+        _generate_image will try to create an image from
+        the packet
+        _generate_image will clear the packet, so there
+        will only be one attempt per packet
+    If successful, self._image will be updated and returned
     If unsuccessful, get_image will return the previous image
     """
 
@@ -438,17 +440,16 @@ class KeyFrameConverter:
         """Initialize."""
 
         # Keep import here so that we can import stream integration
-        # without installingreqs
-        # pylint: disable-next=import-outside-toplevel
-        from homeassistant.components.camera.img_util import TurboJPEGSingleton
+        # without installing reqs
+        from homeassistant.components.camera import TurboJPEGSingleton  # noqa: PLC0415
 
-        self._packet: Packet = None
+        self._packet: Packet | None = None
         self._event: asyncio.Event = asyncio.Event()
         self._hass = hass
         self._image: bytes | None = None
         self._turbojpeg = TurboJPEGSingleton.instance()
         self._lock = asyncio.Lock()
-        self._codec_context: CodecContext | None = None
+        self._codec_context: VideoCodecContext | None = None
         self._stream_settings = stream_settings
         self._dynamic_stream_settings = dynamic_stream_settings
 
@@ -460,7 +461,7 @@ class KeyFrameConverter:
         self._packet = packet
         self._hass.loop.call_soon_threadsafe(self._event.set)
 
-    def create_codec_context(self, codec_context: CodecContext) -> None:
+    def create_codec_context(self, codec_context: VideoCodecContext) -> None:
         """Create a codec context to be used for decoding the keyframes.
 
         This is run by the worker thread and will only be called once per worker.
@@ -471,10 +472,11 @@ class KeyFrameConverter:
 
         # Keep import here so that we can import stream integration without
         # installing reqs
-        # pylint: disable-next=import-outside-toplevel
-        from av import CodecContext
+        from av import CodecContext  # noqa: PLC0415
 
-        self._codec_context = CodecContext.create(codec_context.name, "r")
+        self._codec_context = cast(
+            "VideoCodecContext", CodecContext.create(codec_context.name, "r")
+        )
         self._codec_context.extradata = codec_context.extradata
         self._codec_context.skip_frame = "NONKEY"
         self._codec_context.thread_type = "NONE"
@@ -506,9 +508,8 @@ class KeyFrameConverter:
                     frames = self._codec_context.decode(None)
                 break
             except EOFError:
-                _LOGGER.debug("Codec context needs flushing, attempting to reopen")
-                self._codec_context.close()
-                self._codec_context.open()
+                _LOGGER.debug("Codec context needs flushing")
+                self._codec_context.flush_buffers()
         else:
             _LOGGER.debug("Unable to decode keyframe")
             return

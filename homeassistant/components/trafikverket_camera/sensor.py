@@ -1,7 +1,5 @@
 """Sensor platform for Trafikverket Camera integration."""
 
-from __future__ import annotations
-
 from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import datetime
@@ -13,7 +11,7 @@ from homeassistant.components.sensor import (
 )
 from homeassistant.const import DEGREE
 from homeassistant.core import HomeAssistant, callback
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 from homeassistant.helpers.typing import StateType
 
 from . import TVCameraConfigEntry
@@ -74,7 +72,7 @@ SENSOR_TYPES: tuple[TVCameraSensorEntityDescription, ...] = (
 async def async_setup_entry(
     hass: HomeAssistant,
     entry: TVCameraConfigEntry,
-    async_add_entities: AddEntitiesCallback,
+    async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up Trafikverket Camera sensor platform."""
 

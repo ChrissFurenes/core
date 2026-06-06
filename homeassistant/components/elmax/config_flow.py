@@ -1,7 +1,5 @@
 """Config flow for elmax-cloud integration."""
 
-from __future__ import annotations
-
 from collections.abc import Mapping
 import logging
 from typing import Any
@@ -12,9 +10,9 @@ from elmax_api.model.panel import PanelEntry, PanelStatus
 import httpx
 import voluptuous as vol
 
-from homeassistant.components.zeroconf import ZeroconfServiceInfo
-from homeassistant.config_entries import ConfigEntry, ConfigFlow, ConfigFlowResult
+from homeassistant.config_entries import ConfigFlow, ConfigFlowResult
 from homeassistant.exceptions import HomeAssistantError
+from homeassistant.helpers.service_info.zeroconf import ZeroconfServiceInfo
 
 from .common import (
     build_direct_ssl_context,
@@ -114,7 +112,6 @@ class ElmaxConfigFlow(ConfigFlow, domain=DOMAIN):
     # Panel selection variables
     _panels_schema: vol.Schema
     _panel_names: dict
-    _entry: ConfigEntry | None
 
     async def async_step_user(
         self, user_input: dict[str, Any] | None = None
@@ -140,21 +137,25 @@ class ElmaxConfigFlow(ConfigFlow, domain=DOMAIN):
         return await self._test_direct_and_create_entry()
 
     async def _test_direct_and_create_entry(self):
-        """Test the direct connection to the Elmax panel and create and entry if successful."""
+        """Test the direct connection to the Elmax panel and create entry."""
         ssl_context = None
         self._panel_direct_ssl_cert = None
         if self._panel_direct_use_ssl:
             # Fetch the remote certificate.
-            # Local API is exposed via a self-signed SSL that we must add to our trust store.
+            # Local API is exposed via a self-signed SSL that
+            # we must add to our trust store.
             self._panel_direct_ssl_cert = (
                 await GenericElmax.retrieve_server_certificate(
                     hostname=self._panel_direct_hostname,
                     port=self._panel_direct_port,
                 )
             )
-            ssl_context = build_direct_ssl_context(cadata=self._panel_direct_ssl_cert)
+            ssl_context = await self.hass.async_add_executor_job(
+                build_direct_ssl_context, self._panel_direct_ssl_cert
+            )
 
-        # Attempt the connection to make sure the pin works. Also, take the chance to retrieve the panel ID via APIs.
+        # Attempt the connection to make sure the pin works.
+        # Also, take the chance to retrieve the panel ID via APIs.
         client_api_url = get_direct_api_url(
             host=self._panel_direct_hostname,
             port=self._panel_direct_port,
@@ -167,7 +168,7 @@ class ElmaxConfigFlow(ConfigFlow, domain=DOMAIN):
         )
         try:
             await client.login()
-        except (ElmaxNetworkError, httpx.ConnectError, httpx.ConnectTimeout):
+        except ElmaxNetworkError, httpx.ConnectError, httpx.ConnectTimeout:
             return self.async_show_form(
                 step_id=CONF_ELMAX_MODE_DIRECT,
                 data_schema=DIRECT_SETUP_SCHEMA,
@@ -204,7 +205,7 @@ class ElmaxConfigFlow(ConfigFlow, domain=DOMAIN):
 
     async def async_step_direct(self, user_input: dict[str, Any]) -> ConfigFlowResult:
         """Handle the direct setup step."""
-        self._selected_mode = CONF_ELMAX_MODE_CLOUD
+        self._selected_mode = CONF_ELMAX_MODE_DIRECT
         if user_input is None:
             return self.async_show_form(
                 step_id=CONF_ELMAX_MODE_DIRECT,
@@ -288,7 +289,8 @@ class ElmaxConfigFlow(ConfigFlow, domain=DOMAIN):
             )
 
         # Otherwise, it means we are handling now the "submission" of the user form.
-        # In this case, let's try to log in to the Elmax cloud and retrieve the available panels.
+        # In this case, let's try to log in to the Elmax cloud
+        # and retrieve the available panels.
         username = user_input[CONF_ELMAX_USERNAME]
         password = user_input[CONF_ELMAX_PASSWORD]
         try:
@@ -308,7 +310,8 @@ class ElmaxConfigFlow(ConfigFlow, domain=DOMAIN):
                 errors={"base": "network_error"},
             )
 
-        # If the login succeeded, retrieve the list of available panels and filter the online ones
+        # If the login succeeded, retrieve the list of available
+        # panels and filter the online ones
         online_panels = [x for x in await client.list_control_panels() if x.online]
 
         # If no online panel was found, we display an error in the next UI.
@@ -320,8 +323,9 @@ class ElmaxConfigFlow(ConfigFlow, domain=DOMAIN):
             )
 
         # Show the panel selection.
-        # We want the user to choose the panel using the associated name, we set up a mapping
-        # dictionary to handle that case.
+        # We want the user to choose the panel using the
+        # associated name, we set up a mapping dictionary to
+        # handle that case.
         panel_names: dict[str, str] = {}
         username = client.get_authenticated_username()
         for panel in online_panels:
@@ -395,7 +399,6 @@ class ElmaxConfigFlow(ConfigFlow, domain=DOMAIN):
         self, entry_data: Mapping[str, Any]
     ) -> ConfigFlowResult:
         """Perform reauth upon an API authentication error."""
-        self._entry = self.hass.config_entries.async_get_entry(self.context["entry_id"])
         self._reauth_cloud_username = entry_data.get(CONF_ELMAX_USERNAME)
         self._reauth_cloud_panelid = entry_data.get(CONF_ELMAX_PANEL_ID)
         return await self.async_step_reauth_confirm()
@@ -411,9 +414,10 @@ class ElmaxConfigFlow(ConfigFlow, domain=DOMAIN):
             panel_pin = user_input[CONF_ELMAX_PANEL_PIN]
             await self.async_set_unique_id(self._reauth_cloud_panelid)
 
-            # Handle authentication, make sure the panel we are re-authenticating against is listed among results
+            # Handle authentication, make sure the panel we are
+            # re-authenticating against is listed among results
             # and verify its pin is correct.
-            assert self._entry is not None
+            reauth_entry = self._get_reauth_entry()
             try:
                 # Test login.
                 client = await self._async_login(username=username, password=password)
@@ -421,14 +425,14 @@ class ElmaxConfigFlow(ConfigFlow, domain=DOMAIN):
                 panels = [
                     p
                     for p in await client.list_control_panels()
-                    if p.hash == self._entry.data[CONF_ELMAX_PANEL_ID]
+                    if p.hash == reauth_entry.data[CONF_ELMAX_PANEL_ID]
                 ]
                 if len(panels) < 1:
                     raise NoOnlinePanelsError  # noqa: TRY301
 
                 # Verify the pin is still valid.
                 await client.get_panel_status(
-                    control_panel_id=self._entry.data[CONF_ELMAX_PANEL_ID],
+                    control_panel_id=reauth_entry.data[CONF_ELMAX_PANEL_ID],
                     pin=panel_pin,
                 )
 
@@ -440,18 +444,16 @@ class ElmaxConfigFlow(ConfigFlow, domain=DOMAIN):
                 errors["base"] = "invalid_pin"
 
             # If all went right, update the config entry
-            if not errors:
-                self.hass.config_entries.async_update_entry(
-                    self._entry,
+            else:
+                return self.async_update_reload_and_abort(
+                    reauth_entry,
                     data={
-                        CONF_ELMAX_PANEL_ID: self._entry.data[CONF_ELMAX_PANEL_ID],
+                        CONF_ELMAX_PANEL_ID: reauth_entry.data[CONF_ELMAX_PANEL_ID],
                         CONF_ELMAX_PANEL_PIN: panel_pin,
                         CONF_ELMAX_USERNAME: username,
                         CONF_ELMAX_PASSWORD: password,
                     },
                 )
-                await self.hass.config_entries.async_reload(self._entry.entry_id)
-                return self.async_abort(reason="reauth_successful")
 
         # Otherwise start over and show the relative error message
         return self.async_show_form(
@@ -467,15 +469,20 @@ class ElmaxConfigFlow(ConfigFlow, domain=DOMAIN):
         http_port: int,
     ) -> ConfigFlowResult | None:
         # Look for another entry with the same PANEL_ID (local or remote).
-        # If there already is a matching panel, take the change to notify the Coordinator
-        # so that it uses the newly discovered IP address. This mitigates the issues
+        # If there already is a matching panel, take the chance
+        # to notify the Coordinator so that it uses the newly
+        # discovered IP address. This mitigates the issues
         # arising with DHCP and IP changes of the panels.
         for entry in self._async_current_entries(include_ignore=False):
             if entry.data[CONF_ELMAX_PANEL_ID] in (local_id, remote_id):
-                # If the discovery finds another entry with the same ID, skip the notification.
-                # However, if the discovery finds a new host for a panel that was already registered
-                # for a given host (leave PORT comparison aside as we don't want to get notified twice
-                # for HTTP and HTTPS), update the entry so that the integration "follows" the DHCP IP.
+                # If the discovery finds another entry with the
+                # same ID, skip the notification. However, if the
+                # discovery finds a new host for a panel that was
+                # already registered for a given host (leave PORT
+                # comparison aside as we don't want to get
+                # notified twice for HTTP and HTTPS), update the
+                # entry so that the integration "follows" the
+                # DHCP IP.
                 if (
                     entry.data.get(CONF_ELMAX_MODE, CONF_ELMAX_MODE_CLOUD)
                     == CONF_ELMAX_MODE_DIRECT
@@ -492,7 +499,8 @@ class ElmaxConfigFlow(ConfigFlow, domain=DOMAIN):
                     self.hass.config_entries.async_update_entry(
                         entry, unique_id=entry.unique_id, data=new_data
                     )
-                # Abort the configuration, as there already is an entry for this PANEL-ID.
+                # Abort the configuration, as there already
+                # is an entry for this PANEL-ID.
                 return self.async_abort(reason="already_configured")
         return None
 
@@ -500,7 +508,11 @@ class ElmaxConfigFlow(ConfigFlow, domain=DOMAIN):
         self, discovery_info: ZeroconfServiceInfo
     ) -> ConfigFlowResult:
         """Handle device found via zeroconf."""
-        host = discovery_info.host
+        host = (
+            f"[{discovery_info.ip_address}]"
+            if discovery_info.ip_address.version == 6
+            else str(discovery_info.ip_address)
+        )
         https_port = (
             int(discovery_info.port)
             if discovery_info.port is not None

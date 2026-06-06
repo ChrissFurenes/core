@@ -1,6 +1,4 @@
-"""Tests for the dnsip integration."""
-
-from __future__ import annotations
+"""Tests for the DNS IP integration."""
 
 
 class QueryResult:
@@ -23,6 +21,7 @@ class RetrieveDNS:
             self.nameservers = nameservers
         self._nameservers = ["1.2.3.4"]
         self.error = error
+        self._closed = False
 
     async def query(self, hostname, qtype) -> list[QueryResult]:
         """Return information."""
@@ -47,3 +46,7 @@ class RetrieveDNS:
     @nameservers.setter
     def nameservers(self, value: list[str]) -> None:
         self._nameservers = value
+
+    async def close(self) -> None:
+        """Close the resolver."""
+        self._closed = True

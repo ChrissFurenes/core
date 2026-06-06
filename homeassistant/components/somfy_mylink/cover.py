@@ -3,21 +3,14 @@
 import logging
 from typing import Any
 
-from homeassistant.components.cover import CoverDeviceClass, CoverEntity
-from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import STATE_CLOSED, STATE_OPEN
+from homeassistant.components.cover import CoverDeviceClass, CoverEntity, CoverState
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.device_registry import DeviceInfo
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 from homeassistant.helpers.restore_state import RestoreEntity
 
-from .const import (
-    CONF_REVERSED_TARGET_IDS,
-    DATA_SOMFY_MYLINK,
-    DOMAIN,
-    MANUFACTURER,
-    MYLINK_STATUS,
-)
+from . import SomfyMyLinkConfigEntry
+from .const import CONF_REVERSED_TARGET_IDS, DOMAIN, MANUFACTURER
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -29,15 +22,14 @@ MYLINK_COVER_TYPE_TO_DEVICE_CLASS = {
 
 async def async_setup_entry(
     hass: HomeAssistant,
-    config_entry: ConfigEntry,
-    async_add_entities: AddEntitiesCallback,
+    config_entry: SomfyMyLinkConfigEntry,
+    async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Discover and configure Somfy covers."""
     reversed_target_ids = config_entry.options.get(CONF_REVERSED_TARGET_IDS, {})
 
-    data = hass.data[DOMAIN][config_entry.entry_id]
-    mylink_status = data[MYLINK_STATUS]
-    somfy_mylink = data[DATA_SOMFY_MYLINK]
+    mylink_status = config_entry.runtime_data.mylink_status
+    somfy_mylink = config_entry.runtime_data.somfy_mylink
     cover_list = []
 
     for cover in mylink_status["result"]:
@@ -52,7 +44,7 @@ async def async_setup_entry(
 
         cover_list.append(SomfyShade(somfy_mylink, **cover_config))
 
-        _LOGGER.info(
+        _LOGGER.debug(
             "Adding Somfy Cover: %s with targetID %s",
             cover_config["name"],
             cover_config["target_id"],
@@ -131,7 +123,7 @@ class SomfyShade(RestoreEntity, CoverEntity):
         last_state = await self.async_get_last_state()
 
         if last_state is not None and last_state.state in (
-            STATE_OPEN,
-            STATE_CLOSED,
+            CoverState.OPEN,
+            CoverState.CLOSED,
         ):
-            self._attr_is_closed = last_state.state == STATE_CLOSED
+            self._attr_is_closed = last_state.state == CoverState.CLOSED

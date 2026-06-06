@@ -1,9 +1,8 @@
-"""Support for TMB (Transports Metropolitans de Barcelona) Barcelona public transport."""
-
-from __future__ import annotations
+"""Support for TMB Barcelona public transport."""
 
 from datetime import timedelta
 import logging
+from typing import Any
 
 from requests import HTTPError
 from tmb import IBus
@@ -15,7 +14,7 @@ from homeassistant.components.sensor import (
 )
 from homeassistant.const import CONF_NAME, UnitOfTime
 from homeassistant.core import HomeAssistant
-import homeassistant.helpers.config_validation as cv
+from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
 from homeassistant.util import Throttle
@@ -108,7 +107,7 @@ class TMBSensor(SensorEntity):
         return self._state
 
     @property
-    def extra_state_attributes(self):
+    def extra_state_attributes(self) -> dict[str, Any]:
         """Return the state attributes of the last update."""
         return {
             ATTR_BUS_STOP: self._stop,

@@ -1,8 +1,7 @@
 """Support for Melnor RainCloud sprinkler water timer."""
 
-from __future__ import annotations
-
 import logging
+from typing import cast
 
 import voluptuous as vol
 
@@ -10,22 +9,19 @@ from homeassistant.components.sensor import (
     PLATFORM_SCHEMA as SENSOR_PLATFORM_SCHEMA,
     SensorEntity,
 )
-from homeassistant.const import CONF_MONITORED_CONDITIONS
+from homeassistant.const import CONF_MONITORED_CONDITIONS, PERCENTAGE, UnitOfTime
 from homeassistant.core import HomeAssistant
-import homeassistant.helpers.config_validation as cv
+from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.icon import icon_for_battery_level
 from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
 
-from . import (
-    DATA_RAINCLOUD,
-    ICON_MAP,
-    SENSORS,
-    UNIT_OF_MEASUREMENT_MAP,
-    RainCloudEntity,
-)
+from .const import DATA_RAINCLOUD
+from .entity import RainCloudEntity
 
 _LOGGER = logging.getLogger(__name__)
+
+SENSORS = ["battery", "next_cycle", "rain_delay", "watering_time"]
 
 PLATFORM_SCHEMA = SENSOR_PLATFORM_SCHEMA.extend(
     {
@@ -34,6 +30,17 @@ PLATFORM_SCHEMA = SENSOR_PLATFORM_SCHEMA.extend(
         )
     }
 )
+
+UNIT_OF_MEASUREMENT_MAP: dict[str, str] = {
+    "auto_watering": "",
+    "battery": PERCENTAGE,
+    "is_watering": "",
+    "manual_watering": "",
+    "next_cycle": "",
+    "rain_delay": UnitOfTime.DAYS,
+    "status": "",
+    "watering_time": UnitOfTime.MINUTES,
+}
 
 
 def setup_platform(
@@ -63,28 +70,24 @@ class RainCloudSensor(RainCloudEntity, SensorEntity):
     """A sensor implementation for raincloud device."""
 
     @property
-    def native_value(self):
-        """Return the state of the sensor."""
-        return self._state
-
-    @property
-    def native_unit_of_measurement(self):
+    def native_unit_of_measurement(self) -> str | None:
         """Return the units of measurement."""
         return UNIT_OF_MEASUREMENT_MAP.get(self._sensor_type)
 
     def update(self) -> None:
         """Get the latest data and updates the states."""
-        _LOGGER.debug("Updating RainCloud sensor: %s", self._name)
+        _LOGGER.debug("Updating RainCloud sensor: %s", self.name)
         if self._sensor_type == "battery":
-            self._state = self.data.battery
+            self._attr_native_value = self.data.battery
         else:
-            self._state = getattr(self.data, self._sensor_type)
+            self._attr_native_value = getattr(self.data, self._sensor_type)
 
     @property
-    def icon(self):
+    def icon(self) -> str | None:
         """Icon to use in the frontend, if any."""
-        if self._sensor_type == "battery" and self._state is not None:
+        if self._sensor_type == "battery" and self.native_value is not None:
             return icon_for_battery_level(
-                battery_level=int(self._state), charging=False
+                battery_level=int(cast(float, self.native_value)),
+                charging=False,
             )
-        return ICON_MAP.get(self._sensor_type)
+        return super().icon

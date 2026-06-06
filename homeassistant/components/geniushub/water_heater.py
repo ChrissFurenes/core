@@ -1,14 +1,12 @@
 """Support for Genius Hub water_heater devices."""
 
-from __future__ import annotations
-
 from homeassistant.components.water_heater import (
     WaterHeaterEntity,
     WaterHeaterEntityFeature,
 )
 from homeassistant.const import STATE_OFF
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
 from . import GeniusHubConfigEntry
 from .entity import GeniusHeatingZone
@@ -36,7 +34,7 @@ GH_HEATERS = ["hot water temperature"]
 async def async_setup_entry(
     hass: HomeAssistant,
     entry: GeniusHubConfigEntry,
-    async_add_entities: AddEntitiesCallback,
+    async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up the Genius Hub water heater entities."""
 

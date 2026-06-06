@@ -1,19 +1,22 @@
 """Network helpers."""
 
-from __future__ import annotations
-
 from collections.abc import Callable
 from contextlib import suppress
 from ipaddress import ip_address
+import logging
 
+from aiohttp import hdrs
 from hass_nabucasa import remote
 import yarl
 
-from homeassistant.components import http
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import HomeAssistantError
-from homeassistant.loader import bind_hass
 from homeassistant.util.network import is_ip_address, is_loopback, normalize_url
+
+from . import http
+from .hassio import is_hassio
+
+_LOGGER = logging.getLogger(__name__)
 
 TYPE_URL_INTERNAL = "internal_url"
 TYPE_URL_EXTERNAL = "external_url"
@@ -24,7 +27,6 @@ class NoURLAvailableError(HomeAssistantError):
     """An URL to the Home Assistant instance is not available."""
 
 
-@bind_hass
 def is_internal_request(hass: HomeAssistant) -> bool:
     """Test if the current request is internal."""
     try:
@@ -36,15 +38,10 @@ def is_internal_request(hass: HomeAssistant) -> bool:
     return True
 
 
-@bind_hass
 def get_supervisor_network_url(
     hass: HomeAssistant, *, allow_ssl: bool = False
 ) -> str | None:
     """Get URL for home assistant within supervisor network."""
-    # Local import to avoid circular dependencies
-    # pylint: disable-next=import-outside-toplevel
-    from homeassistant.components.hassio import is_hassio
-
     if hass.config.api is None or not is_hassio(hass):
         return None
 
@@ -115,7 +112,6 @@ def is_hass_url(hass: HomeAssistant, url: str) -> bool:
     return False
 
 
-@bind_hass
 def get_url(
     hass: HomeAssistant,
     *,
@@ -179,20 +175,29 @@ def get_url(
         and request_host is not None
         and hass.config.api is not None
     ):
-        # Local import to avoid circular dependencies
-        # pylint: disable-next=import-outside-toplevel
-        from homeassistant.components.hassio import get_host_info, is_hassio
-
         scheme = "https" if hass.config.api.use_ssl else "http"
         current_url = yarl.URL.build(
             scheme=scheme, host=request_host, port=hass.config.api.port
         )
 
         known_hostnames = ["localhost"]
-        if is_hassio(hass) and (host_info := get_host_info(hass)):
-            known_hostnames.extend(
-                [host_info["hostname"], f"{host_info['hostname']}.local"]
+        if is_hassio(hass):
+            # Local import to avoid circular dependencies
+            from homeassistant.components.hassio import (  # noqa: PLC0415
+                HassioNotReadyError,
+                get_host_info,
             )
+
+            try:
+                host_info = get_host_info(hass)
+                known_hostnames.extend(
+                    [host_info["hostname"], f"{host_info['hostname']}.local"]
+                )
+            except HassioNotReadyError:
+                _LOGGER.debug(
+                    "Could not retrieve Supervisor host information,"
+                    " list of known URLs will be incomplete"
+                )
 
         if (
             (
@@ -216,10 +221,20 @@ def _get_request_host() -> str | None:
     """Get the host address of the current request."""
     if (request := http.current_request.get()) is None:
         raise NoURLAvailableError
-    return yarl.URL(request.url).host
+    # partition the host to remove the port
+    # because the raw host header can contain the port
+    host = request.headers.get(hdrs.HOST)
+    if host is None:
+        return None
+    # IPv6 addresses are enclosed in brackets
+    # use same logic as yarl and urllib to extract the host
+    if "[" in host:
+        return (host.partition("[")[2]).partition("]")[0]
+    if ":" in host:
+        host = host.partition(":")[0]
+    return host
 
 
-@bind_hass
 def _get_internal_url(
     hass: HomeAssistant,
     *,
@@ -257,7 +272,6 @@ def _get_internal_url(
     raise NoURLAvailableError
 
 
-@bind_hass
 def _get_external_url(
     hass: HomeAssistant,
     *,
@@ -302,13 +316,11 @@ def _get_external_url(
     raise NoURLAvailableError
 
 
-@bind_hass
 def _get_cloud_url(hass: HomeAssistant, require_current_request: bool = False) -> str:
     """Get external Home Assistant Cloud URL of this instance."""
     if "cloud" in hass.config.components:
         # Local import to avoid circular dependencies
-        # pylint: disable-next=import-outside-toplevel
-        from homeassistant.components.cloud import (
+        from homeassistant.components.cloud import (  # noqa: PLC0415
             CloudNotAvailable,
             async_remote_ui_url,
         )

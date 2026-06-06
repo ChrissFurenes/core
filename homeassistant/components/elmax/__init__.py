@@ -1,15 +1,9 @@
 """The elmax-cloud integration."""
 
-from __future__ import annotations
-
-from datetime import timedelta
-import logging
-
 from elmax_api.exceptions import ElmaxBadLoginError
 from elmax_api.http import Elmax, ElmaxLocal, GenericElmax
 from elmax_api.model.panel import PanelEntry
 
-from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import EVENT_HOMEASSISTANT_STOP
 from homeassistant.core import Event, HomeAssistant
 from homeassistant.exceptions import ConfigEntryAuthFailed
@@ -27,17 +21,13 @@ from .const import (
     CONF_ELMAX_PANEL_PIN,
     CONF_ELMAX_PASSWORD,
     CONF_ELMAX_USERNAME,
-    DOMAIN,
     ELMAX_PLATFORMS,
-    POLLING_SECONDS,
 )
-from .coordinator import ElmaxCoordinator
-
-_LOGGER = logging.getLogger(__name__)
+from .coordinator import ElmaxConfigEntry, ElmaxCoordinator
 
 
 async def _load_elmax_panel_client(
-    entry: ConfigEntry,
+    entry: ElmaxConfigEntry,
 ) -> tuple[GenericElmax, PanelEntry]:
     # Connection mode was not present in initial version, default to cloud if not set
     mode = entry.data.get(CONF_ELMAX_MODE, CONF_ELMAX_MODE_CLOUD)
@@ -78,8 +68,9 @@ async def _check_cloud_panel_status(client: Elmax, panel_id: str) -> PanelEntry:
     panels = await client.list_control_panels()
     panel = next((panel for panel in panels if panel.hash == panel_id), None)
 
-    # If the panel is no longer available within the ones associated to that client, raise
-    # a config error as the user must reconfigure it in order to  make it work again
+    # If the panel is no longer available within the ones
+    # associated to that client, raise a config error as the
+    # user must reconfigure it in order to make it work again
     if not panel:
         raise ConfigEntryAuthFailed(
             f"Panel ID {panel_id} is no longer linked to this user account"
@@ -87,7 +78,7 @@ async def _check_cloud_panel_status(client: Elmax, panel_id: str) -> PanelEntry:
     return panel
 
 
-async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
+async def async_setup_entry(hass: HomeAssistant, entry: ElmaxConfigEntry) -> bool:
     """Set up elmax-cloud from a config entry."""
     try:
         client, panel = await _load_elmax_panel_client(entry)
@@ -98,11 +89,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     # if there is something wrong with user credentials
     coordinator = ElmaxCoordinator(
         hass=hass,
-        logger=_LOGGER,
+        entry=entry,
         elmax_api_client=client,
         panel=panel,
-        name=f"Elmax Cloud {entry.entry_id}",
-        update_interval=timedelta(seconds=POLLING_SECONDS),
     )
 
     async def _async_on_hass_stop(_: Event) -> None:
@@ -117,7 +106,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     await coordinator.async_config_entry_first_refresh()
 
     # Store a global reference to the coordinator for later use
-    hass.data.setdefault(DOMAIN, {})[entry.entry_id] = coordinator
+    entry.runtime_data = coordinator
 
     entry.async_on_unload(entry.add_update_listener(async_reload_entry))
 
@@ -126,15 +115,11 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     return True
 
 
-async def async_reload_entry(hass: HomeAssistant, entry: ConfigEntry) -> None:
+async def async_reload_entry(hass: HomeAssistant, entry: ElmaxConfigEntry) -> None:
     """Handle an options update."""
     await hass.config_entries.async_reload(entry.entry_id)
 
 
-async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
+async def async_unload_entry(hass: HomeAssistant, entry: ElmaxConfigEntry) -> bool:
     """Unload a config entry."""
-    unload_ok = await hass.config_entries.async_unload_platforms(entry, ELMAX_PLATFORMS)
-    if unload_ok:
-        hass.data[DOMAIN].pop(entry.entry_id)
-
-    return unload_ok
+    return await hass.config_entries.async_unload_platforms(entry, ELMAX_PLATFORMS)

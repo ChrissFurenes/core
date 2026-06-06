@@ -1,7 +1,5 @@
 """Constants for the Bluetooth integration."""
 
-from __future__ import annotations
-
 from typing import Final
 
 from habluetooth import (  # noqa: F401
@@ -9,14 +7,25 @@ from habluetooth import (  # noqa: F401
     FALLBACK_MAXIMUM_STALE_ADVERTISEMENT_SECONDS,
     SCANNER_WATCHDOG_INTERVAL,
     SCANNER_WATCHDOG_TIMEOUT,
+    BluetoothScanningMode,
 )
+
+from homeassistant.const import CONF_MODE  # noqa: F401
 
 DOMAIN = "bluetooth"
 
 CONF_ADAPTER = "adapter"
 CONF_DETAILS = "details"
+# CONF_PASSIVE is the legacy boolean option; we keep writing it alongside
+# CONF_MODE so a downgrade to a pre-AUTO release reads a sensible value.
 CONF_PASSIVE = "passive"
 
+DEFAULT_MODE = BluetoothScanningMode.AUTO.value
+
+CONF_SOURCE_DOMAIN: Final = "source_domain"
+CONF_SOURCE_MODEL: Final = "source_model"
+CONF_SOURCE_CONFIG_ENTRY_ID: Final = "source_config_entry_id"
+CONF_SOURCE_DEVICE_ID: Final = "source_device_id"
 
 SOURCE_LOCAL: Final = "local"
 

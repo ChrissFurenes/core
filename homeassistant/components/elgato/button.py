@@ -1,12 +1,10 @@
 """Support for Elgato button."""
 
-from __future__ import annotations
-
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
 from typing import Any
 
-from elgato import Elgato, ElgatoError
+from elgato import Elgato
 
 from homeassistant.components.button import (
     ButtonDeviceClass,
@@ -15,12 +13,13 @@ from homeassistant.components.button import (
 )
 from homeassistant.const import EntityCategory
 from homeassistant.core import HomeAssistant
-from homeassistant.exceptions import HomeAssistantError
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
-from . import ElgatorConfigEntry
-from .coordinator import ElgatoDataUpdateCoordinator
+from .coordinator import ElgatoConfigEntry, ElgatoDataUpdateCoordinator
 from .entity import ElgatoEntity
+from .helpers import elgato_exception_handler
+
+PARALLEL_UPDATES = 1
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -48,8 +47,8 @@ BUTTONS = [
 
 async def async_setup_entry(
     hass: HomeAssistant,
-    entry: ElgatorConfigEntry,
-    async_add_entities: AddEntitiesCallback,
+    entry: ElgatoConfigEntry,
+    async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up Elgato button based on a config entry."""
     coordinator = entry.runtime_data
@@ -79,11 +78,7 @@ class ElgatoButtonEntity(ElgatoEntity, ButtonEntity):
             f"{coordinator.data.info.serial_number}_{description.key}"
         )
 
+    @elgato_exception_handler
     async def async_press(self) -> None:
         """Trigger button press on the Elgato device."""
-        try:
-            await self.entity_description.press_fn(self.coordinator.client)
-        except ElgatoError as error:
-            raise HomeAssistantError(
-                "An error occurred while communicating with the Elgato Light"
-            ) from error
+        await self.entity_description.press_fn(self.coordinator.client)

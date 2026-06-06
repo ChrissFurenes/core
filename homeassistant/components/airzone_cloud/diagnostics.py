@@ -1,7 +1,5 @@
 """Support for the Airzone Cloud diagnostics."""
 
-from __future__ import annotations
-
 from collections.abc import Mapping
 from typing import Any
 
@@ -21,11 +19,11 @@ from aioairzone_cloud.const import (
     RAW_WEBSERVERS,
 )
 
-from homeassistant.components.diagnostics.util import async_redact_data
+from homeassistant.components.diagnostics import async_redact_data
 from homeassistant.const import CONF_PASSWORD, CONF_USERNAME
 from homeassistant.core import HomeAssistant
 
-from . import AirzoneCloudConfigEntry
+from .coordinator import AirzoneCloudConfigEntry
 
 TO_REDACT_API = [
     API_CITY,

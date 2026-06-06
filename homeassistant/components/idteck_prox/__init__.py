@@ -1,7 +1,5 @@
 """Component for interfacing RFK101 proximity card readers."""
 
-from __future__ import annotations
-
 import logging
 
 from rfk101py.rfk101py import rfk101py
@@ -14,7 +12,7 @@ from homeassistant.const import (
     EVENT_HOMEASSISTANT_STOP,
 )
 from homeassistant.core import Event, HomeAssistant
-import homeassistant.helpers.config_validation as cv
+from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.typing import ConfigType
 
 _LOGGER = logging.getLogger(__name__)

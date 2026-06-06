@@ -1,7 +1,5 @@
 """Tracking for bluetooth low energy devices."""
 
-from __future__ import annotations
-
 from datetime import datetime, timedelta
 import logging
 from uuid import UUID
@@ -24,10 +22,10 @@ from homeassistant.components.device_tracker.legacy import (
 )
 from homeassistant.const import CONF_SCAN_INTERVAL, EVENT_HOMEASSISTANT_STOP
 from homeassistant.core import Event, HomeAssistant, callback
-import homeassistant.helpers.config_validation as cv
+from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.event import async_track_time_interval
 from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
-import homeassistant.util.dt as dt_util
+from homeassistant.util import dt as dt_util
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -164,8 +162,10 @@ async def async_setup_scanner(  # noqa: C901
         # until bleak releases v0.15+ which resolves these.
         except (AttributeError, BleakError) as err:
             _LOGGER.debug("Could not read battery status: %s", err)
-            # If the device does not offer battery information, there is no point in asking again later on.
-            # Remove the device from the battery-tracked devices, so that their battery is not wasted
+            # If the device does not offer battery information,
+            # there is no point in asking again later on.
+            # Remove the device from the battery-tracked
+            # devices, so that their battery is not wasted
             # trying to get an unavailable information.
             del devs_track_battery[mac]
         if battery:
@@ -194,7 +194,7 @@ async def async_setup_scanner(  # noqa: C901
 
         if track_new:
             if mac not in devs_to_track and mac not in devs_no_track:
-                _LOGGER.info("Discovered Bluetooth LE device %s", mac)
+                _LOGGER.debug("Discovered Bluetooth LE device %s", mac)
                 hass.async_create_task(
                     async_see_device(mac, service_info.name, new_device=True)
                 )

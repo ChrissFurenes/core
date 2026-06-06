@@ -3,13 +3,13 @@
 import logging
 from typing import Any
 
-from homeassistant.components.ssdp import (
+from homeassistant.config_entries import ConfigFlow, ConfigFlowResult
+from homeassistant.const import CONF_HOST, CONF_NAME
+from homeassistant.helpers.service_info.ssdp import (
     ATTR_UPNP_FRIENDLY_NAME,
     ATTR_UPNP_UDN,
     SsdpServiceInfo,
 )
-from homeassistant.config_entries import ConfigFlow, ConfigFlowResult
-from homeassistant.const import CONF_HOST, CONF_NAME
 
 from .const import DOMAIN
 
@@ -24,6 +24,9 @@ def _is_complete_discovery(discovery_info: SsdpServiceInfo) -> bool:
 class OpenhomeConfigFlow(ConfigFlow, domain=DOMAIN):
     """Handle an Openhome config flow."""
 
+    _host: str | None
+    _name: str
+
     async def async_step_ssdp(
         self, discovery_info: SsdpServiceInfo
     ) -> ConfigFlowResult:
@@ -34,19 +37,23 @@ class OpenhomeConfigFlow(ConfigFlow, domain=DOMAIN):
             _LOGGER.debug("async_step_ssdp: Incomplete discovery, ignoring")
             return self.async_abort(reason="incomplete_discovery")
 
-        _LOGGER.debug(
-            "async_step_ssdp: setting unique id %s", discovery_info.upnp[ATTR_UPNP_UDN]
-        )
+        udn = discovery_info.upnp[ATTR_UPNP_UDN]
+        if isinstance(udn, list):
+            if not udn:
+                return self.async_abort(reason="incomplete_discovery")
+            udn = udn[0]
 
-        await self.async_set_unique_id(discovery_info.upnp[ATTR_UPNP_UDN])
+        _LOGGER.debug("async_step_ssdp: setting unique id %s", udn)
+
+        await self.async_set_unique_id(udn)
         self._abort_if_unique_id_configured({CONF_HOST: discovery_info.ssdp_location})
 
         _LOGGER.debug(
             "async_step_ssdp: create entry %s", discovery_info.upnp[ATTR_UPNP_UDN]
         )
 
-        self.context[CONF_NAME] = discovery_info.upnp[ATTR_UPNP_FRIENDLY_NAME]
-        self.context[CONF_HOST] = discovery_info.ssdp_location
+        self._name = discovery_info.upnp[ATTR_UPNP_FRIENDLY_NAME]
+        self._host = discovery_info.ssdp_location
 
         return await self.async_step_confirm()
 
@@ -57,11 +64,11 @@ class OpenhomeConfigFlow(ConfigFlow, domain=DOMAIN):
 
         if user_input is not None:
             return self.async_create_entry(
-                title=self.context[CONF_NAME],
-                data={CONF_HOST: self.context[CONF_HOST]},
+                title=self._name,
+                data={CONF_HOST: self._host},
             )
 
         return self.async_show_form(
             step_id="confirm",
-            description_placeholders={CONF_NAME: self.context[CONF_NAME]},
+            description_placeholders={CONF_NAME: self._name},
         )

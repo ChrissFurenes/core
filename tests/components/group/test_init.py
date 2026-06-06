@@ -1,7 +1,5 @@
 """The tests for the Group components."""
 
-from __future__ import annotations
-
 import asyncio
 from collections import OrderedDict
 from typing import Any
@@ -11,6 +9,7 @@ import pytest
 
 from homeassistant.components import group
 from homeassistant.components.group.registry import GroupIntegrationRegistry
+from homeassistant.components.lock import LockState
 from homeassistant.const import (
     ATTR_ASSUMED_STATE,
     ATTR_FRIENDLY_NAME,
@@ -19,17 +18,10 @@ from homeassistant.const import (
     SERVICE_RELOAD,
     STATE_CLOSED,
     STATE_HOME,
-    STATE_JAMMED,
-    STATE_LOCKED,
-    STATE_LOCKING,
     STATE_NOT_HOME,
     STATE_OFF,
     STATE_ON,
-    STATE_OPEN,
-    STATE_OPENING,
     STATE_UNKNOWN,
-    STATE_UNLOCKED,
-    STATE_UNLOCKING,
 )
 from homeassistant.core import CoreState, HomeAssistant
 from homeassistant.helpers import entity_registry as er
@@ -740,78 +732,78 @@ async def test_is_on(hass: HomeAssistant) -> None:
         ),
         (
             ("cover", "cover"),
-            (STATE_OPEN, STATE_CLOSED),
+            (LockState.OPEN, STATE_CLOSED),
             (STATE_CLOSED, STATE_CLOSED),
-            (STATE_OPEN, True),
+            (LockState.OPEN, True),
             (STATE_CLOSED, False),
         ),
         (
             ("lock", "lock"),
-            (STATE_UNLOCKED, STATE_LOCKED),
-            (STATE_LOCKED, STATE_LOCKED),
-            (STATE_UNLOCKED, True),
-            (STATE_LOCKED, False),
+            (LockState.UNLOCKED, LockState.LOCKED),
+            (LockState.LOCKED, LockState.LOCKED),
+            (LockState.UNLOCKED, True),
+            (LockState.LOCKED, False),
         ),
         (
             ("cover", "lock"),
-            (STATE_OPEN, STATE_LOCKED),
-            (STATE_CLOSED, STATE_LOCKED),
+            (LockState.OPEN, LockState.LOCKED),
+            (STATE_CLOSED, LockState.LOCKED),
             (STATE_ON, True),
             (STATE_OFF, False),
         ),
         (
             ("cover", "lock"),
-            (STATE_OPEN, STATE_UNLOCKED),
-            (STATE_CLOSED, STATE_LOCKED),
+            (LockState.OPEN, LockState.UNLOCKED),
+            (STATE_CLOSED, LockState.LOCKED),
             (STATE_ON, True),
             (STATE_OFF, False),
         ),
         (
             ("cover", "lock", "light"),
-            (STATE_OPEN, STATE_LOCKED, STATE_ON),
-            (STATE_CLOSED, STATE_LOCKED, STATE_OFF),
+            (LockState.OPEN, LockState.LOCKED, STATE_ON),
+            (STATE_CLOSED, LockState.LOCKED, STATE_OFF),
             (STATE_ON, True),
             (STATE_OFF, False),
         ),
         (
             ("lock", "lock"),
-            (STATE_OPEN, STATE_LOCKED),
-            (STATE_LOCKED, STATE_LOCKED),
-            (STATE_UNLOCKED, True),
-            (STATE_LOCKED, False),
+            (LockState.OPEN, LockState.LOCKED),
+            (LockState.LOCKED, LockState.LOCKED),
+            (LockState.UNLOCKED, True),
+            (LockState.LOCKED, False),
         ),
         (
             ("lock", "lock"),
-            (STATE_OPENING, STATE_LOCKED),
-            (STATE_LOCKED, STATE_LOCKED),
-            (STATE_UNLOCKED, True),
-            (STATE_LOCKED, False),
+            (LockState.OPENING, LockState.LOCKED),
+            (LockState.LOCKED, LockState.LOCKED),
+            (LockState.UNLOCKED, True),
+            (LockState.LOCKED, False),
         ),
         (
             ("lock", "lock"),
-            (STATE_UNLOCKING, STATE_LOCKED),
-            (STATE_LOCKED, STATE_LOCKED),
-            (STATE_UNLOCKED, True),
-            (STATE_LOCKED, False),
+            (LockState.UNLOCKING, LockState.LOCKED),
+            (LockState.LOCKED, LockState.LOCKED),
+            (LockState.UNLOCKED, True),
+            (LockState.LOCKED, False),
         ),
         (
             ("lock", "lock"),
-            (STATE_LOCKING, STATE_LOCKED),
-            (STATE_LOCKED, STATE_LOCKED),
-            (STATE_UNLOCKED, True),
-            (STATE_LOCKED, False),
+            (LockState.LOCKING, LockState.LOCKED),
+            (LockState.LOCKED, LockState.LOCKED),
+            (LockState.UNLOCKED, True),
+            (LockState.LOCKED, False),
         ),
         (
             ("lock", "lock"),
-            (STATE_JAMMED, STATE_LOCKED),
-            (STATE_LOCKED, STATE_LOCKED),
-            (STATE_LOCKED, False),
-            (STATE_LOCKED, False),
+            (LockState.JAMMED, LockState.LOCKED),
+            (LockState.LOCKED, LockState.LOCKED),
+            (LockState.LOCKED, False),
+            (LockState.LOCKED, False),
         ),
         (
             ("cover", "lock"),
-            (STATE_OPEN, STATE_OPEN),
-            (STATE_CLOSED, STATE_LOCKED),
+            (LockState.OPEN, LockState.OPEN),
+            (STATE_CLOSED, LockState.LOCKED),
             (STATE_ON, True),
             (STATE_OFF, False),
         ),
@@ -1221,7 +1213,9 @@ async def test_group_persons_and_device_trackers(hass: HomeAssistant) -> None:
         {
             "group": {
                 "group_zero": {
-                    "entities": "device_tracker.one, person.one, person.two, person.three"
+                    "entities": (
+                        "device_tracker.one, person.one, person.two, person.three"
+                    )
                 },
             }
         },
@@ -1246,7 +1240,12 @@ async def test_group_mixed_domains_on(hass: HomeAssistant) -> None:
             "group": {
                 "group_zero": {
                     "all": "true",
-                    "entities": "lock.alexander_garage_exit_door, binary_sensor.alexander_garage_side_door_open, cover.small_garage_door",
+                    "entities": (
+                        "lock.alexander_garage_exit_door,"
+                        " binary_sensor"
+                        ".alexander_garage_side_door_open,"
+                        " cover.small_garage_door"
+                    ),
                 },
             }
         },
@@ -1271,7 +1270,12 @@ async def test_group_mixed_domains_off(hass: HomeAssistant) -> None:
             "group": {
                 "group_zero": {
                     "all": "true",
-                    "entities": "lock.alexander_garage_exit_door, binary_sensor.alexander_garage_side_door_open, cover.small_garage_door",
+                    "entities": (
+                        "lock.alexander_garage_exit_door,"
+                        " binary_sensor"
+                        ".alexander_garage_side_door_open,"
+                        " cover.small_garage_door"
+                    ),
                 },
             }
         },
@@ -1408,7 +1412,11 @@ async def test_group_alarm(hass: HomeAssistant) -> None:
         {
             "group": {
                 "group_zero": {
-                    "entities": "alarm_control_panel.one, alarm_control_panel.two, alarm_control_panel.three"
+                    "entities": (
+                        "alarm_control_panel.one,"
+                        " alarm_control_panel.two,"
+                        " alarm_control_panel.three"
+                    )
                 },
             }
         },
@@ -1433,7 +1441,11 @@ async def test_group_alarm_disarmed(hass: HomeAssistant) -> None:
         {
             "group": {
                 "group_zero": {
-                    "entities": "alarm_control_panel.one, alarm_control_panel.two, alarm_control_panel.three"
+                    "entities": (
+                        "alarm_control_panel.one,"
+                        " alarm_control_panel.two,"
+                        " alarm_control_panel.three"
+                    )
                 },
             }
         },

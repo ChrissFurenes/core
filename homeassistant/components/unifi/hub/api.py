@@ -1,10 +1,8 @@
 """Provide an object to communicate with UniFi Network application."""
 
-from __future__ import annotations
-
 import asyncio
+from collections.abc import Mapping
 import ssl
-from types import MappingProxyType
 from typing import Any, Literal
 
 from aiohttp import CookieJar
@@ -27,7 +25,7 @@ from ..errors import AuthenticationRequired, CannotConnect
 
 async def get_unifi_api(
     hass: HomeAssistant,
-    config: MappingProxyType[str, Any],
+    config: Mapping[str, Any],
 ) -> aiounifi.Controller:
     """Create a aiounifi object and verify authentication."""
     ssl_context: ssl.SSLContext | Literal[False] = False

@@ -1,9 +1,14 @@
-"""Support for monitoring plants."""
+"""Support for monitoring plants.
+
+DEVELOPMENT OF THE PLANT INTEGRATION IS FROZEN
+PENDING A DESIGN EVALUATION.
+"""
 
 from collections import deque
 from contextlib import suppress
 from datetime import datetime, timedelta
 import logging
+from typing import Any
 
 import voluptuous as vol
 
@@ -28,7 +33,7 @@ from homeassistant.core import (
     callback,
 )
 from homeassistant.exceptions import HomeAssistantError
-import homeassistant.helpers.config_validation as cv
+from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.entity import Entity
 from homeassistant.helpers.entity_component import EntityComponent
 from homeassistant.helpers.event import async_track_state_change_event
@@ -128,6 +133,9 @@ class Plant(Entity):
 
     It also checks the measurements against
     configurable min and max values.
+
+    DEVELOPMENT OF THE PLANT INTEGRATION IS FROZEN
+    PENDING A DESIGN EVALUATION.
     """
 
     _attr_should_poll = False
@@ -148,7 +156,7 @@ class Plant(Entity):
             "max": CONF_MAX_MOISTURE,
         },
         READING_CONDUCTIVITY: {
-            ATTR_UNIT_OF_MEASUREMENT: UnitOfConductivity.MICROSIEMENS,
+            ATTR_UNIT_OF_MEASUREMENT: UnitOfConductivity.MICROSIEMENS_PER_CM,
             "min": CONF_MIN_CONDUCTIVITY,
             "max": CONF_MAX_CONDUCTIVITY,
         },
@@ -338,7 +346,7 @@ class Plant(Entity):
         return self._state
 
     @property
-    def extra_state_attributes(self):
+    def extra_state_attributes(self) -> dict[str, Any]:
         """Return the attributes of the entity.
 
         Provide the individual measurements from the
@@ -363,6 +371,9 @@ class DailyHistory:
     """Stores one measurement per day for a maximum number of days.
 
     At the moment only the maximum value per day is kept.
+
+    DEVELOPMENT OF THE PLANT INTEGRATION IS FROZEN
+    PENDING A DESIGN EVALUATION.
     """
 
     def __init__(self, max_length):

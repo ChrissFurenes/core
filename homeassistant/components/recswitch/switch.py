@@ -1,7 +1,5 @@
 """Support for Ankuoo RecSwitch MS6126 devices."""
 
-from __future__ import annotations
-
 import logging
 from typing import Any
 
@@ -14,7 +12,7 @@ from homeassistant.components.switch import (
 )
 from homeassistant.const import CONF_HOST, CONF_MAC, CONF_NAME
 from homeassistant.core import HomeAssistant
-import homeassistant.helpers.config_validation as cv
+from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
 
@@ -77,7 +75,7 @@ class RecSwitchSwitch(SwitchEntity):
         return self.device_name
 
     @property
-    def is_on(self):
+    def is_on(self) -> bool:
         """Return true if switch is on."""
         return self.gpio_state
 

@@ -6,6 +6,7 @@ from time import sleep
 from aurorapy.client import AuroraError, AuroraSerialClient, AuroraTimeoutError
 from serial import SerialException
 
+from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
@@ -14,15 +15,32 @@ from .const import DOMAIN, SCAN_INTERVAL
 _LOGGER = logging.getLogger(__name__)
 
 
+type AuroraAbbConfigEntry = ConfigEntry[AuroraAbbDataUpdateCoordinator]
+
+
 class AuroraAbbDataUpdateCoordinator(DataUpdateCoordinator[dict[str, float]]):
     """Class to manage fetching AuroraAbbPowerone data."""
 
-    def __init__(self, hass: HomeAssistant, comport: str, address: int) -> None:
+    config_entry: AuroraAbbConfigEntry
+
+    def __init__(
+        self,
+        hass: HomeAssistant,
+        config_entry: AuroraAbbConfigEntry,
+        comport: str,
+        address: int,
+    ) -> None:
         """Initialize the data update coordinator."""
         self.available_prev = False
         self.available = False
         self.client = AuroraSerialClient(address, comport, parity="N", timeout=1)
-        super().__init__(hass, _LOGGER, name=DOMAIN, update_interval=SCAN_INTERVAL)
+        super().__init__(
+            hass,
+            _LOGGER,
+            config_entry=config_entry,
+            name=DOMAIN,
+            update_interval=SCAN_INTERVAL,
+        )
 
     def _update_data(self) -> dict[str, float]:
         """Fetch new state data for the sensors.
@@ -43,7 +61,13 @@ class AuroraAbbDataUpdateCoordinator(DataUpdateCoordinator[dict[str, float]]):
                 frequency = self.client.measure(4)
                 i_leak_dcdc = self.client.measure(6)
                 i_leak_inverter = self.client.measure(7)
+                power_in_1 = self.client.measure(8)
+                power_in_2 = self.client.measure(9)
                 temperature_c = self.client.measure(21)
+                voltage_in_1 = self.client.measure(23)
+                current_in_1 = self.client.measure(25)
+                voltage_in_2 = self.client.measure(26)
+                current_in_2 = self.client.measure(27)
                 r_iso = self.client.measure(30)
                 energy_wh = self.client.cumulated_energy(5)
                 [alarm, *_] = self.client.alarms()
@@ -69,7 +93,13 @@ class AuroraAbbDataUpdateCoordinator(DataUpdateCoordinator[dict[str, float]]):
                 data["grid_frequency"] = round(frequency, 1)
                 data["i_leak_dcdc"] = i_leak_dcdc
                 data["i_leak_inverter"] = i_leak_inverter
+                data["power_in_1"] = round(power_in_1, 1)
+                data["power_in_2"] = round(power_in_2, 1)
                 data["temp"] = round(temperature_c, 1)
+                data["voltage_in_1"] = round(voltage_in_1, 1)
+                data["current_in_1"] = round(current_in_1, 1)
+                data["voltage_in_2"] = round(voltage_in_2, 1)
+                data["current_in_2"] = round(current_in_2, 1)
                 data["r_iso"] = r_iso
                 data["totalenergy"] = round(energy_wh / 1000, 2)
                 data["alarm"] = alarm
@@ -78,9 +108,9 @@ class AuroraAbbDataUpdateCoordinator(DataUpdateCoordinator[dict[str, float]]):
             finally:
                 if self.available != self.available_prev:
                     if self.available:
-                        _LOGGER.info("Communication with %s back online", self.name)
+                        _LOGGER.warning("Communication with %s back online", self.name)
                     else:
-                        _LOGGER.info(
+                        _LOGGER.warning(
                             "Communication with %s lost",
                             self.name,
                         )

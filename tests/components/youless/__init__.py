@@ -2,14 +2,14 @@
 
 import requests_mock
 
-from homeassistant.components import youless
+from homeassistant.components.youless.const import DOMAIN
 from homeassistant.const import CONF_DEVICE, CONF_HOST
 from homeassistant.core import HomeAssistant
 
 from tests.common import (
     MockConfigEntry,
-    load_json_array_fixture,
-    load_json_object_fixture,
+    async_load_json_array_fixture,
+    async_load_json_object_fixture,
 )
 
 
@@ -18,16 +18,21 @@ async def init_component(hass: HomeAssistant) -> MockConfigEntry:
     with requests_mock.Mocker() as mock:
         mock.get(
             "http://1.1.1.1/d",
-            json=load_json_object_fixture("device.json", youless.DOMAIN),
+            json=await async_load_json_object_fixture(hass, "device.json", DOMAIN),
         )
         mock.get(
             "http://1.1.1.1/e",
-            json=load_json_array_fixture("enologic.json", youless.DOMAIN),
+            json=await async_load_json_array_fixture(hass, "enologic.json", DOMAIN),
+            headers={"Content-Type": "application/json"},
+        )
+        mock.get(
+            "http://1.1.1.1/f",
+            json=await async_load_json_object_fixture(hass, "phase.json", DOMAIN),
             headers={"Content-Type": "application/json"},
         )
 
         entry = MockConfigEntry(
-            domain=youless.DOMAIN,
+            domain=DOMAIN,
             title="localhost",
             data={CONF_HOST: "1.1.1.1", CONF_DEVICE: "localhost"},
         )

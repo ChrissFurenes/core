@@ -1,7 +1,5 @@
 """Support for Unifi Led lights."""
 
-from __future__ import annotations
-
 import logging
 from typing import Any
 
@@ -16,7 +14,7 @@ from homeassistant.components.light import (
 )
 from homeassistant.const import CONF_HOST, CONF_PASSWORD, CONF_PORT, CONF_USERNAME
 from homeassistant.core import HomeAssistant
-import homeassistant.helpers.config_validation as cv
+from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
 

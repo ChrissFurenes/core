@@ -313,7 +313,7 @@ async def mock_api_object_fixture(
         return get_request_return_values[update_type]
 
     with patch(
-        "homeassistant.components.forked_daapd.media_player.ForkedDaapdAPI",
+        "homeassistant.components.forked_daapd.ForkedDaapdAPI",
         autospec=True,
     ) as mock_api:
         mock_api.return_value.get_request.side_effect = get_request_side_effect
@@ -367,7 +367,7 @@ def test_master_state(hass: HomeAssistant) -> None:
     assert state.attributes[ATTR_SUPPORTED_FEATURES] == SUPPORTED_FEATURES
     assert not state.attributes[ATTR_MEDIA_VOLUME_MUTED]
     assert state.attributes[ATTR_MEDIA_VOLUME_LEVEL] == 0.2
-    assert state.attributes[ATTR_MEDIA_CONTENT_ID] == 12322
+    assert state.attributes[ATTR_MEDIA_CONTENT_ID] == "12322"
     assert state.attributes[ATTR_MEDIA_CONTENT_TYPE] == MediaType.MUSIC
     assert state.attributes[ATTR_MEDIA_DURATION] == 0.05
     assert state.attributes[ATTR_MEDIA_POSITION] == 0.005
@@ -808,7 +808,7 @@ async def test_invalid_websocket_port(
 ) -> None:
     """Test invalid websocket port on async_init."""
     with patch(
-        "homeassistant.components.forked_daapd.media_player.ForkedDaapdAPI",
+        "homeassistant.components.forked_daapd.ForkedDaapdAPI",
         autospec=True,
     ) as mock_api:
         mock_api.return_value.get_request.return_value = SAMPLE_CONFIG_NO_WEBSOCKET

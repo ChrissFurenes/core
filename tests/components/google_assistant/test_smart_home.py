@@ -9,10 +9,20 @@ from pytest_unordered import unordered
 
 from homeassistant.components.camera import CameraEntityFeature
 from homeassistant.components.climate import ATTR_MAX_TEMP, ATTR_MIN_TEMP, HVACMode
+
+# pylint: disable-next=home-assistant-component-root-import
 from homeassistant.components.demo.binary_sensor import DemoBinarySensor
+
+# pylint: disable-next=home-assistant-component-root-import
 from homeassistant.components.demo.cover import DemoCover
+
+# pylint: disable-next=home-assistant-component-root-import
 from homeassistant.components.demo.light import LIGHT_EFFECT_LIST, DemoLight
+
+# pylint: disable-next=home-assistant-component-root-import
 from homeassistant.components.demo.media_player import AbstractDemoPlayer
+
+# pylint: disable-next=home-assistant-component-root-import
 from homeassistant.components.demo.switch import DemoSwitch
 from homeassistant.components.google_assistant import (
     EVENT_COMMAND_RECEIVED,
@@ -22,7 +32,6 @@ from homeassistant.components.google_assistant import (
     smart_home as sh,
     trait,
 )
-from homeassistant.config import async_process_ha_core_config
 from homeassistant.const import (
     ATTR_UNIT_OF_MEASUREMENT,
     EVENT_CALL_SERVICE,
@@ -31,17 +40,19 @@ from homeassistant.const import (
     __version__,
 )
 from homeassistant.core import HomeAssistant, State
+from homeassistant.core_config import async_process_ha_core_config
 from homeassistant.helpers import (
     area_registry as ar,
     device_registry as dr,
     entity_platform,
     entity_registry as er,
 )
+from homeassistant.helpers.entity import EntityPlatformState
 from homeassistant.setup import async_setup_component
 
 from . import BASIC_CONFIG, MockConfig
 
-from tests.common import MockConfigEntry, async_capture_events
+from tests.common import MockConfigEntry, MockEntityPlatform, async_capture_events
 
 REQ_ID = "ff36a3cc-ec34-11e6-b1a0-64510650abcf"
 
@@ -73,7 +84,7 @@ def registries(
 async def test_async_handle_message(hass: HomeAssistant) -> None:
     """Test the async handle message method."""
     config = MockConfig(
-        should_expose=lambda state: state.entity_id != "light.not_expose",
+        should_expose=lambda entity_id: entity_id != "light.not_expose",
         entity_config={
             "light.demo_light": {
                 const.CONF_ROOM_HINT: "Living Room",
@@ -130,11 +141,12 @@ async def test_sync_message(hass: HomeAssistant, registries) -> None:
         "light",
         "test",
         "unique-demo-light",
+        original_name="Demo Light",
         suggested_object_id="demo_light",
     )
     registries.entity.async_update_entity(
         entity.entity_id,
-        aliases={"Stay", "Healthy"},
+        aliases=[er.COMPUTED_NAME, "Stay", "Healthy"],
     )
 
     light = DemoLight(
@@ -146,9 +158,11 @@ async def test_sync_message(hass: HomeAssistant, registries) -> None:
         effect=LIGHT_EFFECT_LIST[0],
     )
     light.hass = hass
+    light.platform = MockEntityPlatform(hass)
     light.entity_id = "light.demo_light"
     light._attr_device_info = None
     light._attr_name = "Demo Light"
+    light._platform_state = EntityPlatformState.ADDED
     light.async_write_ha_state()
 
     # This should not show up in the sync request
@@ -158,7 +172,7 @@ async def test_sync_message(hass: HomeAssistant, registries) -> None:
     hass.states.async_set("light.not_expose", "on")
 
     config = MockConfig(
-        should_expose=lambda state: state.entity_id != "light.not_expose",
+        should_expose=lambda entity_id: entity_id != "light.not_expose",
         entity_config={
             "light.demo_light": {
                 const.CONF_ROOM_HINT: "Living Room",
@@ -199,7 +213,7 @@ async def test_sync_message(hass: HomeAssistant, registries) -> None:
                     },
                     "traits": [
                         trait.TRAIT_BRIGHTNESS,
-                        trait.TRAIT_ONOFF,
+                        trait.TRAIT_ON_OFF,
                         trait.TRAIT_COLOR_SETTING,
                         trait.TRAIT_MODES,
                     ],
@@ -224,11 +238,11 @@ async def test_sync_message(hass: HomeAssistant, registries) -> None:
                                         ],
                                     },
                                     {
-                                        "setting_name": "none",
+                                        "setting_name": "off",
                                         "setting_values": [
                                             {
                                                 "lang": "en",
-                                                "setting_synonym": ["none"],
+                                                "setting_synonym": ["off"],
                                             }
                                         ],
                                     },
@@ -266,6 +280,7 @@ async def test_sync_in_area(area_on_device, hass: HomeAssistant, registries) -> 
         model="Some model",
         sw_version="Some Version",
         connections={(dr.CONNECTION_NETWORK_MAC, "12:34:56:AB:CD:EF")},
+        name="Test Device",
     )
     registries.device.async_update_device(
         device.id, area_id=area.id if area_on_device else None
@@ -275,6 +290,7 @@ async def test_sync_in_area(area_on_device, hass: HomeAssistant, registries) -> 
         "light",
         "test",
         "1235",
+        original_name="Demo Light",
         suggested_object_id="demo_light",
         device_id=device.id,
     )
@@ -291,9 +307,11 @@ async def test_sync_in_area(area_on_device, hass: HomeAssistant, registries) -> 
         effect=LIGHT_EFFECT_LIST[0],
     )
     light.hass = hass
+    light.platform = MockEntityPlatform(hass)
     light.entity_id = entity.entity_id
     light._attr_device_info = None
     light._attr_name = "Demo Light"
+    light._platform_state = EntityPlatformState.ADDED
     light.async_write_ha_state()
 
     config = MockConfig(should_expose=lambda _: True, entity_config={})
@@ -316,10 +334,10 @@ async def test_sync_in_area(area_on_device, hass: HomeAssistant, registries) -> 
             "devices": [
                 {
                     "id": "light.demo_light",
-                    "name": {"name": "Demo Light"},
+                    "name": {"name": "Test Device Demo Light"},
                     "traits": [
                         trait.TRAIT_BRIGHTNESS,
-                        trait.TRAIT_ONOFF,
+                        trait.TRAIT_ON_OFF,
                         trait.TRAIT_COLOR_SETTING,
                         trait.TRAIT_MODES,
                     ],
@@ -344,9 +362,9 @@ async def test_sync_in_area(area_on_device, hass: HomeAssistant, registries) -> 
                                         ],
                                     },
                                     {
-                                        "setting_name": "none",
+                                        "setting_name": "off",
                                         "setting_values": [
-                                            {"lang": "en", "setting_synonym": ["none"]}
+                                            {"lang": "en", "setting_synonym": ["off"]}
                                         ],
                                     },
                                 ],
@@ -386,25 +404,31 @@ async def test_query_message(hass: HomeAssistant) -> None:
         effect=LIGHT_EFFECT_LIST[0],
     )
     light.hass = hass
+    light.platform = MockEntityPlatform(hass)
     light.entity_id = "light.demo_light"
     light._attr_device_info = None
     light._attr_name = "Demo Light"
+    light._platform_state = EntityPlatformState.ADDED
     light.async_write_ha_state()
 
     light2 = DemoLight(
-        None, "Another Light", state=True, hs_color=(180, 75), ct=400, brightness=78
+        None, "Another Light", state=True, hs_color=(180, 75), ct=2500, brightness=78
     )
     light2.hass = hass
+    light2.platform = MockEntityPlatform(hass)
     light2.entity_id = "light.another_light"
     light2._attr_device_info = None
     light2._attr_name = "Another Light"
+    light2._platform_state = EntityPlatformState.ADDED
     light2.async_write_ha_state()
 
-    light3 = DemoLight(None, "Color temp Light", state=True, ct=400, brightness=200)
+    light3 = DemoLight(None, "Color temp Light", state=True, ct=2500, brightness=200)
     light3.hass = hass
+    light3.platform = MockEntityPlatform(hass)
     light3.entity_id = "light.color_temp_light"
     light3._attr_device_info = None
     light3._attr_name = "Color temp Light"
+    light3._platform_state = EntityPlatformState.ADDED
     light3.async_write_ha_state()
 
     events = async_capture_events(hass, EVENT_QUERY_RECEIVED)
@@ -521,7 +545,8 @@ async def test_execute(
                                         "params": {"on": True},
                                     },
                                     {
-                                        "command": "action.devices.commands.BrightnessAbsolute",
+                                        "command": "action.devices.commands"
+                                        ".BrightnessAbsolute",
                                         "params": {"brightness": 20},
                                     },
                                 ],
@@ -682,7 +707,8 @@ async def test_execute_times_out(
                                             "params": {"on": True},
                                         },
                                         {
-                                            "command": "action.devices.commands.BrightnessAbsolute",
+                                            "command": "action.devices.commands"
+                                            ".BrightnessAbsolute",
                                             "params": {"brightness": 20},
                                         },
                                     ],
@@ -889,10 +915,12 @@ async def test_unavailable_state_does_sync(hass: HomeAssistant) -> None:
         effect=LIGHT_EFFECT_LIST[0],
     )
     light.hass = hass
+    light.platform = MockEntityPlatform(hass)
     light.entity_id = "light.demo_light"
     light._available = False
     light._attr_device_info = None
     light._attr_name = "Demo Light"
+    light._platform_state = EntityPlatformState.ADDED
     light.async_write_ha_state()
 
     events = async_capture_events(hass, EVENT_SYNC_RECEIVED)
@@ -916,7 +944,7 @@ async def test_unavailable_state_does_sync(hass: HomeAssistant) -> None:
                     "name": {"name": "Demo Light"},
                     "traits": [
                         trait.TRAIT_BRIGHTNESS,
-                        trait.TRAIT_ONOFF,
+                        trait.TRAIT_ON_OFF,
                         trait.TRAIT_COLOR_SETTING,
                         trait.TRAIT_MODES,
                     ],
@@ -941,9 +969,9 @@ async def test_unavailable_state_does_sync(hass: HomeAssistant) -> None:
                                         ],
                                     },
                                     {
-                                        "setting_name": "none",
+                                        "setting_name": "off",
                                         "setting_values": [
-                                            {"lang": "en", "setting_synonym": ["none"]}
+                                            {"lang": "en", "setting_synonym": ["off"]}
                                         ],
                                     },
                                 ],
@@ -978,18 +1006,20 @@ async def test_device_class_switch(
     hass: HomeAssistant, device_class, google_type
 ) -> None:
     """Test that a cover entity syncs to the correct device type."""
-    sensor = DemoSwitch(
+    switch = DemoSwitch(
         None,
-        "Demo Sensor",
+        "Demo switch",
         state=False,
         assumed=False,
         device_class=device_class,
     )
-    sensor.hass = hass
-    sensor.entity_id = "switch.demo_sensor"
-    sensor._attr_device_info = None
-    sensor._attr_name = "Demo Sensor"
-    sensor.async_write_ha_state()
+    switch.hass = hass
+    switch.platform = MockEntityPlatform(hass)
+    switch.entity_id = "switch.demo_switch"
+    switch._attr_device_info = None
+    switch._attr_name = "Demo Switch"
+    switch._platform_state = EntityPlatformState.ADDED
+    switch.async_write_ha_state()
 
     result = await sh.async_handle_message(
         hass,
@@ -1007,8 +1037,8 @@ async def test_device_class_switch(
             "devices": [
                 {
                     "attributes": {},
-                    "id": "switch.demo_sensor",
-                    "name": {"name": "Demo Sensor"},
+                    "id": "switch.demo_switch",
+                    "name": {"name": "Demo Switch"},
                     "traits": ["action.devices.traits.OnOff"],
                     "type": google_type,
                     "willReportState": False,
@@ -1032,14 +1062,16 @@ async def test_device_class_binary_sensor(
     hass: HomeAssistant, device_class, google_type
 ) -> None:
     """Test that a binary entity syncs to the correct device type."""
-    sensor = DemoBinarySensor(
-        None, "Demo Sensor", state=False, device_class=device_class
+    binary_sensor = DemoBinarySensor(
+        None, "Demo Binary Sensor", state=False, device_class=device_class
     )
-    sensor.hass = hass
-    sensor.entity_id = "binary_sensor.demo_sensor"
-    sensor._attr_device_info = None
-    sensor._attr_name = "Demo Sensor"
-    sensor.async_write_ha_state()
+    binary_sensor.hass = hass
+    binary_sensor.platform = MockEntityPlatform(hass)
+    binary_sensor.entity_id = "binary_sensor.demo_binary_sensor"
+    binary_sensor._attr_device_info = None
+    binary_sensor._attr_name = "Demo Binary Sensor"
+    binary_sensor._platform_state = EntityPlatformState.ADDED
+    binary_sensor.async_write_ha_state()
 
     result = await sh.async_handle_message(
         hass,
@@ -1060,8 +1092,8 @@ async def test_device_class_binary_sensor(
                         "queryOnlyOpenClose": True,
                         "discreteOnlyOpenClose": True,
                     },
-                    "id": "binary_sensor.demo_sensor",
-                    "name": {"name": "Demo Sensor"},
+                    "id": "binary_sensor.demo_binary_sensor",
+                    "name": {"name": "Demo Binary Sensor"},
                     "traits": ["action.devices.traits.OpenClose"],
                     "type": google_type,
                     "willReportState": False,
@@ -1088,12 +1120,14 @@ async def test_device_class_cover(
     hass: HomeAssistant, device_class, google_type
 ) -> None:
     """Test that a cover entity syncs to the correct device type."""
-    sensor = DemoCover(None, hass, "Demo Sensor", device_class=device_class)
-    sensor.hass = hass
-    sensor.entity_id = "cover.demo_sensor"
-    sensor._attr_device_info = None
-    sensor._attr_name = "Demo Sensor"
-    sensor.async_write_ha_state()
+    cover = DemoCover(None, hass, "Demo Cover", device_class=device_class)
+    cover.hass = hass
+    cover.platform = MockEntityPlatform(hass)
+    cover.entity_id = "cover.demo_cover"
+    cover._attr_device_info = None
+    cover._attr_name = "Demo Cover"
+    cover._platform_state = EntityPlatformState.ADDED
+    cover.async_write_ha_state()
 
     result = await sh.async_handle_message(
         hass,
@@ -1111,8 +1145,8 @@ async def test_device_class_cover(
             "devices": [
                 {
                     "attributes": {"discreteOnlyOpenClose": True},
-                    "id": "cover.demo_sensor",
-                    "name": {"name": "Demo Sensor"},
+                    "id": "cover.demo_cover",
+                    "name": {"name": "Demo Cover"},
                     "traits": [
                         "action.devices.traits.StartStop",
                         "action.devices.traits.OpenClose",
@@ -1138,10 +1172,12 @@ async def test_device_media_player(
     hass: HomeAssistant, device_class, google_type
 ) -> None:
     """Test that a binary entity syncs to the correct device type."""
-    sensor = AbstractDemoPlayer("Demo", device_class=device_class)
-    sensor.hass = hass
-    sensor.entity_id = "media_player.demo"
-    sensor.async_write_ha_state()
+    media_player = AbstractDemoPlayer("Demo", device_class=device_class)
+    media_player.hass = hass
+    media_player.platform = MockEntityPlatform(hass)
+    media_player.entity_id = "media_player.demo"
+    media_player._platform_state = EntityPlatformState.ADDED
+    media_player.async_write_ha_state()
 
     result = await sh.async_handle_message(
         hass,
@@ -1162,8 +1198,8 @@ async def test_device_media_player(
                         "supportActivityState": True,
                         "supportPlaybackState": True,
                     },
-                    "id": sensor.entity_id,
-                    "name": {"name": sensor.name},
+                    "id": media_player.entity_id,
+                    "name": {"name": media_player.name},
                     "traits": [
                         "action.devices.traits.OnOff",
                         "action.devices.traits.MediaState",
@@ -1226,7 +1262,8 @@ async def test_trait_execute_adding_query_data(hass: HomeAssistant) -> None:
                                     "devices": [{"id": "camera.office"}],
                                     "execution": [
                                         {
-                                            "command": "action.devices.commands.GetCameraStream",
+                                            "command": "action.devices.commands"
+                                            ".GetCameraStream",
                                             "params": {
                                                 "StreamToChromecast": True,
                                                 "SupportedStreamProtocols": [
@@ -1308,7 +1345,10 @@ async def test_identify(hass: HomeAssistant) -> None:
                         "httpPort": 8123,
                         "httpSSL": False,
                         "proxyDeviceId": proxy_device_id,
-                        "webhookId": "dde3b9800a905e886cc4d38e226a6e7e3f2a6993d2b9b9f63d13e42ee7de3219",
+                        "webhookId": (
+                            "dde3b9800a905e886cc4d38e226a6e7e"
+                            "3f2a6993d2b9b9f63d13e42ee7de3219"
+                        ),
                     },
                 }
             ],
@@ -1352,7 +1392,7 @@ async def test_reachable_devices(hass: HomeAssistant) -> None:
     hass.states.async_set("lock.has_2fa", "on")
 
     config = MockConfig(
-        should_expose=lambda state: state.entity_id != "light.not_expose",
+        should_expose=lambda entity_id: entity_id != "light.not_expose",
     )
 
     user_agent_id = "mock-user-id"
@@ -1387,7 +1427,10 @@ async def test_reachable_devices(hass: HomeAssistant) -> None:
                         "httpPort": 8123,
                         "httpSSL": False,
                         "proxyDeviceId": proxy_device_id,
-                        "webhookId": "dde3b9800a905e886cc4d38e226a6e7e3f2a6993d2b9b9f63d13e42ee7de3219",
+                        "webhookId": (
+                            "dde3b9800a905e886cc4d38e226a6e7e"
+                            "3f2a6993d2b9b9f63d13e42ee7de3219"
+                        ),
                     },
                 },
                 {
@@ -1396,7 +1439,10 @@ async def test_reachable_devices(hass: HomeAssistant) -> None:
                         "httpPort": 8123,
                         "httpSSL": False,
                         "proxyDeviceId": proxy_device_id,
-                        "webhookId": "dde3b9800a905e886cc4d38e226a6e7e3f2a6993d2b9b9f63d13e42ee7de3219",
+                        "webhookId": (
+                            "dde3b9800a905e886cc4d38e226a6e7e"
+                            "3f2a6993d2b9b9f63d13e42ee7de3219"
+                        ),
                     },
                 },
                 {
@@ -1405,7 +1451,10 @@ async def test_reachable_devices(hass: HomeAssistant) -> None:
                         "httpPort": 8123,
                         "httpSSL": False,
                         "proxyDeviceId": proxy_device_id,
-                        "webhookId": "dde3b9800a905e886cc4d38e226a6e7e3f2a6993d2b9b9f63d13e42ee7de3219",
+                        "webhookId": (
+                            "dde3b9800a905e886cc4d38e226a6e7e"
+                            "3f2a6993d2b9b9f63d13e42ee7de3219"
+                        ),
                     },
                 },
                 {"id": proxy_device_id, "customData": {}},
@@ -1431,16 +1480,18 @@ async def test_sync_message_recovery(
         hs_color=(180, 75),
     )
     light.hass = hass
+    light.platform = MockEntityPlatform(hass)
     light.entity_id = "light.demo_light"
     light._attr_device_info = None
     light._attr_name = "Demo Light"
+    light._platform_state = EntityPlatformState.ADDED
     light.async_write_ha_state()
 
     hass.states.async_set(
         "light.bad_light",
         "on",
         {
-            "min_mireds": "badvalue",
+            "max_color_temp_kelvin": "badvalue",
             "supported_color_modes": ["color_temp"],
         },
     )

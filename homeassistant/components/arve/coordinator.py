@@ -1,7 +1,5 @@
 """Coordinator for the Arve integration."""
 
-from __future__ import annotations
-
 from datetime import timedelta
 
 from asyncarve import (
@@ -21,18 +19,21 @@ from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, Upda
 
 from .const import DOMAIN, LOGGER
 
+type ArveConfigEntry = ConfigEntry[ArveCoordinator]
+
 
 class ArveCoordinator(DataUpdateCoordinator[ArveSensProData]):
     """Arve coordinator."""
 
-    config_entry: ConfigEntry
+    config_entry: ArveConfigEntry
     devices: ArveDevices
 
-    def __init__(self, hass: HomeAssistant) -> None:
+    def __init__(self, hass: HomeAssistant, config_entry: ArveConfigEntry) -> None:
         """Initialize Arve coordinator."""
         super().__init__(
             hass,
             LOGGER,
+            config_entry=config_entry,
             name=DOMAIN,
             update_interval=timedelta(seconds=60),
         )

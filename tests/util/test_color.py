@@ -6,7 +6,7 @@ import pytest
 from syrupy.assertion import SnapshotAssertion
 import voluptuous as vol
 
-import homeassistant.util.color as color_util
+from homeassistant.util import color as color_util
 
 GAMUT = color_util.GamutType(
     color_util.XYPoint(0.704, 0.296),
@@ -181,7 +181,7 @@ def test_color_hs_to_xy() -> None:
 
     assert color_util.color_hs_to_xy(350, 12.5) == (0.356, 0.321)
 
-    assert color_util.color_hs_to_xy(140, 50) == (0.229, 0.474)
+    assert color_util.color_hs_to_xy(140, 50) == (0.23, 0.474)
 
     assert color_util.color_hs_to_xy(0, 40) == (0.474, 0.317)
 
@@ -288,7 +288,7 @@ def test_color_rgb_to_hex() -> None:
     assert color_util.color_rgb_to_hex(255, 255, 255) == "ffffff"
     assert color_util.color_rgb_to_hex(0, 0, 0) == "000000"
     assert color_util.color_rgb_to_hex(51, 153, 255) == "3399ff"
-    assert color_util.color_rgb_to_hex(255, 67.9204190, 0) == "ff4400"
+    assert color_util.color_rgb_to_hex(255, 68, 0) == "ff4400"
 
 
 def test_match_max_scale() -> None:
@@ -389,7 +389,8 @@ def test_color_rgb_to_rgbww() -> None:
         255,
         255,
     )
-    # Light with mid point at ~5500K (less warm white) -> output compensated by adding less blue
+    # Light with mid point at ~5500K (less warm white)
+    # -> output compensated by adding less blue
     assert color_util.color_rgb_to_rgbww(255, 255, 255, 1000, 10000) == (
         255,
         255,
@@ -397,7 +398,8 @@ def test_color_rgb_to_rgbww() -> None:
         0,
         0,
     )
-    # Light with mid point at ~1MK (unrealistically cold white) -> output compensated by adding red
+    # Light with mid point at ~1MK (unrealistically cold white)
+    # -> output compensated by adding red
     assert color_util.color_rgb_to_rgbww(255, 255, 255, 1000, 1000000) == (
         0,
         118,

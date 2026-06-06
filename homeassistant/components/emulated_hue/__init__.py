@@ -1,7 +1,5 @@
 """Support for local control of entities by emulating a Philips Hue bridge."""
 
-from __future__ import annotations
-
 import logging
 
 from aiohttp import web
@@ -16,7 +14,7 @@ from homeassistant.const import (
     EVENT_HOMEASSISTANT_STOP,
 )
 from homeassistant.core import Event, HomeAssistant
-import homeassistant.helpers.config_validation as cv
+from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.typing import ConfigType
 
 from .config import (

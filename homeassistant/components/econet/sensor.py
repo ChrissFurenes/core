@@ -1,7 +1,5 @@
 """Support for Rheem EcoNet water heaters."""
 
-from __future__ import annotations
-
 from pyeconet.equipment import Equipment, EquipmentType
 
 from homeassistant.components.sensor import (
@@ -10,7 +8,6 @@ from homeassistant.components.sensor import (
     SensorEntityDescription,
     SensorStateClass,
 )
-from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
     PERCENTAGE,
     SIGNAL_STRENGTH_DECIBELS,
@@ -19,10 +16,10 @@ from homeassistant.const import (
     UnitOfVolume,
 )
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
-from . import EcoNetEntity
-from .const import DOMAIN, EQUIPMENT
+from . import EconetConfigEntry
+from .entity import EcoNetEntity
 
 SENSOR_TYPES: tuple[SensorEntityDescription, ...] = (
     SensorEntityDescription(
@@ -82,11 +79,13 @@ SENSOR_TYPES: tuple[SensorEntityDescription, ...] = (
 
 
 async def async_setup_entry(
-    hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback
+    hass: HomeAssistant,
+    entry: EconetConfigEntry,
+    async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up EcoNet sensor based on a config entry."""
 
-    data = hass.data[DOMAIN][EQUIPMENT][entry.entry_id]
+    data = entry.runtime_data
     equipment = data[EquipmentType.WATER_HEATER].copy()
     equipment.extend(data[EquipmentType.THERMOSTAT].copy())
 

@@ -1,7 +1,5 @@
 """Config flow for WiZ Platform."""
 
-from __future__ import annotations
-
 import logging
 from typing import Any
 
@@ -10,10 +8,11 @@ from pywizlight.discovery import DiscoveredBulb
 from pywizlight.exceptions import WizLightConnectionError, WizLightTimeOutError
 import voluptuous as vol
 
-from homeassistant.components import dhcp, onboarding
+from homeassistant.components import onboarding
 from homeassistant.config_entries import ConfigFlow, ConfigFlowResult
-from homeassistant.const import CONF_HOST
+from homeassistant.const import CONF_DEVICE, CONF_HOST
 from homeassistant.data_entry_flow import AbortFlow
+from homeassistant.helpers.service_info.dhcp import DhcpServiceInfo
 from homeassistant.util.network import is_ip_address
 
 from .const import DEFAULT_NAME, DISCOVER_SCAN_TIMEOUT, DOMAIN, WIZ_CONNECT_EXCEPTIONS
@@ -21,8 +20,6 @@ from .discovery import async_discover_devices
 from .utils import _short_mac, name_from_bulb_type_and_mac
 
 _LOGGER = logging.getLogger(__name__)
-
-CONF_DEVICE = "device"
 
 
 class WizConfigFlow(ConfigFlow, domain=DOMAIN):
@@ -38,7 +35,7 @@ class WizConfigFlow(ConfigFlow, domain=DOMAIN):
         self._discovered_devices: dict[str, DiscoveredBulb] = {}
 
     async def async_step_dhcp(
-        self, discovery_info: dhcp.DhcpServiceInfo
+        self, discovery_info: DhcpServiceInfo
     ) -> ConfigFlowResult:
         """Handle discovery via dhcp."""
         self._discovered_device = DiscoveredBulb(
@@ -80,6 +77,8 @@ class WizConfigFlow(ConfigFlow, domain=DOMAIN):
                 exc_info=True,
             )
             raise AbortFlow("cannot_connect") from ex
+        finally:
+            await bulb.async_close()
         self._name = name_from_bulb_type_and_mac(bulbtype, device.mac_address)
 
     async def async_step_discovery_confirm(
@@ -117,13 +116,15 @@ class WizConfigFlow(ConfigFlow, domain=DOMAIN):
                 bulbtype = await bulb.get_bulbtype()
             except WIZ_CONNECT_EXCEPTIONS:
                 return self.async_abort(reason="cannot_connect")
+            finally:
+                await bulb.async_close()
 
             return self.async_create_entry(
                 title=name_from_bulb_type_and_mac(bulbtype, device.mac_address),
                 data={CONF_HOST: device.ip_address},
             )
 
-        current_unique_ids = self._async_current_ids()
+        current_unique_ids = self._async_current_ids(include_ignore=False)
         current_hosts = {
             entry.data[CONF_HOST]
             for entry in self._async_current_entries(include_ignore=False)
@@ -181,6 +182,8 @@ class WizConfigFlow(ConfigFlow, domain=DOMAIN):
                         title=name,
                         data=user_input,
                     )
+                finally:
+                    await bulb.async_close()
 
         return self.async_show_form(
             step_id="user",

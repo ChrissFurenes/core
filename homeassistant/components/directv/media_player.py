@@ -1,7 +1,5 @@
 """Support for the DirecTV receivers."""
 
-from __future__ import annotations
-
 import logging
 from typing import Any
 
@@ -14,17 +12,16 @@ from homeassistant.components.media_player import (
     MediaPlayerState,
     MediaType,
 )
-from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 from homeassistant.util import dt as dt_util
 
+from . import DirecTVConfigEntry
 from .const import (
     ATTR_MEDIA_CURRENTLY_RECORDING,
     ATTR_MEDIA_RATING,
     ATTR_MEDIA_RECORDED,
     ATTR_MEDIA_START_TIME,
-    DOMAIN,
 )
 from .entity import DIRECTVEntity
 
@@ -55,11 +52,11 @@ SUPPORT_DTV_CLIENT = (
 
 async def async_setup_entry(
     hass: HomeAssistant,
-    entry: ConfigEntry,
-    async_add_entities: AddEntitiesCallback,
+    entry: DirecTVConfigEntry,
+    async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up the DirecTV config entry."""
-    dtv = hass.data[DOMAIN][entry.entry_id]
+    dtv = entry.runtime_data
 
     async_add_entities(
         (
@@ -118,7 +115,7 @@ class DIRECTVMediaPlayer(DIRECTVEntity, MediaPlayerEntity):
             self._attr_assumed_state = self._is_recorded
 
     @property
-    def extra_state_attributes(self):
+    def extra_state_attributes(self) -> dict[str, Any]:
         """Return device specific state attributes."""
         if self._is_standby:
             return {}

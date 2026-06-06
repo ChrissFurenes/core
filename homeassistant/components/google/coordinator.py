@@ -1,7 +1,5 @@
 """Support for Google Calendar Search binary sensors."""
 
-from __future__ import annotations
-
 from collections.abc import Iterable
 from datetime import datetime, timedelta
 import itertools
@@ -14,11 +12,12 @@ from gcal_sync.sync import CalendarEventSyncManager
 from gcal_sync.timeline import Timeline
 from ical.iter import SortableItemValue
 
-from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 from homeassistant.util import dt as dt_util
+
+from .store import GoogleConfigEntry
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -47,11 +46,12 @@ def _truncate_timeline(timeline: Timeline, max_events: int) -> Timeline:
 class CalendarSyncUpdateCoordinator(DataUpdateCoordinator[Timeline]):
     """Coordinator for calendar RPC calls that use an efficient sync."""
 
-    config_entry: ConfigEntry
+    config_entry: GoogleConfigEntry
 
     def __init__(
         self,
         hass: HomeAssistant,
+        config_entry: GoogleConfigEntry,
         sync: CalendarEventSyncManager,
         name: str,
     ) -> None:
@@ -59,6 +59,7 @@ class CalendarSyncUpdateCoordinator(DataUpdateCoordinator[Timeline]):
         super().__init__(
             hass,
             _LOGGER,
+            config_entry=config_entry,
             name=name,
             update_interval=MIN_TIME_BETWEEN_UPDATES,
         )
@@ -106,11 +107,12 @@ class CalendarQueryUpdateCoordinator(DataUpdateCoordinator[list[Event]]):
     for limitations in the calendar API for supporting search.
     """
 
-    config_entry: ConfigEntry
+    config_entry: GoogleConfigEntry
 
     def __init__(
         self,
         hass: HomeAssistant,
+        config_entry: GoogleConfigEntry,
         calendar_service: GoogleCalendarService,
         name: str,
         calendar_id: str,
@@ -120,6 +122,7 @@ class CalendarQueryUpdateCoordinator(DataUpdateCoordinator[list[Event]]):
         super().__init__(
             hass,
             _LOGGER,
+            config_entry=config_entry,
             name=name,
             update_interval=MIN_TIME_BETWEEN_UPDATES,
         )

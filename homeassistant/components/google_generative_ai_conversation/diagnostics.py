@@ -1,7 +1,5 @@
 """Diagnostics support for Google Generative AI Conversation."""
 
-from __future__ import annotations
-
 from typing import Any
 
 from homeassistant.components.diagnostics import async_redact_data
@@ -21,6 +19,7 @@ async def async_get_config_entry_diagnostics(
             "title": entry.title,
             "data": entry.data,
             "options": entry.options,
+            "subentries": dict(entry.subentries),
         },
         TO_REDACT,
     )

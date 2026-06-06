@@ -6,15 +6,10 @@ from asyncsleepiq import (
     SleepIQTimeoutException,
 )
 
-from homeassistant.components.sleepiq.const import (
-    DOMAIN,
-    IS_IN_BED,
-    PRESSURE,
-    SLEEP_NUMBER,
-)
+from homeassistant.components.sleepiq.const import DOMAIN, IS_IN_BED, SLEEP_NUMBER
 from homeassistant.components.sleepiq.coordinator import UPDATE_INTERVAL
 from homeassistant.config_entries import ConfigEntryState
-from homeassistant.const import CONF_USERNAME
+from homeassistant.const import CONF_USERNAME, PRESSURE
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import entity_registry as er
 from homeassistant.setup import async_setup_component
@@ -29,7 +24,12 @@ from .conftest import (
     setup_platform,
 )
 
-from tests.common import MockConfigEntry, async_fire_time_changed, mock_registry
+from tests.common import (
+    MockConfigEntry,
+    RegistryEntryWithDefaults,
+    async_fire_time_changed,
+    mock_registry,
+)
 
 ENTITY_IS_IN_BED = f"sensor.sleepnumber_{BED_ID}_{SLEEPER_L_NAME_LOWER}_{IS_IN_BED}"
 ENTITY_PRESSURE = f"sensor.sleepnumber_{BED_ID}_{SLEEPER_L_NAME_LOWER}_{PRESSURE}"
@@ -103,19 +103,19 @@ async def test_unique_id_migration(hass: HomeAssistant, mock_asyncsleepiq) -> No
     mock_registry(
         hass,
         {
-            ENTITY_IS_IN_BED: er.RegistryEntry(
+            ENTITY_IS_IN_BED: RegistryEntryWithDefaults(
                 entity_id=ENTITY_IS_IN_BED,
                 unique_id=f"{BED_ID}_{SLEEPER_L_NAME}_{IS_IN_BED}",
                 platform=DOMAIN,
                 config_entry_id=mock_entry.entry_id,
             ),
-            ENTITY_PRESSURE: er.RegistryEntry(
+            ENTITY_PRESSURE: RegistryEntryWithDefaults(
                 entity_id=ENTITY_PRESSURE,
                 unique_id=f"{BED_ID}_{SLEEPER_L_NAME}_{PRESSURE}",
                 platform=DOMAIN,
                 config_entry_id=mock_entry.entry_id,
             ),
-            ENTITY_SLEEP_NUMBER: er.RegistryEntry(
+            ENTITY_SLEEP_NUMBER: RegistryEntryWithDefaults(
                 entity_id=ENTITY_SLEEP_NUMBER,
                 unique_id=f"{BED_ID}_{SLEEPER_L_NAME}_{SLEEP_NUMBER}",
                 platform=DOMAIN,

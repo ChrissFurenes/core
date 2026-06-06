@@ -1,7 +1,5 @@
 """Support for the DIRECTV remote."""
 
-from __future__ import annotations
-
 from collections.abc import Iterable
 from datetime import timedelta
 import logging
@@ -10,11 +8,10 @@ from typing import Any
 from directv import DIRECTV, DIRECTVError
 
 from homeassistant.components.remote import ATTR_NUM_REPEATS, RemoteEntity
-from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
-from .const import DOMAIN
+from . import DirecTVConfigEntry
 from .entity import DIRECTVEntity
 
 _LOGGER = logging.getLogger(__name__)
@@ -24,11 +21,11 @@ SCAN_INTERVAL = timedelta(minutes=2)
 
 async def async_setup_entry(
     hass: HomeAssistant,
-    entry: ConfigEntry,
-    async_add_entities: AddEntitiesCallback,
+    entry: DirecTVConfigEntry,
+    async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Load DirecTV remote based on a config entry."""
-    dtv = hass.data[DOMAIN][entry.entry_id]
+    dtv = entry.runtime_data
 
     async_add_entities(
         (
@@ -93,6 +90,7 @@ class DIRECTVRemote(DIRECTVEntity, RemoteEntity):
             for single_command in command:
                 try:
                     await self.dtv.remote(single_command, self._address)
+                # pylint: disable-next=home-assistant-action-swallowed-exception
                 except DIRECTVError:
                     _LOGGER.exception(
                         "Sending command %s to device %s failed",

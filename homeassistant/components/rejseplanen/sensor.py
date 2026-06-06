@@ -4,12 +4,11 @@ For more info on the API see:
 https://help.rejseplanen.dk/hc/en-us/articles/214174465-Rejseplanen-s-API
 """
 
-from __future__ import annotations
-
 from contextlib import suppress
 from datetime import datetime, timedelta
 import logging
 from operator import itemgetter
+from typing import Any
 
 import rjpl
 import voluptuous as vol
@@ -20,10 +19,10 @@ from homeassistant.components.sensor import (
 )
 from homeassistant.const import CONF_NAME, UnitOfTime
 from homeassistant.core import HomeAssistant
-import homeassistant.helpers.config_validation as cv
+from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
-import homeassistant.util.dt as dt_util
+from homeassistant.util import dt as dt_util
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -124,7 +123,7 @@ class RejseplanenTransportSensor(SensorEntity):
         return self._state
 
     @property
-    def extra_state_attributes(self):
+    def extra_state_attributes(self) -> dict[str, Any]:
         """Return the state attributes."""
         if not self._times:
             return {ATTR_STOP_ID: self._stop_id}
@@ -196,7 +195,7 @@ class PublicTransportData:
         except rjpl.rjplAPIError as error:
             _LOGGER.debug("API returned error: %s", error)
             return
-        except (rjpl.rjplConnectionError, rjpl.rjplHTTPError):
+        except rjpl.rjplConnectionError, rjpl.rjplHTTPError:
             _LOGGER.debug("Error occurred while connecting to the API")
             return
 

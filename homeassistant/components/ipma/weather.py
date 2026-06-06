@@ -1,7 +1,5 @@
 """Support for IPMA weather service."""
 
-from __future__ import annotations
-
 import asyncio
 import contextlib
 import logging
@@ -23,7 +21,6 @@ from homeassistant.components.weather import (
     WeatherEntity,
     WeatherEntityFeature,
 )
-from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
     CONF_MODE,
     UnitOfPressure,
@@ -31,18 +28,12 @@ from homeassistant.const import (
     UnitOfTemperature,
 )
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 from homeassistant.helpers.sun import is_up
 from homeassistant.util import Throttle
 
-from .const import (
-    ATTRIBUTION,
-    CONDITION_MAP,
-    DATA_API,
-    DATA_LOCATION,
-    DOMAIN,
-    MIN_TIME_BETWEEN_UPDATES,
-)
+from . import IpmaConfigEntry
+from .const import ATTRIBUTION, CONDITION_MAP, MIN_TIME_BETWEEN_UPDATES
 from .entity import IPMADevice
 
 _LOGGER = logging.getLogger(__name__)
@@ -50,12 +41,12 @@ _LOGGER = logging.getLogger(__name__)
 
 async def async_setup_entry(
     hass: HomeAssistant,
-    config_entry: ConfigEntry,
-    async_add_entities: AddEntitiesCallback,
+    config_entry: IpmaConfigEntry,
+    async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Add a weather entity from a config_entry."""
-    api = hass.data[DOMAIN][config_entry.entry_id][DATA_API]
-    location = hass.data[DOMAIN][config_entry.entry_id][DATA_LOCATION]
+    location = config_entry.runtime_data.location
+    api = config_entry.runtime_data.api
     async_add_entities([IPMAWeather(api, location, config_entry)], True)
 
 
@@ -72,7 +63,7 @@ class IPMAWeather(WeatherEntity, IPMADevice):
     )
 
     def __init__(
-        self, api: IPMA_API, location: Location, config_entry: ConfigEntry
+        self, api: IPMA_API, location: Location, config_entry: IpmaConfigEntry
     ) -> None:
         """Initialise the platform with a data instance and station name."""
         IPMADevice.__init__(self, api, location)
@@ -82,7 +73,11 @@ class IPMAWeather(WeatherEntity, IPMADevice):
         self._daily_forecast: list[IPMAForecast] | None = None
         self._hourly_forecast: list[IPMAForecast] | None = None
         if self._mode is not None:
-            self._attr_unique_id = f"{self._location.station_latitude}, {self._location.station_longitude}, {self._mode}"
+            self._attr_unique_id = (
+                f"{self._location.station_latitude},"
+                f" {self._location.station_longitude},"
+                f" {self._mode}"
+            )
         else:
             self._attr_unique_id = (
                 f"{self._location.station_latitude}, {self._location.station_longitude}"
@@ -136,8 +131,11 @@ class IPMAWeather(WeatherEntity, IPMADevice):
         return CONDITION_MAP.get(identifier)
 
     @property
-    def condition(self):
-        """Return the current condition which is only available on the hourly forecast data."""
+    def condition(self) -> str | None:
+        """Return the current condition.
+
+        Only available on the hourly forecast data.
+        """
         forecast = self._hourly_forecast
 
         if not forecast:
@@ -146,7 +144,7 @@ class IPMAWeather(WeatherEntity, IPMADevice):
         return self._condition_conversion(forecast[0].weather_type.id, None)
 
     @property
-    def native_temperature(self):
+    def native_temperature(self) -> float | None:
         """Return the current temperature."""
         if not self._observation:
             return None
@@ -154,7 +152,7 @@ class IPMAWeather(WeatherEntity, IPMADevice):
         return self._observation.temperature
 
     @property
-    def native_pressure(self):
+    def native_pressure(self) -> float | None:
         """Return the current pressure."""
         if not self._observation:
             return None
@@ -162,7 +160,7 @@ class IPMAWeather(WeatherEntity, IPMADevice):
         return self._observation.pressure
 
     @property
-    def humidity(self):
+    def humidity(self) -> float | None:
         """Return the name of the sensor."""
         if not self._observation:
             return None
@@ -170,7 +168,7 @@ class IPMAWeather(WeatherEntity, IPMADevice):
         return self._observation.humidity
 
     @property
-    def native_wind_speed(self):
+    def native_wind_speed(self) -> float | None:
         """Return the current windspeed."""
         if not self._observation:
             return None
@@ -178,7 +176,7 @@ class IPMAWeather(WeatherEntity, IPMADevice):
         return self._observation.wind_intensity_km
 
     @property
-    def wind_bearing(self):
+    def wind_bearing(self) -> float | None:
         """Return the current wind bearing (degrees)."""
         if not self._observation:
             return None
@@ -198,7 +196,9 @@ class IPMAWeather(WeatherEntity, IPMADevice):
                 ),
                 ATTR_FORECAST_NATIVE_TEMP_LOW: data_in.min_temperature,
                 ATTR_FORECAST_NATIVE_TEMP: data_in.max_temperature,
-                ATTR_FORECAST_PRECIPITATION_PROBABILITY: data_in.precipitation_probability,
+                ATTR_FORECAST_PRECIPITATION_PROBABILITY: (
+                    data_in.precipitation_probability
+                ),
                 ATTR_FORECAST_NATIVE_WIND_SPEED: data_in.wind_strength,
                 ATTR_FORECAST_WIND_BEARING: data_in.wind_direction,
             }

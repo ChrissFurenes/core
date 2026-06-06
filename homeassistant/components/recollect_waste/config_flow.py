@@ -1,24 +1,18 @@
 """Config flow for ReCollect Waste integration."""
 
-from __future__ import annotations
-
 from typing import Any
 
 from aiorecollect.client import Client
 from aiorecollect.errors import RecollectError
 import voluptuous as vol
 
-from homeassistant.config_entries import (
-    ConfigEntry,
-    ConfigFlow,
-    ConfigFlowResult,
-    OptionsFlow,
-)
+from homeassistant.config_entries import ConfigFlow, ConfigFlowResult, OptionsFlow
 from homeassistant.const import CONF_FRIENDLY_NAME
 from homeassistant.core import callback
 from homeassistant.helpers import aiohttp_client
 
 from .const import CONF_PLACE_ID, CONF_SERVICE_ID, DOMAIN, LOGGER
+from .coordinator import RecollectWasteConfigEntry
 
 DATA_SCHEMA = vol.Schema(
     {vol.Required(CONF_PLACE_ID): str, vol.Required(CONF_SERVICE_ID): str}
@@ -33,10 +27,10 @@ class RecollectWasteConfigFlow(ConfigFlow, domain=DOMAIN):
     @staticmethod
     @callback
     def async_get_options_flow(
-        config_entry: ConfigEntry,
-    ) -> OptionsFlow:
+        config_entry: RecollectWasteConfigEntry,
+    ) -> RecollectWasteOptionsFlowHandler:
         """Define the config flow to handle options."""
-        return RecollectWasteOptionsFlowHandler(config_entry)
+        return RecollectWasteOptionsFlowHandler()
 
     async def async_step_user(
         self, user_input: dict[str, Any] | None = None
@@ -79,10 +73,6 @@ class RecollectWasteConfigFlow(ConfigFlow, domain=DOMAIN):
 class RecollectWasteOptionsFlowHandler(OptionsFlow):
     """Handle a Recollect Waste options flow."""
 
-    def __init__(self, entry: ConfigEntry) -> None:
-        """Initialize."""
-        self._entry = entry
-
     async def async_step_init(
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
@@ -96,7 +86,7 @@ class RecollectWasteOptionsFlowHandler(OptionsFlow):
                 {
                     vol.Optional(
                         CONF_FRIENDLY_NAME,
-                        default=self._entry.options.get(CONF_FRIENDLY_NAME),
+                        default=self.config_entry.options.get(CONF_FRIENDLY_NAME),
                     ): bool
                 }
             ),

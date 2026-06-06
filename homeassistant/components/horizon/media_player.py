@@ -1,7 +1,5 @@
 """Support for the Unitymedia Horizon HD Recorder."""
 
-from __future__ import annotations
-
 from datetime import timedelta
 import logging
 from typing import Any
@@ -21,7 +19,7 @@ from homeassistant.components.media_player import (
 from homeassistant.const import CONF_HOST, CONF_NAME, CONF_PORT
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import PlatformNotReady
-import homeassistant.helpers.config_validation as cv
+from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
 
@@ -65,7 +63,7 @@ def setup_platform(
         _LOGGER.error("Connection to %s at %s failed: %s", name, host, msg)
         raise PlatformNotReady from msg
 
-    _LOGGER.info("Connection to %s at %s established", name, host)
+    _LOGGER.debug("Connection to %s at %s established", name, host)
 
     add_entities([HorizonDevice(client, name, keys)], True)
 
@@ -151,6 +149,7 @@ class HorizonDevice(MediaPlayerEntity):
             try:
                 self._select_channel(int(media_id))
                 self._attr_state = MediaPlayerState.PLAYING
+            # pylint: disable-next=home-assistant-action-swallowed-exception
             except ValueError:
                 _LOGGER.error("Invalid channel: %s", media_id)
         else:

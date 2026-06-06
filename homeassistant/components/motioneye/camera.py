@@ -1,9 +1,7 @@
 """The motionEye integration."""
 
-from __future__ import annotations
-
+from collections.abc import Mapping
 from contextlib import suppress
-from types import MappingProxyType
 from typing import Any
 
 import aiohttp
@@ -30,8 +28,8 @@ from homeassistant.components.mjpeg import (
     CONF_STILL_IMAGE_URL,
     MjpegCamera,
 )
-from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
+    CONF_ACTION,
     CONF_AUTHENTICATION,
     CONF_NAME,
     CONF_PASSWORD,
@@ -42,29 +40,21 @@ from homeassistant.const import (
 )
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers import config_validation as cv, entity_platform
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
-from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
+from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
-from . import (
-    MotionEyeEntity,
-    get_camera_from_cameras,
-    is_acceptable_camera,
-    listen_for_new_cameras,
-)
+from . import get_camera_from_cameras, is_acceptable_camera, listen_for_new_cameras
 from .const import (
-    CONF_ACTION,
-    CONF_CLIENT,
-    CONF_COORDINATOR,
     CONF_STREAM_URL_TEMPLATE,
     CONF_SURVEILLANCE_PASSWORD,
     CONF_SURVEILLANCE_USERNAME,
-    DOMAIN,
     MOTIONEYE_MANUFACTURER,
     SERVICE_ACTION,
     SERVICE_SET_TEXT_OVERLAY,
     SERVICE_SNAPSHOT,
     TYPE_MOTIONEYE_MJPEG_CAMERA,
 )
+from .coordinator import MotionEyeConfigEntry, MotionEyeUpdateCoordinator
+from .entity import MotionEyeEntity
 
 PLATFORMS = [Platform.CAMERA]
 
@@ -97,10 +87,12 @@ SCHEMA_SERVICE_SET_TEXT = vol.Schema(
 
 
 async def async_setup_entry(
-    hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback
+    hass: HomeAssistant,
+    entry: MotionEyeConfigEntry,
+    async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up motionEye from a config entry."""
-    entry_data = hass.data[DOMAIN][entry.entry_id]
+    coordinator = entry.runtime_data
 
     @callback
     def camera_add(camera: dict[str, Any]) -> None:
@@ -114,8 +106,8 @@ async def async_setup_entry(
                     ),
                     entry.data.get(CONF_SURVEILLANCE_PASSWORD, ""),
                     camera,
-                    entry_data[CONF_CLIENT],
-                    entry_data[CONF_COORDINATOR],
+                    coordinator.client,
+                    coordinator,
                     entry.options,
                 )
             ]
@@ -155,8 +147,8 @@ class MotionEyeMjpegCamera(MotionEyeEntity, MjpegCamera):
         password: str,
         camera: dict[str, Any],
         client: MotionEyeClient,
-        coordinator: DataUpdateCoordinator,
-        options: MappingProxyType[str, str],
+        coordinator: MotionEyeUpdateCoordinator,
+        options: Mapping[str, str],
     ) -> None:
         """Initialize a MJPEG camera."""
         self._surveillance_username = username

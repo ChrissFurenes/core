@@ -3,24 +3,48 @@
 from unittest.mock import patch
 
 import pytest
-from syrupy import SnapshotAssertion
+from syrupy.assertion import SnapshotAssertion
 
 from homeassistant.components.switch import (
     DOMAIN as SWITCH_DOMAIN,
     SERVICE_TURN_OFF,
     SERVICE_TURN_ON,
 )
+from homeassistant.components.tessie.switch import DESCRIPTIONS
 from homeassistant.const import ATTR_ENTITY_ID, STATE_OFF, STATE_ON, Platform
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import entity_registry as er
+from homeassistant.helpers.typing import StateType
 
 from .common import RESPONSE_OK, assert_entities, setup_platform
+
+
+@pytest.mark.parametrize(
+    ("value", "expected"),
+    [
+        ("Starting", True),
+        ("Charging", True),
+        ("Stopped", False),
+        (True, True),
+        (False, False),
+        ("Unexpected", False),
+        (None, False),
+    ],
+)
+def test_charge_switch_state(value: StateType, expected: bool) -> None:
+    """Test charging switch state conversion."""
+    description = next(
+        description
+        for description in DESCRIPTIONS
+        if description.key == "charge_state_charging_state"
+    )
+    assert description.value_func(value) is expected
 
 
 async def test_switches(
     hass: HomeAssistant, snapshot: SnapshotAssertion, entity_registry: er.EntityRegistry
 ) -> None:
-    """Tests that the switche entities are correct."""
+    """Tests that the switch entities are correct."""
 
     entry = await setup_platform(hass, [Platform.SWITCH])
 
@@ -61,13 +85,13 @@ async def test_switches(
     [
         (
             "energy_site_storm_watch",
-            "EnergySpecific.storm_mode",
-            "EnergySpecific.storm_mode",
+            "storm_mode",
+            "storm_mode",
         ),
         (
             "energy_site_allow_charging_from_grid",
-            "EnergySpecific.grid_import_export",
-            "EnergySpecific.grid_import_export",
+            "grid_import_export",
+            "grid_import_export",
         ),
     ],
 )
@@ -80,7 +104,7 @@ async def test_switch_services(
 
     entity_id = f"switch.{name}"
     with patch(
-        f"homeassistant.components.teslemetry.{on}",
+        f"tesla_fleet_api.tessie.EnergySite.{on}",
         return_value=RESPONSE_OK,
     ) as call:
         await hass.services.async_call(
@@ -94,7 +118,7 @@ async def test_switch_services(
         call.assert_called_once()
 
     with patch(
-        f"homeassistant.components.teslemetry.{off}",
+        f"tesla_fleet_api.tessie.EnergySite.{off}",
         return_value=RESPONSE_OK,
     ) as call:
         await hass.services.async_call(

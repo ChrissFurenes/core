@@ -1,7 +1,5 @@
 """Module that groups code required to handle state restore for component."""
 
-from __future__ import annotations
-
 import asyncio
 from collections.abc import Iterable
 from typing import Any
@@ -14,6 +12,7 @@ from .const import (
     ATTR_HUMIDITY,
     ATTR_HVAC_MODE,
     ATTR_PRESET_MODE,
+    ATTR_SWING_HORIZONTAL_MODE,
     ATTR_SWING_MODE,
     ATTR_TARGET_TEMP_HIGH,
     ATTR_TARGET_TEMP_LOW,
@@ -23,6 +22,7 @@ from .const import (
     SERVICE_SET_HUMIDITY,
     SERVICE_SET_HVAC_MODE,
     SERVICE_SET_PRESET_MODE,
+    SERVICE_SET_SWING_HORIZONTAL_MODE,
     SERVICE_SET_SWING_MODE,
     SERVICE_SET_TEMPERATURE,
 )
@@ -55,9 +55,9 @@ async def _async_reproduce_states(
         await call_service(SERVICE_SET_HVAC_MODE, [], {ATTR_HVAC_MODE: state.state})
 
     if (
-        (ATTR_TEMPERATURE in state.attributes)
-        or (ATTR_TARGET_TEMP_HIGH in state.attributes)
-        or (ATTR_TARGET_TEMP_LOW in state.attributes)
+        (state.attributes.get(ATTR_TEMPERATURE) is not None)
+        or (state.attributes.get(ATTR_TARGET_TEMP_HIGH) is not None)
+        or (state.attributes.get(ATTR_TARGET_TEMP_LOW) is not None)
     ):
         await call_service(
             SERVICE_SET_TEMPERATURE,
@@ -75,6 +75,14 @@ async def _async_reproduce_states(
         and state.attributes[ATTR_SWING_MODE] is not None
     ):
         await call_service(SERVICE_SET_SWING_MODE, [ATTR_SWING_MODE])
+
+    if (
+        ATTR_SWING_HORIZONTAL_MODE in state.attributes
+        and state.attributes[ATTR_SWING_HORIZONTAL_MODE] is not None
+    ):
+        await call_service(
+            SERVICE_SET_SWING_HORIZONTAL_MODE, [ATTR_SWING_HORIZONTAL_MODE]
+        )
 
     if (
         ATTR_FAN_MODE in state.attributes

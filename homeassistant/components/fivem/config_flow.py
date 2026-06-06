@@ -1,7 +1,5 @@
 """Config flow for FiveM integration."""
 
-from __future__ import annotations
-
 import logging
 from typing import Any
 
@@ -10,7 +8,7 @@ import voluptuous as vol
 
 from homeassistant.config_entries import ConfigFlow, ConfigFlowResult
 from homeassistant.const import CONF_HOST, CONF_PORT
-import homeassistant.helpers.config_validation as cv
+from homeassistant.helpers import config_validation as cv
 
 from .const import DOMAIN
 

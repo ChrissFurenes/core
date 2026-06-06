@@ -4,10 +4,9 @@ Get data from 'Usage Summary' page:
 https://www.fido.ca/pages/#/my-account/wireless
 """
 
-from __future__ import annotations
-
 from datetime import timedelta
 import logging
+from typing import Any
 
 from pyfido import FidoClient
 from pyfido.client import PyFidoError
@@ -28,8 +27,8 @@ from homeassistant.const import (
     UnitOfTime,
 )
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
-import homeassistant.helpers.config_validation as cv
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
 from homeassistant.util import Throttle
@@ -226,7 +225,7 @@ class FidoSensor(SensorEntity):
         self._attr_name = f"{name} {number} {description.name}"
 
     @property
-    def extra_state_attributes(self):
+    def extra_state_attributes(self) -> dict[str, Any]:
         """Return the state attributes of the sensor."""
         return {"number": self._number}
 

@@ -1,7 +1,5 @@
 """DataUpdateCoordinator for the srp_energy integration."""
 
-from __future__ import annotations
-
 import asyncio
 from datetime import timedelta
 
@@ -12,26 +10,38 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 from homeassistant.util import dt as dt_util
 
-from .const import DOMAIN, LOGGER, MIN_TIME_BETWEEN_UPDATES, PHOENIX_TIME_ZONE
+from .const import (
+    CONF_IS_TOU,
+    DOMAIN,
+    LOGGER,
+    MIN_TIME_BETWEEN_UPDATES,
+    PHOENIX_TIME_ZONE,
+)
 
 TIMEOUT = 10
 PHOENIX_ZONE_INFO = dt_util.get_time_zone(PHOENIX_TIME_ZONE)
+
+type SRPEnergyConfigEntry = ConfigEntry[SRPEnergyDataUpdateCoordinator]
 
 
 class SRPEnergyDataUpdateCoordinator(DataUpdateCoordinator[float]):
     """A srp_energy Data Update Coordinator."""
 
-    config_entry: ConfigEntry
+    config_entry: SRPEnergyConfigEntry
 
     def __init__(
-        self, hass: HomeAssistant, client: SrpEnergyClient, is_time_of_use: bool
+        self,
+        hass: HomeAssistant,
+        config_entry: SRPEnergyConfigEntry,
+        client: SrpEnergyClient,
     ) -> None:
         """Initialize the srp_energy data coordinator."""
         self._client = client
-        self._is_time_of_use = is_time_of_use
+        self._is_time_of_use = config_entry.data[CONF_IS_TOU]
         super().__init__(
             hass,
             LOGGER,
+            config_entry=config_entry,
             name=DOMAIN,
             update_interval=MIN_TIME_BETWEEN_UPDATES,
         )

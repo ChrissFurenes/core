@@ -1,8 +1,6 @@
 """Diagnostics support for MQTT."""
 
-from __future__ import annotations
-
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
 from homeassistant.components import device_tracker
 from homeassistant.components.diagnostics import async_redact_data
@@ -13,12 +11,11 @@ from homeassistant.const import (
     CONF_PASSWORD,
     CONF_USERNAME,
 )
-from homeassistant.core import HomeAssistant, callback, split_entity_id
+from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers import device_registry as dr, entity_registry as er
 from homeassistant.helpers.device_registry import DeviceEntry
 
 from . import debug_info, is_connected
-from .models import DATA_MQTT
 
 REDACT_CONFIG = {CONF_PASSWORD, CONF_USERNAME}
 REDACT_STATE_DEVICE_TRACKER = {ATTR_LATITUDE, ATTR_LONGITUDE}
@@ -45,11 +42,10 @@ def _async_get_diagnostics(
     device: DeviceEntry | None = None,
 ) -> dict[str, Any]:
     """Return diagnostics for a config entry."""
-    mqtt_instance = hass.data[DATA_MQTT].client
-    if TYPE_CHECKING:
-        assert mqtt_instance is not None
-
-    redacted_config = async_redact_data(mqtt_instance.conf, REDACT_CONFIG)
+    redacted_config = {
+        "data": async_redact_data(dict(entry.data), REDACT_CONFIG),
+        "options": dict(entry.options),
+    }
 
     data = {
         "connected": is_connected(hass),
@@ -105,10 +101,8 @@ def _async_device_as_dict(hass: HomeAssistant, device: DeviceEntry) -> dict[str,
         # The context doesn't provide useful information in this case.
         state_dict.pop("context", None)
 
-        entity_domain = split_entity_id(state.entity_id)[0]
-
         # Retract some sensitive state attributes
-        if entity_domain == device_tracker.DOMAIN:
+        if state.domain == device_tracker.DOMAIN:
             state_dict["attributes"] = async_redact_data(
                 state_dict["attributes"], REDACT_STATE_DEVICE_TRACKER
             )

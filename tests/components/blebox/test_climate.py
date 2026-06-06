@@ -21,6 +21,7 @@ from homeassistant.components.climate import (
 )
 from homeassistant.const import (
     ATTR_DEVICE_CLASS,
+    ATTR_ENTITY_ID,
     ATTR_SUPPORTED_FEATURES,
     ATTR_TEMPERATURE,
     STATE_UNKNOWN,
@@ -51,7 +52,7 @@ def saunabox_fixture():
     product = feature.product
     type(product).name = PropertyMock(return_value="My sauna")
     type(product).model = PropertyMock(return_value="saunaBox")
-    return (feature, "climate.saunabox_thermostat")
+    return (feature, "climate.my_sauna_saunabox_thermostat")
 
 
 @pytest.fixture(name="thermobox")
@@ -74,7 +75,7 @@ def thermobox_fixture():
     product = feature.product
     type(product).name = PropertyMock(return_value="My thermo")
     type(product).model = PropertyMock(return_value="thermoBox")
-    return (feature, "climate.thermobox_thermostat")
+    return (feature, "climate.my_thermo_thermobox_thermostat")
 
 
 async def test_init(
@@ -87,12 +88,12 @@ async def test_init(
     assert entry.unique_id == "BleBox-saunaBox-1afe34db9437-thermostat"
 
     state = hass.states.get(entity_id)
-    assert state.name == "saunaBox-thermostat"
+    assert state.name == "My sauna saunaBox-thermostat"
 
     supported_features = state.attributes[ATTR_SUPPORTED_FEATURES]
     assert supported_features & ClimateEntityFeature.TARGET_TEMPERATURE
 
-    assert state.attributes[ATTR_HVAC_MODES] == [HVACMode.OFF, None]
+    assert state.attributes[ATTR_HVAC_MODES] == [HVACMode.OFF]
 
     assert ATTR_DEVICE_CLASS not in state.attributes
     assert ATTR_HVAC_MODE not in state.attributes
@@ -152,6 +153,7 @@ async def test_on_when_below_desired(saunabox, hass: HomeAssistant) -> None:
         feature_mock.desired = 64.8
         feature_mock.current = 25.7
 
+    feature_mock.mode = 1
     feature_mock.async_on = AsyncMock(side_effect=turn_on)
     await hass.services.async_call(
         "climate",
@@ -186,12 +188,13 @@ async def test_on_when_above_desired(saunabox, hass: HomeAssistant) -> None:
         feature_mock.desired = 23.4
         feature_mock.current = 28.7
 
+    feature_mock.mode = 1
     feature_mock.async_on = AsyncMock(side_effect=turn_on)
 
     await hass.services.async_call(
         "climate",
         SERVICE_SET_HVAC_MODE,
-        {"entity_id": entity_id, ATTR_HVAC_MODE: HVACMode.HEAT},
+        {ATTR_ENTITY_ID: entity_id, ATTR_HVAC_MODE: HVACMode.HEAT},
         blocking=True,
     )
     feature_mock.async_off.assert_not_called()

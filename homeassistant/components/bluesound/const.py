@@ -1,10 +1,9 @@
-"""Constants for the Bluesound HiFi wireless speakers and audio integrations component."""
+"""Bluesound HiFi wireless speakers and audio integrations."""
 
 DOMAIN = "bluesound"
 INTEGRATION_TITLE = "Bluesound"
-SERVICE_CLEAR_TIMER = "clear_sleep_timer"
-SERVICE_JOIN = "join"
-SERVICE_SET_TIMER = "set_sleep_timer"
-SERVICE_UNJOIN = "unjoin"
 ATTR_BLUESOUND_GROUP = "bluesound_group"
 ATTR_MASTER = "master"
+
+SERVICE_JOIN = "join"
+SERVICE_UNJOIN = "unjoin"

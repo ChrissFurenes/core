@@ -1,9 +1,8 @@
 """Support for OhmConnect."""
 
-from __future__ import annotations
-
 from datetime import timedelta
 import logging
+from typing import Any
 
 import defusedxml.ElementTree as ET
 import requests
@@ -15,7 +14,7 @@ from homeassistant.components.sensor import (
 )
 from homeassistant.const import CONF_ID, CONF_NAME
 from homeassistant.core import HomeAssistant
-import homeassistant.helpers.config_validation as cv
+from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
 from homeassistant.util import Throttle
@@ -70,7 +69,7 @@ class OhmconnectSensor(SensorEntity):
         return "Inactive"
 
     @property
-    def extra_state_attributes(self):
+    def extra_state_attributes(self) -> dict[str, Any]:
         """Return the state attributes."""
         return {"Address": self._data.get("address"), "ID": self._ohmid}
 

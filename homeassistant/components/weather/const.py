@@ -1,10 +1,8 @@
 """Constants for weather."""
 
-from __future__ import annotations
-
 from collections.abc import Callable
 from enum import IntFlag
-from typing import Final
+from typing import TYPE_CHECKING, Final
 
 from homeassistant.const import (
     UnitOfLength,
@@ -13,12 +11,18 @@ from homeassistant.const import (
     UnitOfSpeed,
     UnitOfTemperature,
 )
+from homeassistant.util.hass_dict import HassKey
 from homeassistant.util.unit_conversion import (
     DistanceConverter,
     PressureConverter,
     SpeedConverter,
     TemperatureConverter,
 )
+
+if TYPE_CHECKING:
+    from homeassistant.helpers.entity_component import EntityComponent
+
+    from . import WeatherEntity
 
 
 class WeatherEntityFeature(IntFlag):
@@ -48,6 +52,9 @@ ATTR_WEATHER_CLOUD_COVERAGE = "cloud_coverage"
 ATTR_WEATHER_UV_INDEX = "uv_index"
 
 DOMAIN: Final = "weather"
+DATA_COMPONENT: HassKey[EntityComponent[WeatherEntity]] = HassKey(DOMAIN)
+
+INTENT_GET_WEATHER = "HassGetWeather"
 
 VALID_UNITS_PRESSURE: set[str] = {
     UnitOfPressure.HPA,
@@ -68,6 +75,7 @@ VALID_UNITS_VISIBILITY: set[str] = {
     UnitOfLength.MILES,
 }
 VALID_UNITS_WIND_SPEED: set[str] = {
+    UnitOfSpeed.BEAUFORT,
     UnitOfSpeed.FEET_PER_SECOND,
     UnitOfSpeed.KILOMETERS_PER_HOUR,
     UnitOfSpeed.KNOTS,

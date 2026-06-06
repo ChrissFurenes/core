@@ -1,28 +1,17 @@
 """The Version integration."""
 
-from __future__ import annotations
-
 import logging
 
 from pyhaversion import HaVersion
 
-from homeassistant.config_entries import ConfigEntry
+from homeassistant.const import CONF_SOURCE
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
-from .const import (
-    BOARD_MAP,
-    CONF_BOARD,
-    CONF_CHANNEL,
-    CONF_IMAGE,
-    CONF_SOURCE,
-    PLATFORMS,
-)
-from .coordinator import VersionDataUpdateCoordinator
+from .const import BOARD_MAP, CONF_BOARD, CONF_CHANNEL, CONF_IMAGE, PLATFORMS
+from .coordinator import VersionConfigEntry, VersionDataUpdateCoordinator
 
 _LOGGER = logging.getLogger(__name__)
-
-type VersionConfigEntry = ConfigEntry[VersionDataUpdateCoordinator]
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: VersionConfigEntry) -> bool:
@@ -40,6 +29,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: VersionConfigEntry) -> b
 
     coordinator = VersionDataUpdateCoordinator(
         hass=hass,
+        config_entry=entry,
         api=HaVersion(
             session=async_get_clientsession(hass),
             source=entry.data[CONF_SOURCE],

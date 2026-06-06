@@ -1,7 +1,5 @@
 """Support for bthome event entities."""
 
-from __future__ import annotations
-
 from dataclasses import replace
 
 from homeassistant.components.event import (
@@ -12,12 +10,13 @@ from homeassistant.components.event import (
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers import device_registry as dr, entity_registry as er
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
 from . import format_discovered_event_class, format_event_dispatcher_name
 from .const import (
     DOMAIN,
     EVENT_CLASS_BUTTON,
+    EVENT_CLASS_COMMAND,
     EVENT_CLASS_DIMMER,
     EVENT_PROPERTIES,
     EVENT_TYPE,
@@ -36,6 +35,7 @@ DESCRIPTIONS_BY_EVENT_CLASS = {
             "long_press",
             "long_double_press",
             "long_triple_press",
+            "hold_press",
         ],
         device_class=EventDeviceClass.BUTTON,
     ),
@@ -43,6 +43,11 @@ DESCRIPTIONS_BY_EVENT_CLASS = {
         key=EVENT_CLASS_DIMMER,
         translation_key="dimmer",
         event_types=["rotate_left", "rotate_right"],
+    ),
+    EVENT_CLASS_COMMAND: EventEntityDescription(
+        key=EVENT_CLASS_COMMAND,
+        translation_key="command",
+        event_types=["off", "on", "toggle", "step_up", "step_down"],
     ),
 }
 
@@ -103,7 +108,7 @@ class BTHomeEventEntity(EventEntity):
 async def async_setup_entry(
     hass: HomeAssistant,
     entry: BTHomeConfigEntry,
-    async_add_entities: AddEntitiesCallback,
+    async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up BTHome event."""
     coordinator = entry.runtime_data

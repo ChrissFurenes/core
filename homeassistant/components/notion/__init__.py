@@ -1,28 +1,20 @@
 """Support for Notion."""
 
-from __future__ import annotations
-
 from datetime import timedelta
 from typing import Any
 from uuid import UUID
 
-from aionotion.bridge.models import Bridge
 from aionotion.errors import InvalidCredentialsError, NotionError
-from aionotion.listener.models import Listener, ListenerKind
+from aionotion.listener.models import ListenerKind
 
-from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_PASSWORD, CONF_USERNAME, Platform
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.exceptions import ConfigEntryAuthFailed, ConfigEntryNotReady
-from homeassistant.helpers import device_registry as dr, entity_registry as er
-from homeassistant.helpers.device_registry import DeviceInfo
-from homeassistant.helpers.entity import EntityDescription
-from homeassistant.helpers.update_coordinator import CoordinatorEntity
+from homeassistant.helpers import entity_registry as er
 
 from .const import (
     CONF_REFRESH_TOKEN,
     CONF_USER_UUID,
-    DOMAIN,
     LOGGER,
     SENSOR_BATTERY,
     SENSOR_DOOR,
@@ -35,7 +27,7 @@ from .const import (
     SENSOR_TEMPERATURE,
     SENSOR_WINDOW_HINGED,
 )
-from .coordinator import NotionDataUpdateCoordinator
+from .coordinator import NotionConfigEntry, NotionDataUpdateCoordinator
 from .util import async_get_client_with_credentials, async_get_client_with_refresh_token
 
 PLATFORMS = [Platform.BINARY_SENSOR, Platform.SENSOR]
@@ -71,7 +63,7 @@ def is_uuid(value: str) -> bool:
     return True
 
 
-async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
+async def async_setup_entry(hass: HomeAssistant, entry: NotionConfigEntry) -> bool:
     """Set up Notion as a config entry."""
     entry_updates: dict[str, Any] = {"data": {**entry.data}}
 
@@ -123,8 +115,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     coordinator = NotionDataUpdateCoordinator(hass, entry=entry, client=client)
 
     await coordinator.async_config_entry_first_refresh()
-    hass.data.setdefault(DOMAIN, {})
-    hass.data[DOMAIN][entry.entry_id] = coordinator
+    entry.runtime_data = coordinator
 
     @callback
     def async_migrate_entity_entry(entry: er.RegistryEntry) -> dict[str, Any] | None:
@@ -161,109 +152,6 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     return True
 
 
-async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
+async def async_unload_entry(hass: HomeAssistant, entry: NotionConfigEntry) -> bool:
     """Unload a Notion config entry."""
-    unload_ok = await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
-    if unload_ok:
-        hass.data[DOMAIN].pop(entry.entry_id)
-
-    return unload_ok
-
-
-class NotionEntity(CoordinatorEntity[NotionDataUpdateCoordinator]):
-    """Define a base Notion entity."""
-
-    _attr_has_entity_name = True
-
-    def __init__(
-        self,
-        coordinator: NotionDataUpdateCoordinator,
-        listener_id: str,
-        sensor_id: str,
-        bridge_id: int,
-        description: EntityDescription,
-    ) -> None:
-        """Initialize the entity."""
-        super().__init__(coordinator)
-
-        sensor = self.coordinator.data.sensors[sensor_id]
-
-        self._attr_device_info = DeviceInfo(
-            identifiers={(DOMAIN, sensor.hardware_id)},
-            manufacturer="Silicon Labs",
-            model=str(sensor.hardware_revision),
-            name=str(sensor.name).capitalize(),
-            sw_version=sensor.firmware_version,
-        )
-
-        if bridge := self._async_get_bridge(bridge_id):
-            self._attr_device_info["via_device"] = (DOMAIN, bridge.hardware_id)
-
-        self._attr_extra_state_attributes = {}
-        self._attr_unique_id = listener_id
-        self._bridge_id = bridge_id
-        self._listener_id = listener_id
-        self._sensor_id = sensor_id
-        self.entity_description = description
-
-    @property
-    def available(self) -> bool:
-        """Return True if entity is available."""
-        return (
-            self.coordinator.last_update_success
-            and self._listener_id in self.coordinator.data.listeners
-        )
-
-    @property
-    def listener(self) -> Listener:
-        """Return the listener related to this entity."""
-        return self.coordinator.data.listeners[self._listener_id]
-
-    @callback
-    def _async_get_bridge(self, bridge_id: int) -> Bridge | None:
-        """Get a bridge by ID (if it exists)."""
-        if (bridge := self.coordinator.data.bridges.get(bridge_id)) is None:
-            LOGGER.debug("Entity references a non-existent bridge ID: %s", bridge_id)
-            return None
-        return bridge
-
-    @callback
-    def _async_update_bridge_id(self) -> None:
-        """Update the entity's bridge ID if it has changed.
-
-        Sensors can move to other bridges based on signal strength, etc.
-        """
-        sensor = self.coordinator.data.sensors[self._sensor_id]
-
-        # If the bridge ID hasn't changed, return:
-        if self._bridge_id == sensor.bridge.id:
-            return
-
-        # If the bridge doesn't exist, return:
-        if (bridge := self._async_get_bridge(sensor.bridge.id)) is None:
-            return
-
-        self._bridge_id = sensor.bridge.id
-
-        device_registry = dr.async_get(self.hass)
-        this_device = device_registry.async_get_device(
-            identifiers={(DOMAIN, sensor.hardware_id)}
-        )
-        bridge = self.coordinator.data.bridges[self._bridge_id]
-        bridge_device = device_registry.async_get_device(
-            identifiers={(DOMAIN, bridge.hardware_id)}
-        )
-
-        if not bridge_device or not this_device:
-            return
-
-        device_registry.async_update_device(
-            this_device.id, via_device_id=bridge_device.id
-        )
-
-    @callback
-    def _handle_coordinator_update(self) -> None:
-        """Respond to a DataUpdateCoordinator update."""
-        if self._listener_id in self.coordinator.data.listeners:
-            self._async_update_bridge_id()
-        super()._handle_coordinator_update()
+    return await hass.config_entries.async_unload_platforms(entry, PLATFORMS)

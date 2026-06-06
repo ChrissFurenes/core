@@ -1,7 +1,5 @@
 """Support for Goal Zero Yeti Sensors."""
 
-from __future__ import annotations
-
 from typing import cast
 
 from homeassistant.components.binary_sensor import (
@@ -11,7 +9,7 @@ from homeassistant.components.binary_sensor import (
 )
 from homeassistant.const import EntityCategory
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
 from .coordinator import GoalZeroConfigEntry
 from .entity import GoalZeroEntity
@@ -44,7 +42,7 @@ BINARY_SENSOR_TYPES: tuple[BinarySensorEntityDescription, ...] = (
 async def async_setup_entry(
     hass: HomeAssistant,
     entry: GoalZeroConfigEntry,
-    async_add_entities: AddEntitiesCallback,
+    async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up the Goal Zero Yeti sensor."""
     async_add_entities(

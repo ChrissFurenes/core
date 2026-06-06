@@ -1,13 +1,11 @@
 """Icon helper methods."""
 
-from __future__ import annotations
-
 import asyncio
 from collections.abc import Iterable
 from functools import lru_cache
 import logging
 import pathlib
-from typing import Any
+from typing import Any, cast
 
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.loader import Integration, async_get_integrations
@@ -21,12 +19,34 @@ ICON_CACHE: HassKey[_IconsCache] = HassKey("icon_cache")
 _LOGGER = logging.getLogger(__name__)
 
 
+def convert_shorthand_service_icon(
+    value: str | dict[str, str | dict[str, str]],
+) -> dict[str, str | dict[str, str]]:
+    """Convert shorthand service icon to dict."""
+    if isinstance(value, str):
+        return {"service": value}
+    return value
+
+
+def _load_icons_file(
+    icons_file: pathlib.Path,
+) -> dict[str, Any]:
+    """Load and parse an icons.json file."""
+    icons = load_json_object(icons_file)
+    if "services" not in icons:
+        return icons
+    services = cast(dict[str, str | dict[str, str | dict[str, str]]], icons["services"])
+    for service, service_icons in services.items():
+        services[service] = convert_shorthand_service_icon(service_icons)
+    return icons
+
+
 def _load_icons_files(
     icons_files: dict[str, pathlib.Path],
 ) -> dict[str, dict[str, Any]]:
     """Load and parse icons.json files."""
     return {
-        component: load_json_object(icons_file)
+        component: _load_icons_file(icons_file)
         for component, icons_file in icons_files.items()
     }
 
@@ -56,7 +76,7 @@ async def _async_get_component_icons(
 class _IconsCache:
     """Cache for icons."""
 
-    __slots__ = ("_hass", "_loaded", "_cache", "_lock")
+    __slots__ = ("_cache", "_hass", "_loaded", "_lock")
 
     def __init__(self, hass: HomeAssistant) -> None:
         """Initialize the cache."""
@@ -150,13 +170,13 @@ def icon_for_battery_level(
     if battery_level is None:
         return f"{icon}-unknown"
     if charging and battery_level > 10:
-        icon += f"-charging-{int(round(battery_level / 20 - 0.01)) * 20}"
+        icon += f"-charging-{round(battery_level / 20 - 0.01) * 20}"
     elif charging:
         icon += "-outline"
     elif battery_level <= 5:
         icon += "-alert"
     elif 5 < battery_level < 95:
-        icon += f"-{int(round(battery_level / 10 - 0.01)) * 10}"
+        icon += f"-{round(battery_level / 10 - 0.01) * 10}"
     return icon
 
 

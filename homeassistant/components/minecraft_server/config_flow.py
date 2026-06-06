@@ -1,17 +1,15 @@
 """Config flow for Minecraft Server integration."""
 
-from __future__ import annotations
-
 import logging
 from typing import Any
 
 import voluptuous as vol
 
 from homeassistant.config_entries import ConfigFlow, ConfigFlowResult
-from homeassistant.const import CONF_ADDRESS, CONF_NAME, CONF_TYPE
+from homeassistant.const import CONF_ADDRESS, CONF_TYPE
 
 from .api import MinecraftServer, MinecraftServerAddressError, MinecraftServerType
-from .const import DEFAULT_NAME, DOMAIN
+from .const import DOMAIN
 
 DEFAULT_ADDRESS = "localhost:25565"
 
@@ -37,11 +35,11 @@ class MinecraftServerConfigFlow(ConfigFlow, domain=DOMAIN):
 
             # Prepare config entry data.
             config_data = {
-                CONF_NAME: user_input[CONF_NAME],
                 CONF_ADDRESS: address,
             }
 
-            # Some Bedrock Edition servers mimic a Java Edition server, therefore check for a Bedrock Edition server first.
+            # Some Bedrock Edition servers mimic a Java Edition
+            # server, therefore check for Bedrock Edition first.
             for server_type in MinecraftServerType:
                 api = MinecraftServer(self.hass, server_type, address)
 
@@ -79,13 +77,11 @@ class MinecraftServerConfigFlow(ConfigFlow, domain=DOMAIN):
             data_schema=vol.Schema(
                 {
                     vol.Required(
-                        CONF_NAME, default=user_input.get(CONF_NAME, DEFAULT_NAME)
-                    ): str,
-                    vol.Required(
                         CONF_ADDRESS,
                         default=user_input.get(CONF_ADDRESS, DEFAULT_ADDRESS),
                     ): vol.All(str, vol.Lower),
                 }
             ),
             errors=errors,
+            description_placeholders={"minimum_minecraft_version": "1.4"},
         )

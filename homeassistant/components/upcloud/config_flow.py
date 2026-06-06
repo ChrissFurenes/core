@@ -1,7 +1,5 @@
 """Config flow for UpCloud."""
 
-from __future__ import annotations
-
 import logging
 from typing import Any
 
@@ -9,16 +7,12 @@ import requests.exceptions
 import upcloud_api
 import voluptuous as vol
 
-from homeassistant.config_entries import (
-    ConfigEntry,
-    ConfigFlow,
-    ConfigFlowResult,
-    OptionsFlow,
-)
+from homeassistant.config_entries import ConfigFlow, ConfigFlowResult, OptionsFlow
 from homeassistant.const import CONF_PASSWORD, CONF_SCAN_INTERVAL, CONF_USERNAME
 from homeassistant.core import callback
 
 from .const import DEFAULT_SCAN_INTERVAL, DOMAIN
+from .coordinator import UpCloudConfigEntry
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -92,18 +86,14 @@ class UpCloudConfigFlow(ConfigFlow, domain=DOMAIN):
     @staticmethod
     @callback
     def async_get_options_flow(
-        config_entry: ConfigEntry,
+        config_entry: UpCloudConfigEntry,
     ) -> UpCloudOptionsFlow:
         """Get options flow."""
-        return UpCloudOptionsFlow(config_entry)
+        return UpCloudOptionsFlow()
 
 
 class UpCloudOptionsFlow(OptionsFlow):
     """UpCloud options flow."""
-
-    def __init__(self, config_entry: ConfigEntry) -> None:
-        """Initialize options flow."""
-        self.config_entry = config_entry
 
     async def async_step_init(
         self, user_input: dict[str, Any] | None = None
@@ -115,6 +105,8 @@ class UpCloudOptionsFlow(OptionsFlow):
 
         data_schema = vol.Schema(
             {
+                # Polling interval is user-configurable, which is no longer allowed
+                # pylint: disable-next=home-assistant-config-flow-polling-field
                 vol.Optional(
                     CONF_SCAN_INTERVAL,
                     default=self.config_entry.options.get(CONF_SCAN_INTERVAL)

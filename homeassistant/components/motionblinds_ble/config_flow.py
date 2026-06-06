@@ -1,7 +1,5 @@
 """Config flow for Motionblinds Bluetooth integration."""
 
-from __future__ import annotations
-
 import logging
 import re
 from typing import TYPE_CHECKING, Any
@@ -12,12 +10,7 @@ import voluptuous as vol
 
 from homeassistant.components import bluetooth
 from homeassistant.components.bluetooth import BluetoothServiceInfoBleak
-from homeassistant.config_entries import (
-    ConfigEntry,
-    ConfigFlow,
-    ConfigFlowResult,
-    OptionsFlow,
-)
+from homeassistant.config_entries import ConfigFlow, ConfigFlowResult, OptionsFlow
 from homeassistant.const import CONF_ADDRESS
 from homeassistant.core import callback
 from homeassistant.exceptions import HomeAssistantError
@@ -27,6 +20,7 @@ from homeassistant.helpers.selector import (
     SelectSelectorMode,
 )
 
+from . import MotionConfigEntry
 from .const import (
     CONF_BLIND_TYPE,
     CONF_LOCAL_NAME,
@@ -48,11 +42,12 @@ CONFIG_SCHEMA = vol.Schema({vol.Required(CONF_MAC_CODE): str})
 class FlowHandler(ConfigFlow, domain=DOMAIN):
     """Handle a config flow for Motionblinds Bluetooth."""
 
+    _display_name: str
+
     def __init__(self) -> None:
         """Initialize a ConfigFlow."""
         self._discovery_info: BluetoothServiceInfoBleak | BLEDevice | None = None
         self._mac_code: str | None = None
-        self._display_name: str | None = None
         self._blind_type: MotionBlindType | None = None
 
     async def async_step_bluetooth(
@@ -68,7 +63,6 @@ class FlowHandler(ConfigFlow, domain=DOMAIN):
         self._discovery_info = discovery_info
         self._mac_code = get_mac_from_local_name(discovery_info.name)
         self._display_name = DISPLAY_NAME.format(mac_code=self._mac_code)
-        self.context["local_name"] = discovery_info.name
         self.context["title_placeholders"] = {"name": self._display_name}
 
         return await self.async_step_confirm()
@@ -114,7 +108,7 @@ class FlowHandler(ConfigFlow, domain=DOMAIN):
                 assert self._discovery_info is not None
 
             return self.async_create_entry(
-                title=str(self._display_name),
+                title=self._display_name,
                 data={
                     CONF_ADDRESS: self._discovery_info.address,
                     CONF_LOCAL_NAME: self._discovery_info.name,
@@ -185,18 +179,14 @@ class FlowHandler(ConfigFlow, domain=DOMAIN):
     @staticmethod
     @callback
     def async_get_options_flow(
-        config_entry: ConfigEntry,
+        config_entry: MotionConfigEntry,
     ) -> OptionsFlow:
         """Create the options flow."""
-        return OptionsFlowHandler(config_entry)
+        return OptionsFlowHandler()
 
 
 class OptionsFlowHandler(OptionsFlow):
     """Handle an options flow for Motionblinds BLE."""
-
-    def __init__(self, config_entry: ConfigEntry) -> None:
-        """Initialize options flow."""
-        self.config_entry = config_entry
 
     async def async_step_init(
         self, user_input: dict[str, Any] | None = None

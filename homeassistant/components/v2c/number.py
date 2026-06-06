@@ -1,7 +1,5 @@
 """Number platform for V2C settings."""
 
-from __future__ import annotations
-
 from collections.abc import Callable, Coroutine
 from dataclasses import dataclass
 from typing import Any
@@ -15,10 +13,9 @@ from homeassistant.components.number import (
 )
 from homeassistant.const import EntityCategory, UnitOfElectricCurrent
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
-from . import V2CConfigEntry
-from .coordinator import V2CUpdateCoordinator
+from .coordinator import V2CConfigEntry, V2CUpdateCoordinator
 from .entity import V2CBaseEntity
 
 MIN_INTENSITY = 6
@@ -72,7 +69,7 @@ TRYDAN_NUMBER_SETTINGS = (
 async def async_setup_entry(
     hass: HomeAssistant,
     config_entry: V2CConfigEntry,
-    async_add_entities: AddEntitiesCallback,
+    async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up V2C Trydan number platform."""
     coordinator = config_entry.runtime_data

@@ -1,17 +1,18 @@
 """Coordinator for radiotherm."""
 
-from __future__ import annotations
-
 from datetime import timedelta
 import logging
 from urllib.error import URLError
 
 from radiotherm.validate import RadiothermTstatError
 
+from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
 from .data import RadioThermInitData, RadioThermUpdate, async_get_data
+
+type RadioThermConfigEntry = ConfigEntry[RadioThermUpdateCoordinator]
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -21,13 +22,21 @@ UPDATE_INTERVAL = timedelta(seconds=15)
 class RadioThermUpdateCoordinator(DataUpdateCoordinator[RadioThermUpdate]):
     """DataUpdateCoordinator to gather data for radio thermostats."""
 
-    def __init__(self, hass: HomeAssistant, init_data: RadioThermInitData) -> None:
+    config_entry: RadioThermConfigEntry
+
+    def __init__(
+        self,
+        hass: HomeAssistant,
+        config_entry: RadioThermConfigEntry,
+        init_data: RadioThermInitData,
+    ) -> None:
         """Initialize DataUpdateCoordinator."""
         self.init_data = init_data
         self._description = f"{init_data.name} ({init_data.host})"
         super().__init__(
             hass,
             _LOGGER,
+            config_entry=config_entry,
             name=f"radiotherm {self.init_data.name}",
             update_interval=UPDATE_INTERVAL,
         )

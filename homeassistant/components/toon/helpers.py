@@ -1,14 +1,12 @@
 """Helpers for Toon."""
 
-from __future__ import annotations
-
 from collections.abc import Callable, Coroutine
 import logging
 from typing import Any, Concatenate
 
 from toonapi import ToonConnectionError, ToonError
 
-from .models import ToonEntity
+from .entity import ToonEntity
 
 _LOGGER = logging.getLogger(__name__)
 

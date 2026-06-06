@@ -1,7 +1,5 @@
 """Sensors on Zigbee Home Automation networks."""
 
-from __future__ import annotations
-
 from collections.abc import Mapping
 import functools
 import logging
@@ -16,7 +14,7 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 from homeassistant.helpers.typing import StateType
 
 from .entity import ZHAEntity
@@ -43,10 +41,18 @@ _EXTRA_STATE_ATTRIBUTES: set[str] = {
     "measurement_type",
     "apparent_power_max",
     "rms_current_max",
+    "rms_current_max_ph_b",
+    "rms_current_max_ph_c",
     "rms_voltage_max",
+    "rms_voltage_max_ph_b",
+    "rms_voltage_max_ph_c",
     "ac_frequency_max",
     "power_factor_max",
+    "power_factor_max_ph_b",
+    "power_factor_max_ph_c",
     "active_power_max",
+    "active_power_max_ph_b",
+    "active_power_max_ph_c",
     # Smart Energy metering
     "device_type",
     "status",
@@ -72,7 +78,7 @@ _EXTRA_STATE_ATTRIBUTES: set[str] = {
 async def async_setup_entry(
     hass: HomeAssistant,
     config_entry: ConfigEntry,
-    async_add_entities: AddEntitiesCallback,
+    async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up the Zigbee Home Automation sensor from config entry."""
     zha_data = get_zha_data(hass)
@@ -88,7 +94,7 @@ async def async_setup_entry(
     config_entry.async_on_unload(unsub)
 
 
-# pylint: disable-next=hass-invalid-inheritance # needs fixing
+# pylint: disable-next=home-assistant-invalid-inheritance # needs fixing
 class Sensor(ZHAEntity, SensorEntity):
     """ZHA sensor."""
 
@@ -129,6 +135,11 @@ class Sensor(ZHAEntity, SensorEntity):
                 self._attr_device_class = SensorDeviceClass(
                     entity_description.device_class.value
                 )
+
+        if entity.info_object.suggested_display_precision is not None:
+            self._attr_suggested_display_precision = (
+                entity.info_object.suggested_display_precision
+            )
 
     @property
     def native_value(self) -> StateType:

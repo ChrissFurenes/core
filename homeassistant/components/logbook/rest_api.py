@@ -1,7 +1,5 @@
 """Event parser and human readable log generator."""
 
-from __future__ import annotations
-
 from collections.abc import Callable
 from datetime import timedelta
 from http import HTTPStatus
@@ -17,7 +15,7 @@ from homeassistant.core import HomeAssistant, callback
 from homeassistant.exceptions import InvalidEntityFormatError
 from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.typing import ConfigType
-import homeassistant.util.dt as dt_util
+from homeassistant.util import dt as dt_util
 
 from .helpers import async_determine_event_types
 from .processor import EventProcessor

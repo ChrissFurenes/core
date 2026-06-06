@@ -16,14 +16,6 @@ PLATFORMS = [
 
 CONF_CONSIDER_HOME = "consider_home"
 
-KEY_ROUTER = "router"
-KEY_COORDINATOR = "coordinator"
-KEY_COORDINATOR_TRAFFIC = "coordinator_traffic"
-KEY_COORDINATOR_SPEED = "coordinator_speed"
-KEY_COORDINATOR_FIRMWARE = "coordinator_firmware"
-KEY_COORDINATOR_UTIL = "coordinator_utilization"
-KEY_COORDINATOR_LINK = "coordinator_link"
-
 DEFAULT_CONSIDER_HOME = timedelta(seconds=180)
 DEFAULT_NAME = "Netgear router"
 
@@ -37,6 +29,7 @@ MODELS_PORT_80 = [
     "RBR",
     "RBS",
     "RBW",
+    "RS",
     "LBK",
     "LBR",
     "CBK",
@@ -61,6 +54,7 @@ MODELS_V2 = [
     "RBR",
     "RBS",
     "RBW",
+    "RS",
     "LBK",
     "LBR",
     "CBK",

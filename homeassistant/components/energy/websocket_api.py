@@ -1,7 +1,5 @@
 """The Energy websocket API."""
 
-from __future__ import annotations
-
 import asyncio
 from collections import defaultdict
 from collections.abc import Callable, Coroutine
@@ -129,6 +127,7 @@ def ws_get_prefs(
         vol.Required("type"): "energy/save_prefs",
         vol.Optional("energy_sources"): ENERGY_SOURCE_SCHEMA,
         vol.Optional("device_consumption"): [DEVICE_CONSUMPTION_SCHEMA],
+        vol.Optional("device_consumption_water"): [DEVICE_CONSUMPTION_SCHEMA],
     }
 )
 @websocket_api.async_response
@@ -293,9 +292,9 @@ async def ws_get_fossil_energy_consumption(
             if statistics_id not in statistic_ids:
                 continue
             for period in stat:
-                if period["change"] is None:
+                if (change := period.get("change")) is None:
                     continue
-                result[period["start"]] += period["change"]
+                result[period["start"]] += change
 
         return {key: result[key] for key in sorted(result)}
 

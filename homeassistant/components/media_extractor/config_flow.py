@@ -1,7 +1,5 @@
 """Config flow for Media Extractor integration."""
 
-from __future__ import annotations
-
 from typing import Any
 
 import voluptuous as vol
@@ -24,9 +22,3 @@ class MediaExtractorConfigFlow(ConfigFlow, domain=DOMAIN):
             return self.async_create_entry(title="Media extractor", data={})
 
         return self.async_show_form(step_id="user", data_schema=vol.Schema({}))
-
-    async def async_step_import(
-        self, import_config: dict[str, Any]
-    ) -> ConfigFlowResult:
-        """Handle import."""
-        return self.async_create_entry(title="Media extractor", data={})

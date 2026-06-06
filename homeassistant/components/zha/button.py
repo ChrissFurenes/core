@@ -1,7 +1,5 @@
 """Support for ZHA button."""
 
-from __future__ import annotations
-
 import functools
 import logging
 
@@ -10,7 +8,7 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
 from .entity import ZHAEntity
 from .helpers import (
@@ -27,7 +25,7 @@ _LOGGER = logging.getLogger(__name__)
 async def async_setup_entry(
     hass: HomeAssistant,
     config_entry: ConfigEntry,
-    async_add_entities: AddEntitiesCallback,
+    async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up the Zigbee Home Automation button from config entry."""
     zha_data = get_zha_data(hass)
@@ -54,7 +52,7 @@ class ZHAButton(ZHAEntity, ButtonEntity):
                 self.entity_data.entity.info_object.device_class
             )
 
-    @convert_zha_error_to_ha_error
+    @convert_zha_error_to_ha_error()
     async def async_press(self) -> None:
         """Send out a update command."""
         await self.entity_data.entity.async_press()

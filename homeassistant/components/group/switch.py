@@ -1,14 +1,12 @@
 """Platform allowing several switches to be grouped into one switch."""
 
-from __future__ import annotations
-
 import logging
 from typing import Any
 
 import voluptuous as vol
 
 from homeassistant.components.switch import (
-    DOMAIN,
+    DOMAIN as SWITCH_DOMAIN,
     PLATFORM_SCHEMA as SWITCH_PLATFORM_SCHEMA,
     SwitchEntity,
 )
@@ -26,7 +24,10 @@ from homeassistant.const import (
 )
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers import config_validation as cv, entity_registry as er
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.entity_platform import (
+    AddConfigEntryEntitiesCallback,
+    AddEntitiesCallback,
+)
 from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
 
 from .entity import GroupEntity
@@ -39,7 +40,7 @@ PARALLEL_UPDATES = 0
 
 PLATFORM_SCHEMA = SWITCH_PLATFORM_SCHEMA.extend(
     {
-        vol.Required(CONF_ENTITIES): cv.entities_domain(DOMAIN),
+        vol.Required(CONF_ENTITIES): cv.entities_domain(SWITCH_DOMAIN),
         vol.Optional(CONF_NAME, default=DEFAULT_NAME): cv.string,
         vol.Optional(CONF_UNIQUE_ID): cv.string,
         vol.Optional(CONF_ALL, default=False): cv.boolean,
@@ -71,7 +72,7 @@ async def async_setup_platform(
 async def async_setup_entry(
     hass: HomeAssistant,
     config_entry: ConfigEntry,
-    async_add_entities: AddEntitiesCallback,
+    async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Initialize Switch Group config entry."""
     registry = er.async_get(hass)
@@ -132,7 +133,7 @@ class SwitchGroup(GroupEntity, SwitchEntity):
         _LOGGER.debug("Forwarded turn_on command: %s", data)
 
         await self.hass.services.async_call(
-            DOMAIN,
+            SWITCH_DOMAIN,
             SERVICE_TURN_ON,
             data,
             blocking=True,
@@ -143,7 +144,7 @@ class SwitchGroup(GroupEntity, SwitchEntity):
         """Forward the turn_off command to all switches in the group."""
         data = {ATTR_ENTITY_ID: self._entity_ids}
         await self.hass.services.async_call(
-            DOMAIN,
+            SWITCH_DOMAIN,
             SERVICE_TURN_OFF,
             data,
             blocking=True,
@@ -153,6 +154,8 @@ class SwitchGroup(GroupEntity, SwitchEntity):
     @callback
     def async_update_group_state(self) -> None:
         """Query all members and determine the switch group state."""
+        self._update_assumed_state_from_members()
+
         states = [
             state.state
             for entity_id in self._entity_ids

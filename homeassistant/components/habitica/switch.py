@@ -1,11 +1,11 @@
 """Switch platform for Habitica integration."""
 
-from __future__ import annotations
-
 from collections.abc import Callable
 from dataclasses import dataclass
 from enum import StrEnum
 from typing import Any
+
+from habiticalib import Habitica
 
 from homeassistant.components.switch import (
     SwitchDeviceClass,
@@ -13,20 +13,21 @@ from homeassistant.components.switch import (
     SwitchEntityDescription,
 )
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
-from . import HabiticaConfigEntry
-from .coordinator import HabiticaData, HabiticaDataUpdateCoordinator
+from .coordinator import HabiticaConfigEntry, HabiticaData
 from .entity import HabiticaBase
+
+PARALLEL_UPDATES = 1
 
 
 @dataclass(kw_only=True, frozen=True)
 class HabiticaSwitchEntityDescription(SwitchEntityDescription):
     """Describes Habitica switch entity."""
 
-    turn_on_fn: Callable[[HabiticaDataUpdateCoordinator], Any]
-    turn_off_fn: Callable[[HabiticaDataUpdateCoordinator], Any]
-    is_on_fn: Callable[[HabiticaData], bool]
+    turn_on_fn: Callable[[Habitica], Any]
+    turn_off_fn: Callable[[Habitica], Any]
+    is_on_fn: Callable[[HabiticaData], bool | None]
 
 
 class HabiticaSwitchEntity(StrEnum):
@@ -40,9 +41,9 @@ SWTICH_DESCRIPTIONS: tuple[HabiticaSwitchEntityDescription, ...] = (
         key=HabiticaSwitchEntity.SLEEP,
         translation_key=HabiticaSwitchEntity.SLEEP,
         device_class=SwitchDeviceClass.SWITCH,
-        turn_on_fn=lambda coordinator: coordinator.api["user"]["sleep"].post(),
-        turn_off_fn=lambda coordinator: coordinator.api["user"]["sleep"].post(),
-        is_on_fn=lambda data: data.user["preferences"]["sleep"],
+        turn_on_fn=lambda habitica: habitica.toggle_sleep(),
+        turn_off_fn=lambda habitica: habitica.toggle_sleep(),
+        is_on_fn=lambda data: data.user.preferences.sleep,
     ),
 )
 
@@ -50,7 +51,7 @@ SWTICH_DESCRIPTIONS: tuple[HabiticaSwitchEntityDescription, ...] = (
 async def async_setup_entry(
     hass: HomeAssistant,
     entry: HabiticaConfigEntry,
-    async_add_entities: AddEntitiesCallback,
+    async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up switches from a config entry."""
 

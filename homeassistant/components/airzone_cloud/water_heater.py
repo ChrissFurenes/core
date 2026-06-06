@@ -1,7 +1,5 @@
 """Support for the Airzone Cloud water heater."""
 
-from __future__ import annotations
-
 from typing import Any, Final
 
 from aioairzone_cloud.common import HotWaterOperation, TemperatureUnit
@@ -29,10 +27,9 @@ from homeassistant.components.water_heater import (
 )
 from homeassistant.const import ATTR_TEMPERATURE, STATE_OFF, UnitOfTemperature
 from homeassistant.core import HomeAssistant, callback
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
-from . import AirzoneCloudConfigEntry
-from .coordinator import AirzoneUpdateCoordinator
+from .coordinator import AirzoneCloudConfigEntry, AirzoneUpdateCoordinator
 from .entity import AirzoneHotWaterEntity
 
 OPERATION_LIB_TO_HASS: Final[dict[HotWaterOperation, str]] = {
@@ -69,7 +66,7 @@ OPERATION_MODE_TO_DHW_PARAMS: Final[dict[str, dict[str, Any]]] = {
 async def async_setup_entry(
     hass: HomeAssistant,
     entry: AirzoneCloudConfigEntry,
-    async_add_entities: AddEntitiesCallback,
+    async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Add Airzone Cloud Water Heater from a config_entry."""
     coordinator = entry.runtime_data

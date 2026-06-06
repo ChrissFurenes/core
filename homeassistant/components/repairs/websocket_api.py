@@ -1,7 +1,5 @@
 """The repairs websocket API."""
 
-from __future__ import annotations
-
 from http import HTTPStatus
 from typing import Any
 
@@ -14,7 +12,6 @@ from homeassistant.components import websocket_api
 from homeassistant.components.http.data_validator import RequestDataValidator
 from homeassistant.components.http.decorators import require_admin
 from homeassistant.core import HomeAssistant, callback
-from homeassistant.exceptions import Unauthorized
 from homeassistant.helpers import issue_registry as ir
 from homeassistant.helpers.data_entry_flow import (
     FlowManagerIndexView,
@@ -114,7 +111,7 @@ class RepairsFlowIndexView(FlowManagerIndexView):
     url = "/api/repairs/issues/fix"
     name = "api:repairs:issues:fix"
 
-    @require_admin(error=Unauthorized(permission=POLICY_EDIT))
+    @require_admin(permission=POLICY_EDIT)
     @RequestDataValidator(
         vol.Schema(
             {
@@ -138,9 +135,9 @@ class RepairsFlowIndexView(FlowManagerIndexView):
                 "Handler does not support user", HTTPStatus.BAD_REQUEST
             )
 
-        result = self._prepare_result_json(result)
-
-        return self.json(result)
+        return self.json(
+            self._prepare_result_json(result),
+        )
 
 
 class RepairsFlowResourceView(FlowManagerResourceView):
@@ -149,12 +146,12 @@ class RepairsFlowResourceView(FlowManagerResourceView):
     url = "/api/repairs/issues/fix/{flow_id}"
     name = "api:repairs:issues:fix:resource"
 
-    @require_admin(error=Unauthorized(permission=POLICY_EDIT))
+    @require_admin(permission=POLICY_EDIT)
     async def get(self, request: web.Request, /, flow_id: str) -> web.Response:
         """Get the current state of a data_entry_flow."""
         return await super().get(request, flow_id)
 
-    @require_admin(error=Unauthorized(permission=POLICY_EDIT))
+    @require_admin(permission=POLICY_EDIT)
     async def post(self, request: web.Request, flow_id: str) -> web.Response:
         """Handle a POST request."""
         return await super().post(request, flow_id)

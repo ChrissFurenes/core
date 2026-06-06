@@ -1,9 +1,7 @@
 """Config flow for Plex."""
 
-from __future__ import annotations
-
 from collections.abc import Mapping
-import copy
+from copy import deepcopy
 import logging
 from typing import TYPE_CHECKING, Any
 
@@ -14,7 +12,6 @@ from plexauth import PlexAuth
 import requests.exceptions
 import voluptuous as vol
 
-from homeassistant.components import http
 from homeassistant.components.http import KEY_HASS, HomeAssistantView
 from homeassistant.components.media_player import DOMAIN as MP_DOMAIN
 from homeassistant.config_entries import (
@@ -35,15 +32,13 @@ from homeassistant.const import (
     CONF_URL,
     CONF_VERIFY_SSL,
 )
-from homeassistant.core import callback
-from homeassistant.helpers import discovery_flow
+from homeassistant.core import HomeAssistant, callback
+from homeassistant.helpers import config_validation as cv, discovery_flow, http
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
-import homeassistant.helpers.config_validation as cv
 
 from .const import (
     AUTH_CALLBACK_NAME,
     AUTH_CALLBACK_PATH,
-    AUTOMATIC_SETUP_STRING,
     CONF_IGNORE_NEW_SHARED_USERS,
     CONF_IGNORE_PLEX_WEB_CLIENTS,
     CONF_MONITORED_USERS,
@@ -54,7 +49,6 @@ from .const import (
     DEFAULT_SSL,
     DEFAULT_VERIFY_SSL,
     DOMAIN,
-    MANUAL_SETUP_STRING,
     PLEX_SERVER_CONFIG,
     X_PLEX_DEVICE_NAME,
     X_PLEX_PLATFORM,
@@ -71,7 +65,7 @@ _LOGGER = logging.getLogger(__package__)
 
 
 @callback
-def configured_servers(hass):
+def configured_servers(hass: HomeAssistant) -> set[str]:
     """Return a set of the configured Plex servers."""
     return {
         entry.data[CONF_SERVER_IDENTIFIER]
@@ -79,7 +73,7 @@ def configured_servers(hass):
     }
 
 
-async def async_discover(hass):
+async def async_discover(hass: HomeAssistant) -> None:
     """Scan for available Plex servers."""
     gdm = GDM()
     await hass.async_add_executor_job(gdm.scan)
@@ -97,6 +91,9 @@ class PlexFlowHandler(ConfigFlow, domain=DOMAIN):
 
     VERSION = 1
 
+    available_servers: list[tuple[str, str, str]]
+    plexauth: PlexAuth
+
     @staticmethod
     @callback
     def async_get_options_flow(
@@ -108,42 +105,38 @@ class PlexFlowHandler(ConfigFlow, domain=DOMAIN):
     def __init__(self) -> None:
         """Initialize the Plex flow."""
         self.current_login: dict[str, Any] = {}
-        self.available_servers = None
-        self.plexauth = None
         self.token = None
         self.client_id = None
         self._manual = False
         self._reauth_config: dict[str, Any] | None = None
 
-    async def async_step_user(self, user_input=None, errors=None):
+    async def async_step_user(
+        self,
+        user_input: dict[str, Any] | None = None,
+    ) -> ConfigFlowResult:
         """Handle a flow initialized by the user."""
-        if user_input is not None:
-            return await self.async_step_plex_website_auth()
-        if self.show_advanced_options:
-            return await self.async_step_user_advanced(errors=errors)
-        return self.async_show_form(step_id="user", errors=errors)
-
-    async def async_step_user_advanced(self, user_input=None, errors=None):
-        """Handle an advanced mode flow initialized by the user."""
-        if user_input is not None:
-            if user_input.get("setup_method") == MANUAL_SETUP_STRING:
-                self._manual = True
-                return await self.async_step_manual_setup()
-            return await self.async_step_plex_website_auth()
-
-        data_schema = vol.Schema(
-            {
-                vol.Required("setup_method", default=AUTOMATIC_SETUP_STRING): vol.In(
-                    [AUTOMATIC_SETUP_STRING, MANUAL_SETUP_STRING]
-                )
-            }
-        )
-        return self.async_show_form(
-            step_id="user_advanced", data_schema=data_schema, errors=errors
+        return self.async_show_menu(
+            step_id="user",
+            menu_options=["website_auth", "manual_setup"],
         )
 
-    async def async_step_manual_setup(self, user_input=None, errors=None):
+    async def async_step_website_auth(
+        self,
+        user_input: dict[str, Any] | None = None,
+        errors: dict[str, str] | None = None,
+    ) -> ConfigFlowResult:
+        """Handle website authentication."""
+        if errors:
+            return self.async_show_form(step_id="website_auth", errors=errors)
+        return await self._async_step_plex_website_auth()
+
+    async def async_step_manual_setup(
+        self,
+        user_input: dict[str, Any] | None = None,
+        errors: dict[str, str] | None = None,
+    ) -> ConfigFlowResult:
         """Begin manual configuration."""
+        self._manual = True
         if user_input is not None and errors is None:
             user_input.pop(CONF_URL, None)
             if host := user_input.get(CONF_HOST):
@@ -201,13 +194,13 @@ class PlexFlowHandler(ConfigFlow, domain=DOMAIN):
         except NoServersFound:
             _LOGGER.error("No servers linked to Plex account")
             errors["base"] = "no_servers"
-        except (plexapi.exceptions.BadRequest, plexapi.exceptions.Unauthorized):
+        except plexapi.exceptions.BadRequest, plexapi.exceptions.Unauthorized:
             _LOGGER.error("Invalid credentials provided, config not created")
             errors[CONF_TOKEN] = "faulty_credentials"
         except requests.exceptions.SSLError as error:
             _LOGGER.error("SSL certificate error: [%s]", error)
             errors["base"] = "ssl_error"
-        except (plexapi.exceptions.NotFound, requests.exceptions.ConnectionError):
+        except plexapi.exceptions.NotFound, requests.exceptions.ConnectionError:
             server_identifier = (
                 server_config.get(CONF_URL) or plex_server.server_choice or "Unknown"
             )
@@ -227,7 +220,7 @@ class PlexFlowHandler(ConfigFlow, domain=DOMAIN):
                 return await self.async_step_manual_setup(
                     user_input=server_config, errors=errors
                 )
-            return await self.async_step_user(errors=errors)
+            return await self.async_step_website_auth(errors=errors)
 
         server_id = plex_server.machine_identifier
         url = plex_server.url_in_use
@@ -264,7 +257,9 @@ class PlexFlowHandler(ConfigFlow, domain=DOMAIN):
 
         return self.async_create_entry(title=url, data=data)
 
-    async def async_step_select_server(self, user_input=None):
+    async def async_step_select_server(
+        self, user_input: dict[str, str] | None = None
+    ) -> ConfigFlowResult:
         """Use selected Plex server."""
         config = dict(self.current_login)
         if user_input is not None:
@@ -292,7 +287,9 @@ class PlexFlowHandler(ConfigFlow, domain=DOMAIN):
             errors={},
         )
 
-    async def async_step_integration_discovery(self, discovery_info):
+    async def async_step_integration_discovery(
+        self, discovery_info: dict[str, Any]
+    ) -> ConfigFlowResult:
         """Handle GDM discovery."""
         machine_identifier = discovery_info["data"]["Resource-Identifier"]
         await self.async_set_unique_id(machine_identifier)
@@ -305,7 +302,7 @@ class PlexFlowHandler(ConfigFlow, domain=DOMAIN):
         }
         return await self.async_step_user()
 
-    async def async_step_plex_website_auth(self):
+    async def _async_step_plex_website_auth(self) -> ConfigFlowResult:
         """Begin external auth flow on Plex website."""
         self.hass.http.register_view(PlexAuthorizationCallbackView)
         if (req := http.current_request.get()) is None:
@@ -329,7 +326,9 @@ class PlexFlowHandler(ConfigFlow, domain=DOMAIN):
         auth_url = self.plexauth.auth_url(forward_url)
         return self.async_external_step(step_id="obtain_token", url=auth_url)
 
-    async def async_step_obtain_token(self, user_input=None):
+    async def async_step_obtain_token(
+        self, user_input: None = None
+    ) -> ConfigFlowResult:
         """Obtain token after external auth completed."""
         token = await self.plexauth.token(10)
 
@@ -340,11 +339,13 @@ class PlexFlowHandler(ConfigFlow, domain=DOMAIN):
         self.client_id = self.plexauth.client_identifier
         return self.async_external_step_done(next_step_id="use_external_token")
 
-    async def async_step_timed_out(self, user_input=None):
+    async def async_step_timed_out(self, user_input: None = None) -> ConfigFlowResult:
         """Abort flow when time expires."""
         return self.async_abort(reason="token_request_timeout")
 
-    async def async_step_use_external_token(self, user_input=None):
+    async def async_step_use_external_token(
+        self, user_input: None = None
+    ) -> ConfigFlowResult:
         """Continue server validation with external token."""
         server_config = {CONF_TOKEN: self.token}
         return await self.async_step_server_validate(server_config)
@@ -364,14 +365,16 @@ class PlexOptionsFlowHandler(OptionsFlow):
 
     def __init__(self, config_entry: ConfigEntry) -> None:
         """Initialize Plex options flow."""
-        self.options = copy.deepcopy(dict(config_entry.options))
+        self.options = deepcopy(dict(config_entry.options))
         self.server_id = config_entry.data[CONF_SERVER_IDENTIFIER]
 
-    async def async_step_init(self, user_input=None):
+    async def async_step_init(self, user_input: None = None) -> ConfigFlowResult:
         """Manage the Plex options."""
         return await self.async_step_plex_mp_settings()
 
-    async def async_step_plex_mp_settings(self, user_input=None):
+    async def async_step_plex_mp_settings(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
         """Manage the Plex media_player options."""
         plex_server = get_plex_server(self.hass, self.server_id)
 

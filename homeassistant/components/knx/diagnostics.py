@@ -1,6 +1,4 @@
-"""Diagnostics support for KNX."""
-
-from __future__ import annotations
+"""Diagnostics support for the KNX integration."""
 
 from typing import Any
 
@@ -18,6 +16,7 @@ from .const import (
     CONF_KNX_SECURE_DEVICE_AUTHENTICATION,
     CONF_KNX_SECURE_USER_PASSWORD,
     DOMAIN,
+    KNX_MODULE_KEY,
 )
 
 TO_REDACT = {
@@ -33,7 +32,7 @@ async def async_get_config_entry_diagnostics(
 ) -> dict[str, Any]:
     """Return diagnostics for a config entry."""
     diag: dict[str, Any] = {}
-    knx_module = hass.data[DOMAIN]
+    knx_module = hass.data[KNX_MODULE_KEY]
     diag["xknx"] = {
         "version": knx_module.xknx.version,
         "current_address": str(knx_module.xknx.current_address),
@@ -51,8 +50,10 @@ async def async_get_config_entry_diagnostics(
     try:
         CONFIG_SCHEMA(raw_config)
     except vol.Invalid as ex:
-        diag["configuration_error"] = str(ex)
+        diag["yaml_configuration_error"] = str(ex)
     else:
-        diag["configuration_error"] = None
+        diag["yaml_configuration_error"] = None
+
+    diag["config_store"] = knx_module.config_store.data
 
     return diag

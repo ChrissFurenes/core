@@ -1,15 +1,12 @@
 """Config flow for the dwd_weather_warnings integration."""
 
-from __future__ import annotations
-
 from typing import Any
 
 from dwdwfsapi import DwdWeatherWarningsAPI
 import voluptuous as vol
 
 from homeassistant.config_entries import ConfigFlow, ConfigFlowResult
-from homeassistant.helpers import entity_registry as er
-import homeassistant.helpers.config_validation as cv
+from homeassistant.helpers import config_validation as cv, entity_registry as er
 from homeassistant.helpers.selector import EntitySelector, EntitySelectorConfig
 
 from .const import CONF_REGION_DEVICE_TRACKER, CONF_REGION_IDENTIFIER, DOMAIN

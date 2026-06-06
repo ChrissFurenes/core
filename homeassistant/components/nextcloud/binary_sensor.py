@@ -1,7 +1,5 @@
 """Summary binary data from Nextcoud."""
 
-from __future__ import annotations
-
 from typing import Final
 
 from homeassistant.components.binary_sensor import (
@@ -10,9 +8,9 @@ from homeassistant.components.binary_sensor import (
 )
 from homeassistant.const import EntityCategory
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
-from . import NextcloudConfigEntry
+from .coordinator import NextcloudConfigEntry
 from .entity import NextcloudEntity
 
 BINARY_SENSORS: Final[list[BinarySensorEntityDescription]] = [
@@ -54,7 +52,7 @@ BINARY_SENSORS: Final[list[BinarySensorEntityDescription]] = [
 async def async_setup_entry(
     hass: HomeAssistant,
     entry: NextcloudConfigEntry,
-    async_add_entities: AddEntitiesCallback,
+    async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up the Nextcloud binary sensors."""
     coordinator = entry.runtime_data

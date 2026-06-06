@@ -1,6 +1,5 @@
 """Config flow to configure Met component."""
-
-from __future__ import annotations
+# pylint: disable=home-assistant-config-flow-name-field  # Name field is no longer allowed in config flow schemas
 
 from typing import Any
 
@@ -10,8 +9,7 @@ from homeassistant.config_entries import (
     ConfigEntry,
     ConfigFlow,
     ConfigFlowResult,
-    OptionsFlow,
-    OptionsFlowWithConfigEntry,
+    OptionsFlowWithReload,
 )
 from homeassistant.const import (
     CONF_ELEVATION,
@@ -21,7 +19,7 @@ from homeassistant.const import (
     UnitOfLength,
 )
 from homeassistant.core import HomeAssistant, callback
-import homeassistant.helpers.config_validation as cv
+from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.selector import (
     NumberSelector,
     NumberSelectorConfig,
@@ -55,7 +53,8 @@ def _get_data_schema(
     hass: HomeAssistant, config_entry: ConfigEntry | None = None
 ) -> vol.Schema:
     """Get a schema with default values."""
-    # If tracking home or no config entry is passed in, default value come from Home location
+    # If tracking home or no config entry is passed in,
+    # default value come from Home location
     if config_entry is None or config_entry.data.get(CONF_TRACK_HOME, False):
         return vol.Schema(
             {
@@ -143,12 +142,12 @@ class MetConfigFlowHandler(ConfigFlow, domain=DOMAIN):
     @callback
     def async_get_options_flow(
         config_entry: ConfigEntry,
-    ) -> OptionsFlow:
+    ) -> MetOptionsFlowHandler:
         """Get the options flow for Met."""
-        return MetOptionsFlowHandler(config_entry)
+        return MetOptionsFlowHandler()
 
 
-class MetOptionsFlowHandler(OptionsFlowWithConfigEntry):
+class MetOptionsFlowHandler(OptionsFlowWithReload):
     """Options flow for Met component."""
 
     async def async_step_init(
@@ -159,13 +158,13 @@ class MetOptionsFlowHandler(OptionsFlowWithConfigEntry):
         if user_input is not None:
             # Update config entry with data from user input
             self.hass.config_entries.async_update_entry(
-                self._config_entry, data=user_input
+                self.config_entry, data=user_input
             )
             return self.async_create_entry(
-                title=self._config_entry.title, data=user_input
+                title=self.config_entry.title, data=user_input
             )
 
         return self.async_show_form(
             step_id="init",
-            data_schema=_get_data_schema(self.hass, config_entry=self._config_entry),
+            data_schema=_get_data_schema(self.hass, config_entry=self.config_entry),
         )

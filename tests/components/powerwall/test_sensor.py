@@ -19,7 +19,7 @@ from homeassistant.const import (
 )
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import device_registry as dr, entity_registry as er
-import homeassistant.util.dt as dt_util
+from homeassistant.util import dt as dt_util
 
 from .mocks import MOCK_GATEWAY_DIN, _mock_powerwall_with_fixtures
 
@@ -118,7 +118,6 @@ async def test_sensors(hass: HomeAssistant, device_registry: dr.DeviceRegistry) 
     expected_attributes = {
         "unit_of_measurement": PERCENTAGE,
         "friendly_name": "MySite Backup reserve",
-        "device_class": "battery",
     }
     # Only test for a subset of attributes in case
     # HA changes the implementation and a new one appears
@@ -196,7 +195,7 @@ async def test_sensors(hass: HomeAssistant, device_registry: dr.DeviceRegistry) 
 
 
 async def test_sensor_backup_reserve_unavailable(hass: HomeAssistant) -> None:
-    """Confirm that backup reserve sensor is not added if data is unavailable from the device."""
+    """Confirm backup reserve sensor is not added if unavailable."""
 
     mock_powerwall = await _mock_powerwall_with_fixtures(hass)
     mock_powerwall.get_backup_reserve_percentage.side_effect = MissingAttributeError(

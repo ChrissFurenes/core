@@ -1,9 +1,7 @@
 """Test the motionEye camera."""
 
-from asyncio import AbstractEventLoop
 from collections.abc import Callable
 import copy
-from typing import cast
 from unittest.mock import AsyncMock, Mock, call
 
 from aiohttp import web
@@ -32,7 +30,6 @@ import voluptuous as vol
 from homeassistant.components.camera import async_get_image, async_get_mjpeg_stream
 from homeassistant.components.motioneye import get_motioneye_device_identifier
 from homeassistant.components.motioneye.const import (
-    CONF_ACTION,
     CONF_STREAM_URL_TEMPLATE,
     CONF_SURVEILLANCE_USERNAME,
     DEFAULT_SCAN_INTERVAL,
@@ -42,11 +39,12 @@ from homeassistant.components.motioneye.const import (
     SERVICE_SET_TEXT_OVERLAY,
     SERVICE_SNAPSHOT,
 )
-from homeassistant.const import ATTR_DEVICE_ID, ATTR_ENTITY_ID, CONF_URL
+from homeassistant.const import ATTR_DEVICE_ID, ATTR_ENTITY_ID, CONF_ACTION, CONF_URL
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers import device_registry as dr, entity_registry as er
-import homeassistant.util.dt as dt_util
+from homeassistant.util import dt as dt_util
+from homeassistant.util.aiohttp import MockRequest
 
 from . import (
     TEST_CAMERA,
@@ -67,7 +65,6 @@ from tests.common import async_fire_time_changed
 
 @pytest.fixture
 def aiohttp_server(
-    event_loop: AbstractEventLoop,
     aiohttp_server: Callable[[], TestServer],
     socket_enabled: None,
 ) -> Callable[[], TestServer]:
@@ -231,7 +228,7 @@ async def test_get_still_image_from_camera(
 ) -> None:
     """Test getting a still image."""
 
-    image_handler = AsyncMock(return_value="")
+    image_handler = AsyncMock(return_value=web.Response(body=""))
 
     app = web.Application()
     app.add_routes(
@@ -273,7 +270,8 @@ async def test_get_stream_from_camera(
 ) -> None:
     """Test getting a stream."""
 
-    stream_handler = AsyncMock(return_value="")
+    stream_handler = AsyncMock(return_value=web.Response(body=""))
+
     app = web.Application()
     app.add_routes([web.get("/", stream_handler)])
     stream_server = await aiohttp_server(app)
@@ -297,12 +295,7 @@ async def test_get_stream_from_camera(
     )
     await hass.async_block_till_done()
 
-    # It won't actually get a stream from the dummy handler, so just catch
-    # the expected exception, then verify the right handler was called.
-    with pytest.raises(HTTPBadGateway):
-        await async_get_mjpeg_stream(
-            hass, cast(web.Request, None), TEST_CAMERA_ENTITY_ID
-        )
+    await async_get_mjpeg_stream(hass, MockRequest(b"", "test"), TEST_CAMERA_ENTITY_ID)
     assert stream_handler.called
 
 
@@ -358,7 +351,8 @@ async def test_camera_option_stream_url_template(
     """Verify camera with a stream URL template option."""
     client = create_mock_motioneye_client()
 
-    stream_handler = AsyncMock(return_value="")
+    stream_handler = AsyncMock(return_value=web.Response(body=""))
+
     app = web.Application()
     app.add_routes([web.get(f"/{TEST_CAMERA_NAME}/{TEST_CAMERA_ID}", stream_handler)])
     stream_server = await aiohttp_server(app)
@@ -384,10 +378,7 @@ async def test_camera_option_stream_url_template(
     )
     await hass.async_block_till_done()
 
-    # It won't actually get a stream from the dummy handler, so just catch
-    # the expected exception, then verify the right handler was called.
-    with pytest.raises(HTTPBadGateway):
-        await async_get_mjpeg_stream(hass, Mock(), TEST_CAMERA_ENTITY_ID)
+    await async_get_mjpeg_stream(hass, MockRequest(b"", "test"), TEST_CAMERA_ENTITY_ID)
     assert AsyncMock.called
     assert not client.get_camera_stream_url.called
 

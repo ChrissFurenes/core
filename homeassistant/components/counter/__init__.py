@@ -1,7 +1,5 @@
 """Component to count within automations."""
 
-from __future__ import annotations
-
 import logging
 from typing import Any, Self
 
@@ -16,8 +14,7 @@ from homeassistant.const import (
     CONF_NAME,
 )
 from homeassistant.core import HomeAssistant, callback
-from homeassistant.helpers import collection
-import homeassistant.helpers.config_validation as cv
+from homeassistant.helpers import collection, config_validation as cv
 from homeassistant.helpers.entity_component import EntityComponent
 from homeassistant.helpers.restore_state import RestoreEntity
 from homeassistant.helpers.storage import Store
@@ -257,17 +254,20 @@ class Counter(collection.CollectionEntity, RestoreEntity):
         """Set counter to value."""
         if (maximum := self._config.get(CONF_MAXIMUM)) is not None and value > maximum:
             raise ValueError(
-                f"Value {value} for {self.entity_id} exceeding the maximum value of {maximum}"
+                f"Value {value} for {self.entity_id}"
+                f" exceeding the maximum value of {maximum}"
             )
 
         if (minimum := self._config.get(CONF_MINIMUM)) is not None and value < minimum:
             raise ValueError(
-                f"Value {value} for {self.entity_id} exceeding the minimum value of {minimum}"
+                f"Value {value} for {self.entity_id}"
+                f" exceeding the minimum value of {minimum}"
             )
 
         if (step := self._config.get(CONF_STEP)) is not None and value % step != 0:
             raise ValueError(
-                f"Value {value} for {self.entity_id} is not a multiple of the step size {step}"
+                f"Value {value} for {self.entity_id}"
+                f" is not a multiple of the step size {step}"
             )
 
         self._state = value

@@ -1,7 +1,5 @@
 """Support for retrieving status info from Google Wifi/OnHub routers."""
 
-from __future__ import annotations
-
 from dataclasses import dataclass
 from datetime import timedelta
 import logging
@@ -21,7 +19,7 @@ from homeassistant.const import (
     UnitOfTime,
 )
 from homeassistant.core import HomeAssistant
-import homeassistant.helpers.config_validation as cv
+from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
 from homeassistant.util import Throttle, dt as dt_util
@@ -184,7 +182,7 @@ class GoogleWifiAPI:
             self.raw_data = response.json()
             self.data_format()
             self.available = True
-        except (ValueError, requests.exceptions.ConnectionError):
+        except ValueError, requests.exceptions.ConnectionError:
             _LOGGER.warning("Unable to fetch data from Google Wifi")
             self.available = False
             self.raw_data = None

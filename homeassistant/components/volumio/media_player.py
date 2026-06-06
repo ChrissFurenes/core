@@ -3,8 +3,6 @@
 Volumio rest API: https://volumio.github.io/docs/API/REST_API.html
 """
 
-from __future__ import annotations
-
 from datetime import timedelta
 import json
 from typing import Any
@@ -17,29 +15,29 @@ from homeassistant.components.media_player import (
     MediaType,
     RepeatMode,
 )
-from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_ID, CONF_NAME
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.device_registry import DeviceInfo
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 from homeassistant.util import Throttle
 
+from . import VolumioConfigEntry
 from .browse_media import browse_node, browse_top_level
-from .const import DATA_INFO, DATA_VOLUMIO, DOMAIN
+from .const import DOMAIN
 
 PLAYLIST_UPDATE_INTERVAL = timedelta(seconds=15)
 
 
 async def async_setup_entry(
     hass: HomeAssistant,
-    config_entry: ConfigEntry,
-    async_add_entities: AddEntitiesCallback,
+    config_entry: VolumioConfigEntry,
+    async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up the Volumio media player platform."""
 
-    data = hass.data[DOMAIN][config_entry.entry_id]
-    volumio = data[DATA_VOLUMIO]
-    info = data[DATA_INFO]
+    data = config_entry.runtime_data
+    volumio = data.volumio
+    info = data.info
     uid = config_entry.data[CONF_ID]
     name = config_entry.data[CONF_NAME]
 
@@ -70,7 +68,6 @@ class Volumio(MediaPlayerEntity):
         | MediaPlayerEntityFeature.CLEAR_PLAYLIST
         | MediaPlayerEntityFeature.BROWSE_MEDIA
     )
-    _attr_source_list = []
 
     def __init__(self, volumio, uid, name, info):
         """Initialize the media player."""
@@ -78,6 +75,7 @@ class Volumio(MediaPlayerEntity):
         unique_id = uid
         self._state = {}
         self.thumbnail_cache = {}
+        self._attr_source_list = []
         self._attr_unique_id = unique_id
         self._attr_device_info = DeviceInfo(
             identifiers={(DOMAIN, unique_id)},

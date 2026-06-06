@@ -1,7 +1,5 @@
 """Tests for the Tankerkoening integration."""
 
-from __future__ import annotations
-
 from datetime import timedelta
 from unittest.mock import AsyncMock
 
@@ -25,7 +23,7 @@ from homeassistant.const import ATTR_ID, CONF_SHOW_ON_MAP, STATE_UNAVAILABLE
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import device_registry as dr, entity_registry as er
 from homeassistant.setup import async_setup_component
-import homeassistant.util.dt as dt_util
+from homeassistant.util import dt as dt_util
 
 from .const import CONFIG_DATA
 

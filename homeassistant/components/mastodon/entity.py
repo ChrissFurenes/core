@@ -4,9 +4,8 @@ from homeassistant.helpers.device_registry import DeviceEntryType, DeviceInfo
 from homeassistant.helpers.entity import EntityDescription
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from . import MastodonConfigEntry
-from .const import DEFAULT_NAME, DOMAIN, INSTANCE_VERSION
-from .coordinator import MastodonCoordinator
+from .const import DEFAULT_NAME, DOMAIN
+from .coordinator import MastodonConfigEntry, MastodonCoordinator
 from .utils import construct_mastodon_username
 
 
@@ -27,7 +26,8 @@ class MastodonEntity(CoordinatorEntity[MastodonCoordinator]):
         assert unique_id is not None
         self._attr_unique_id = f"{unique_id}_{entity_description.key}"
 
-        # Legacy yaml config default title is Mastodon, don't make name Mastodon Mastodon
+        # Legacy yaml config default title is Mastodon,
+        # don't make name Mastodon Mastodon
         name = "Mastodon"
         if data.title != DEFAULT_NAME:
             name = f"Mastodon {data.title}"
@@ -41,8 +41,9 @@ class MastodonEntity(CoordinatorEntity[MastodonCoordinator]):
             manufacturer="Mastodon gGmbH",
             model=full_account_name,
             entry_type=DeviceEntryType.SERVICE,
-            sw_version=data.runtime_data.instance[INSTANCE_VERSION],
+            sw_version=data.runtime_data.instance.version,
             name=name,
         )
 
         self.entity_description = entity_description
+        self.instance = data.runtime_data.instance

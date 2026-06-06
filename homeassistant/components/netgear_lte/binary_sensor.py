@@ -1,7 +1,5 @@
 """Support for Netgear LTE binary sensors."""
 
-from __future__ import annotations
-
 from homeassistant.components.binary_sensor import (
     BinarySensorDeviceClass,
     BinarySensorEntity,
@@ -9,9 +7,9 @@ from homeassistant.components.binary_sensor import (
 )
 from homeassistant.const import EntityCategory
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
-from . import NetgearLTEConfigEntry
+from .coordinator import NetgearLTEConfigEntry
 from .entity import LTEEntity
 
 BINARY_SENSORS: tuple[BinarySensorEntityDescription, ...] = (
@@ -39,7 +37,7 @@ BINARY_SENSORS: tuple[BinarySensorEntityDescription, ...] = (
 async def async_setup_entry(
     hass: HomeAssistant,
     entry: NetgearLTEConfigEntry,
-    async_add_entities: AddEntitiesCallback,
+    async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up the Netgear LTE binary sensor."""
     async_add_entities(
@@ -51,6 +49,6 @@ class NetgearLTEBinarySensor(LTEEntity, BinarySensorEntity):
     """Netgear LTE binary sensor entity."""
 
     @property
-    def is_on(self):
+    def is_on(self) -> bool:
         """Return true if the binary sensor is on."""
         return getattr(self.coordinator.data, self.entity_description.key)

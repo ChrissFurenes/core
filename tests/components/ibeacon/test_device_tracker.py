@@ -11,9 +11,7 @@ from homeassistant.components.bluetooth import (
     async_ble_device_from_address,
     async_last_service_info,
 )
-from homeassistant.components.bluetooth.const import (  # pylint: disable=hass-component-root-import
-    UNAVAILABLE_TRACK_SECONDS,
-)
+from homeassistant.components.bluetooth.const import UNAVAILABLE_TRACK_SECONDS
 from homeassistant.components.ibeacon.const import (
     DOMAIN,
     UNAVAILABLE_TIMEOUT,
@@ -150,7 +148,7 @@ async def test_device_tracker_random_address(hass: HomeAssistant) -> None:
 async def test_device_tracker_random_address_infrequent_changes(
     hass: HomeAssistant,
 ) -> None:
-    """Test creating and updating device_tracker with a random mac that only changes once per day."""
+    """Test device_tracker with a random mac changing once per day."""
     entry = MockConfigEntry(
         domain=DOMAIN,
     )

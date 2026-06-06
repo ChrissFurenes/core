@@ -1,7 +1,5 @@
 """Support for a Hue API to control Home Assistant."""
 
-from __future__ import annotations
-
 import asyncio
 from collections.abc import Iterable
 from functools import lru_cache
@@ -39,7 +37,7 @@ from homeassistant.components.http import KEY_HASS, HomeAssistantView
 from homeassistant.components.humidifier import ATTR_HUMIDITY, SERVICE_SET_HUMIDITY
 from homeassistant.components.light import (
     ATTR_BRIGHTNESS,
-    ATTR_COLOR_TEMP,
+    ATTR_COLOR_TEMP_KELVIN,
     ATTR_HS_COLOR,
     ATTR_TRANSITION,
     ATTR_XY_COLOR,
@@ -67,6 +65,7 @@ from homeassistant.const import (
 )
 from homeassistant.core import Event, EventStateChangedData, State
 from homeassistant.helpers.event import async_track_state_change_event
+from homeassistant.util import color as color_util
 from homeassistant.util.json import json_loads
 from homeassistant.util.network import is_local
 
@@ -321,8 +320,10 @@ class HueOneLightStateView(HomeAssistantView):
 
         if hass_entity_id is None:
             _LOGGER.error(
-                "Unknown entity number: %s not found in emulated_hue_ids.json",
+                "Unknown entity number: %s not found in emulated_hue_ids.json, "
+                "state request from %s",
                 entity_id,
+                request.remote,
             )
             return self.json_message("Entity not found", HTTPStatus.NOT_FOUND)
 
@@ -500,7 +501,11 @@ class HueOneLightChangeView(HomeAssistantView):
                     light.color_temp_supported(color_modes)
                     and parsed[STATE_COLOR_TEMP] is not None
                 ):
-                    data[ATTR_COLOR_TEMP] = parsed[STATE_COLOR_TEMP]
+                    data[ATTR_COLOR_TEMP_KELVIN] = (
+                        color_util.color_temperature_mired_to_kelvin(
+                            parsed[STATE_COLOR_TEMP]
+                        )
+                    )
 
                 if (
                     entity_features & LightEntityFeature.TRANSITION
@@ -643,7 +648,8 @@ def get_entity_state_dict(config: Config, entity: State) -> dict[str, Any]:
     if cached_state_entry is not None:
         entry_state, entry_time = cached_state_entry
         if entry_time is None:
-            # Handle the case where the entity is listed in config.off_maps_to_on_domains.
+            # Handle the case where the entity is listed
+            # in config.off_maps_to_on_domains.
             cached_state = entry_state
         elif time.time() - entry_time < STATE_CACHED_TIMEOUT and entry_state[
             STATE_ON
@@ -702,7 +708,12 @@ def _build_entity_state_dict(entity: State) -> dict[str, Any]:
         else:
             data[STATE_HUE] = HUE_API_STATE_HUE_MIN
             data[STATE_SATURATION] = HUE_API_STATE_SAT_MIN
-        data[STATE_COLOR_TEMP] = attributes.get(ATTR_COLOR_TEMP) or 0
+        kelvin = attributes.get(ATTR_COLOR_TEMP_KELVIN)
+        data[STATE_COLOR_TEMP] = (
+            color_util.color_temperature_kelvin_to_mired(kelvin)
+            if kelvin is not None
+            else 0
+        )
 
     else:
         data[STATE_BRIGHTNESS] = 0
@@ -779,7 +790,7 @@ def state_to_json(config: Config, state: State) -> dict[str, Any]:
     color_temp_supported = is_light and light.color_temp_supported(color_modes)
     if color_supported and color_temp_supported:
         # Extended Color light (Zigbee Device ID: 0x0210)
-        # Same as Color light, but which supports additional setting of color temperature
+        # Same as Color light, but supports additional color temperature setting
         retval["type"] = "Extended color light"
         retval["modelid"] = "HASS231"
         json_state.update(
@@ -797,7 +808,8 @@ def state_to_json(config: Config, state: State) -> dict[str, Any]:
             json_state[HUE_API_STATE_COLORMODE] = "ct"
     elif color_supported:
         # Color light (Zigbee Device ID: 0x0200)
-        # Supports on/off, dimming and color control (hue/saturation, enhanced hue, color loop and XY)
+        # Supports on/off, dimming and color control
+        # (hue/saturation, enhanced hue, color loop and XY)
         retval["type"] = "Color light"
         retval["modelid"] = "HASS213"
         json_state.update(
@@ -855,7 +867,7 @@ def state_supports_hue_brightness(
         return False
     features = state.attributes.get(ATTR_SUPPORTED_FEATURES, 0)
     enum = ENTITY_FEATURES_BY_DOMAIN[domain]
-    features = enum(features) if type(features) is int else features  # noqa: E721
+    features = enum(features) if type(features) is int else features
     return required_feature in features
 
 

@@ -1,25 +1,20 @@
 """The Airly integration."""
 
-from __future__ import annotations
-
 from datetime import timedelta
 import logging
 
-from homeassistant.components.air_quality import DOMAIN as AIR_QUALITY_PLATFORM
-from homeassistant.config_entries import ConfigEntry
+from homeassistant.components.air_quality import DOMAIN as AIR_QUALITY_DOMAIN
 from homeassistant.const import CONF_API_KEY, CONF_LATITUDE, CONF_LONGITUDE, Platform
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import device_registry as dr, entity_registry as er
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
 from .const import CONF_USE_NEAREST, DOMAIN, MIN_UPDATE_INTERVAL
-from .coordinator import AirlyDataUpdateCoordinator
+from .coordinator import AirlyConfigEntry, AirlyDataUpdateCoordinator
 
 PLATFORMS = [Platform.SENSOR]
 
 _LOGGER = logging.getLogger(__name__)
-
-type AirlyConfigEntry = ConfigEntry[AirlyDataUpdateCoordinator]
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: AirlyConfigEntry) -> bool:
@@ -60,7 +55,14 @@ async def async_setup_entry(hass: HomeAssistant, entry: AirlyConfigEntry) -> boo
     update_interval = timedelta(minutes=MIN_UPDATE_INTERVAL)
 
     coordinator = AirlyDataUpdateCoordinator(
-        hass, websession, api_key, latitude, longitude, update_interval, use_nearest
+        hass,
+        entry,
+        websession,
+        api_key,
+        latitude,
+        longitude,
+        update_interval,
+        use_nearest,
     )
     await coordinator.async_config_entry_first_refresh()
 
@@ -71,9 +73,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: AirlyConfigEntry) -> boo
     # Remove air_quality entities from registry if they exist
     ent_reg = er.async_get(hass)
     unique_id = f"{coordinator.latitude}-{coordinator.longitude}"
-    if entity_id := ent_reg.async_get_entity_id(
-        AIR_QUALITY_PLATFORM, DOMAIN, unique_id
-    ):
+    if entity_id := ent_reg.async_get_entity_id(AIR_QUALITY_DOMAIN, DOMAIN, unique_id):
         _LOGGER.debug("Removing deprecated air_quality entity %s", entity_id)
         ent_reg.async_remove(entity_id)
 

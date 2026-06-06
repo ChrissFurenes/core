@@ -1,7 +1,5 @@
 """Passive update processors for the Bluetooth integration."""
 
-from __future__ import annotations
-
 import dataclasses
 from datetime import timedelta
 from functools import cache
@@ -99,6 +97,12 @@ def deserialize_entity_description(
         descriptions_class = descriptions_class._dataclass  # noqa: SLF001
     for field in cached_fields(descriptions_class):
         field_name = field.name
+        # Only set fields that are in the data
+        # otherwise we would override default values with None
+        # causing side effects
+        if field_name not in data:
+            continue
+
         # It would be nice if field.type returned the actual
         # type instead of a str so we could avoid writing this
         # out, but it doesn't. If we end up using this in more
@@ -139,7 +143,9 @@ class PassiveBluetoothDataUpdate[_T]:
     def update(
         self, new_data: PassiveBluetoothDataUpdate[_T]
     ) -> set[PassiveBluetoothEntityKey] | None:
-        """Update the data and returned changed PassiveBluetoothEntityKey or None on device change.
+        """Update the data and return changed PassiveBluetoothEntityKey.
+
+        Returns None on device change.
 
         The changed PassiveBluetoothEntityKey can be used to filter
         which listeners are called.
@@ -292,9 +298,13 @@ class PassiveBluetoothProcessorCoordinator[_DataT](BasePassiveBluetoothCoordinat
         mode: BluetoothScanningMode,
         update_method: Callable[[BluetoothServiceInfoBleak], _DataT],
         connectable: bool = False,
+        scan_interval: float | None = None,
+        scan_duration: float | None = None,
     ) -> None:
         """Initialize the coordinator."""
-        super().__init__(hass, logger, address, mode, connectable)
+        super().__init__(
+            hass, logger, address, mode, connectable, scan_interval, scan_duration
+        )
         self._processors: list[PassiveBluetoothDataProcessor[Any, _DataT]] = []
         self._update_method = update_method
         self.last_update_success = True
@@ -374,6 +384,27 @@ class PassiveBluetoothProcessorCoordinator[_DataT](BasePassiveBluetoothCoordinat
             self.logger.exception("Unexpected error updating %s data", self.name)
             return
 
+        self._process_update(update, was_available)
+
+    @callback
+    def async_set_updated_data(self, update: _DataT) -> None:
+        """Manually update the processor with new data.
+
+        If the data comes in via a different method, like a
+        notification, this method can be used to update the
+        processor with the new data.
+
+        This is useful for devices that retrieve
+        some of their data via notifications.
+        """
+        was_available = self._available
+        self._available = True
+        self._process_update(update, was_available)
+
+    def _process_update(
+        self, update: _DataT, was_available: bool | None = None
+    ) -> None:
+        """Process the update from the bluetooth device."""
         if not self.last_update_success:
             self.last_update_success = True
             self.logger.info("Coordinator %s recovered", self.name)
@@ -597,6 +628,7 @@ class PassiveBluetoothDataProcessor[_T, _DataT]:
         self.async_update_listeners(new_data, was_available, changed_entity_keys)
 
 
+# pylint: disable-next=home-assistant-enforce-class-module
 class PassiveBluetoothProcessorEntity[
     _PassiveBluetoothDataProcessorT: PassiveBluetoothDataProcessor[Any, Any]
 ](Entity):

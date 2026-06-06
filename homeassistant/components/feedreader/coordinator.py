@@ -1,9 +1,8 @@
 """Data update coordinator for RSS/Atom feeds."""
 
-from __future__ import annotations
-
 from calendar import timegm
 from datetime import datetime
+import html
 from logging import getLogger
 from time import gmtime, struct_time
 from typing import TYPE_CHECKING
@@ -12,12 +11,14 @@ from urllib.error import URLError
 import feedparser
 
 from homeassistant.config_entries import ConfigEntry
+from homeassistant.const import CONF_URL
 from homeassistant.core import HomeAssistant, callback
+from homeassistant.exceptions import ConfigEntryNotReady
 from homeassistant.helpers.storage import Store
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 from homeassistant.util import dt as dt_util
 
-from .const import DEFAULT_SCAN_INTERVAL, DOMAIN, EVENT_FEEDREADER
+from .const import CONF_MAX_ENTRIES, DEFAULT_SCAN_INTERVAL, DOMAIN, EVENT_FEEDREADER
 
 DELAY_SAVE = 30
 STORAGE_VERSION = 1
@@ -25,37 +26,39 @@ STORAGE_VERSION = 1
 
 _LOGGER = getLogger(__name__)
 
+type FeedReaderConfigEntry = ConfigEntry[FeedReaderCoordinator]
+
 
 class FeedReaderCoordinator(
     DataUpdateCoordinator[list[feedparser.FeedParserDict] | None]
 ):
     """Abstraction over Feedparser module."""
 
-    config_entry: ConfigEntry
+    config_entry: FeedReaderConfigEntry
 
     def __init__(
         self,
         hass: HomeAssistant,
-        url: str,
-        max_entries: int,
+        config_entry: FeedReaderConfigEntry,
         storage: StoredData,
     ) -> None:
         """Initialize the FeedManager object, poll as per scan interval."""
-        super().__init__(
-            hass=hass,
-            logger=_LOGGER,
-            name=f"{DOMAIN} {url}",
-            update_interval=DEFAULT_SCAN_INTERVAL,
-        )
-        self.url = url
+        self.url = config_entry.data[CONF_URL]
         self.feed_author: str | None = None
         self.feed_version: str | None = None
-        self._max_entries = max_entries
+        self._max_entries = config_entry.options[CONF_MAX_ENTRIES]
         self._storage = storage
         self._last_entry_timestamp: struct_time | None = None
         self._event_type = EVENT_FEEDREADER
         self._feed: feedparser.FeedParserDict | None = None
-        self._feed_id = url
+        self._feed_id = self.url
+        super().__init__(
+            hass=hass,
+            logger=_LOGGER,
+            config_entry=config_entry,
+            name=f"{DOMAIN} {self.url}",
+            update_interval=DEFAULT_SCAN_INTERVAL,
+        )
 
     @callback
     def _log_no_entries(self) -> None:
@@ -100,9 +103,14 @@ class FeedReaderCoordinator(
 
     async def async_setup(self) -> None:
         """Set up the feed manager."""
-        feed = await self._async_fetch_feed()
+        try:
+            feed = await self._async_fetch_feed()
+        except UpdateFailed as err:
+            raise ConfigEntryNotReady from err
+
         self.logger.debug("Feed data fetched from %s : %s", self.url, feed["feed"])
-        self.feed_author = feed["feed"].get("author")
+        if feed_author := feed["feed"].get("author"):
+            self.feed_author = html.unescape(feed_author)
         self.feed_version = feedparser.api.SUPPORTED_VERSIONS.get(feed["version"])
         self._feed = feed
 
@@ -177,7 +185,8 @@ class FeedReaderCoordinator(
             firstrun = True
             # Set last entry timestamp as epoch time if not available
             self._last_entry_timestamp = dt_util.utc_from_timestamp(0).timetuple()
-        # locally cache self._last_entry_timestamp so that entries published at identical times can be processed
+        # locally cache self._last_entry_timestamp so that
+        # entries published at identical times can be processed
         last_entry_timestamp = self._last_entry_timestamp
         for entry in self._feed.entries:
             if firstrun or (

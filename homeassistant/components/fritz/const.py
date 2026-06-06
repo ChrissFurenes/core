@@ -13,6 +13,7 @@ from fritzconnection.core.exceptions import (
     FritzSecurityError,
     FritzServiceError,
 )
+from requests.exceptions import ConnectionError
 
 from homeassistant.const import Platform
 
@@ -26,6 +27,7 @@ class MeshRoles(StrEnum):
 
 
 DOMAIN = "fritz"
+SCAN_INTERVAL = 30
 
 PLATFORMS = [
     Platform.BINARY_SENSOR,
@@ -40,7 +42,8 @@ PLATFORMS = [
 CONF_OLD_DISCOVERY = "old_discovery"
 DEFAULT_CONF_OLD_DISCOVERY = False
 
-DATA_FRITZ = "fritz_data"
+CONF_FEATURE_DEVICE_TRACKING = "feature_device_tracking"
+DEFAULT_CONF_FEATURE_DEVICE_TRACKING = True
 
 DSL_CONNECTION: Literal["dsl"] = "dsl"
 
@@ -56,9 +59,6 @@ ERROR_CANNOT_CONNECT = "cannot_connect"
 ERROR_UPNP_NOT_CONFIGURED = "upnp_not_configured"
 ERROR_UNKNOWN = "unknown_error"
 
-FRITZ_SERVICES = "fritz_services"
-SERVICE_SET_GUEST_WIFI_PW = "set_guest_wifi_password"
-
 SWITCH_TYPE_DEFLECTION = "CallDeflection"
 SWITCH_TYPE_PORTFORWARD = "PortForward"
 SWITCH_TYPE_PROFILE = "Profile"
@@ -66,9 +66,8 @@ SWITCH_TYPE_WIFINETWORK = "WiFiNetwork"
 
 BUTTON_TYPE_WOL = "WakeOnLan"
 
-UPTIME_DEVIATION = 5
-
 FRITZ_EXCEPTIONS = (
+    ConnectionError,
     FritzActionError,
     FritzActionFailedError,
     FritzConnectionException,
@@ -79,6 +78,5 @@ FRITZ_EXCEPTIONS = (
 
 FRITZ_AUTH_EXCEPTIONS = (FritzAuthorizationError, FritzSecurityError)
 
-WIFI_STANDARD = {1: "2.4Ghz", 2: "5Ghz", 3: "5Ghz", 4: "Guest"}
 
 CONNECTION_TYPE_LAN = "LAN"

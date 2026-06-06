@@ -21,7 +21,6 @@ from homeassistant.components.weather import (
     SingleCoordinatorWeatherEntity,
     WeatherEntityFeature,
 )
-from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
     UnitOfLength,
     UnitOfPressure,
@@ -29,30 +28,25 @@ from homeassistant.const import (
     UnitOfTemperature,
 )
 from homeassistant.core import HomeAssistant, callback
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
 from .const import (
     ATTR_CURRENT_WEATHER,
     ATTR_FORECAST_DAILY,
     ATTR_FORECAST_HOURLY,
     ATTRIBUTION,
-    DOMAIN,
 )
-from .coordinator import WeatherKitDataUpdateCoordinator
+from .coordinator import WeatherKitConfigEntry, WeatherKitDataUpdateCoordinator
 from .entity import WeatherKitEntity
 
 
 async def async_setup_entry(
     hass: HomeAssistant,
-    config_entry: ConfigEntry,
-    async_add_entities: AddEntitiesCallback,
+    config_entry: WeatherKitConfigEntry,
+    async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Add a weather entity from a config_entry."""
-    coordinator: WeatherKitDataUpdateCoordinator = hass.data[DOMAIN][
-        config_entry.entry_id
-    ]
-
-    async_add_entities([WeatherKitWeather(coordinator)])
+    async_add_entities([WeatherKitWeather(config_entry.runtime_data)])
 
 
 condition_code_to_hass = {
@@ -149,7 +143,7 @@ class WeatherKitWeather(
 
     @property
     def supported_features(self) -> WeatherEntityFeature:
-        """Determine supported features based on available data sets reported by WeatherKit."""
+        """Determine supported features based on available data sets."""
         features = WeatherEntityFeature(0)
 
         if not self.coordinator.supported_data_sets:

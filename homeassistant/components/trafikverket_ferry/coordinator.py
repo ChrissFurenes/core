@@ -1,7 +1,5 @@
 """DataUpdateCoordinator for the Trafikverket Ferry integration."""
 
-from __future__ import annotations
-
 from datetime import date, datetime, time, timedelta
 import logging
 from typing import TYPE_CHECKING, Any
@@ -36,7 +34,7 @@ def next_weekday(fromdate: date, weekday: int) -> date:
 
 def next_departuredate(departure: list[str]) -> date:
     """Calculate the next departuredate from an array input of short days."""
-    today_date = date.today()
+    today_date = dt_util.now().date()
     today_weekday = date.weekday(today_date)
     if WEEKDAYS[today_weekday] in departure:
         return today_date
@@ -52,21 +50,22 @@ class TVDataUpdateCoordinator(DataUpdateCoordinator):
 
     config_entry: TVFerryConfigEntry
 
-    def __init__(self, hass: HomeAssistant) -> None:
+    def __init__(self, hass: HomeAssistant, config_entry: TVFerryConfigEntry) -> None:
         """Initialize the Trafikverket coordinator."""
         super().__init__(
             hass,
             _LOGGER,
+            config_entry=config_entry,
             name=DOMAIN,
             update_interval=TIME_BETWEEN_UPDATES,
         )
         self._ferry_api = TrafikverketFerry(
-            async_get_clientsession(hass), self.config_entry.data[CONF_API_KEY]
+            async_get_clientsession(hass), config_entry.data[CONF_API_KEY]
         )
-        self._from: str = self.config_entry.data[CONF_FROM]
-        self._to: str = self.config_entry.data[CONF_TO]
-        self._time: time | None = dt_util.parse_time(self.config_entry.data[CONF_TIME])
-        self._weekdays: list[str] = self.config_entry.data[CONF_WEEKDAY]
+        self._from: str = config_entry.data[CONF_FROM]
+        self._to: str = config_entry.data[CONF_TO]
+        self._time: time | None = dt_util.parse_time(config_entry.data[CONF_TIME])
+        self._weekdays: list[str] = config_entry.data[CONF_WEEKDAY]
 
     async def _async_update_data(self) -> dict[str, Any]:
         """Fetch data from Trafikverket."""

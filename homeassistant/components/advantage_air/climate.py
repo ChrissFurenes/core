@@ -1,7 +1,6 @@
 """Climate platform for Advantage Air integration."""
 
-from __future__ import annotations
-
+from decimal import Decimal
 import logging
 from typing import Any
 
@@ -14,12 +13,13 @@ from homeassistant.components.climate import (
     FAN_MEDIUM,
     ClimateEntity,
     ClimateEntityFeature,
+    HVACAction,
     HVACMode,
 )
 from homeassistant.const import ATTR_TEMPERATURE, PRECISION_WHOLE, UnitOfTemperature
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.exceptions import ServiceValidationError
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
 from . import AdvantageAirDataConfigEntry
 from .const import (
@@ -29,8 +29,8 @@ from .const import (
     ADVANTAGE_AIR_STATE_ON,
     ADVANTAGE_AIR_STATE_OPEN,
 )
+from .coordinator import AdvantageAirCoordinator
 from .entity import AdvantageAirAcEntity, AdvantageAirZoneEntity
-from .models import AdvantageAirData
 
 ADVANTAGE_AIR_HVAC_MODES = {
     "heat": HVACMode.HEAT,
@@ -49,6 +49,14 @@ ADVANTAGE_AIR_MYTEMP_ENABLED = "climateControlModeEnabled"
 ADVANTAGE_AIR_HEAT_TARGET = "myAutoHeatTargetTemp"
 ADVANTAGE_AIR_COOL_TARGET = "myAutoCoolTargetTemp"
 ADVANTAGE_AIR_MYFAN = "autoAA"
+ADVANTAGE_AIR_MYAUTO_MODE_SET = "myAutoModeCurrentSetMode"
+
+HVAC_ACTIONS = {
+    "cool": HVACAction.COOLING,
+    "heat": HVACAction.HEATING,
+    "vent": HVACAction.FAN,
+    "dry": HVACAction.DRYING,
+}
 
 HVAC_MODES = [
     HVACMode.OFF,
@@ -76,20 +84,20 @@ _LOGGER = logging.getLogger(__name__)
 async def async_setup_entry(
     hass: HomeAssistant,
     config_entry: AdvantageAirDataConfigEntry,
-    async_add_entities: AddEntitiesCallback,
+    async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up AdvantageAir climate platform."""
 
-    instance = config_entry.runtime_data
+    coordinator = config_entry.runtime_data
 
     entities: list[ClimateEntity] = []
-    if aircons := instance.coordinator.data.get("aircons"):
+    if aircons := coordinator.data.get("aircons"):
         for ac_key, ac_device in aircons.items():
-            entities.append(AdvantageAirAC(instance, ac_key))
+            entities.append(AdvantageAirAC(coordinator, ac_key))
             for zone_key, zone in ac_device["zones"].items():
                 # Only add zone climate control when zone is in temperature control
                 if zone["type"] > 0:
-                    entities.append(AdvantageAirZone(instance, ac_key, zone_key))
+                    entities.append(AdvantageAirZone(coordinator, ac_key, zone_key))
     async_add_entities(entities)
 
 
@@ -102,12 +110,11 @@ class AdvantageAirAC(AdvantageAirAcEntity, ClimateEntity):
     _attr_max_temp = 32
     _attr_min_temp = 16
     _attr_name = None
-    _enable_turn_on_off_backwards_compatibility = False
     _support_preset = ClimateEntityFeature(0)
 
-    def __init__(self, instance: AdvantageAirData, ac_key: str) -> None:
+    def __init__(self, coordinator: AdvantageAirCoordinator, ac_key: str) -> None:
         """Initialize an AdvantageAir AC unit."""
-        super().__init__(instance, ac_key)
+        super().__init__(coordinator, ac_key)
 
         self._attr_preset_modes = [ADVANTAGE_AIR_MYZONE]
 
@@ -164,7 +171,8 @@ class AdvantageAirAC(AdvantageAirAcEntity, ClimateEntity):
     @property
     def target_temperature(self) -> float | None:
         """Return the current target temperature."""
-        # If the system is in MyZone mode, and a zone is set, return that temperature instead.
+        # If the system is in MyZone mode, and a zone is set,
+        # return that temperature instead.
         if self._myzone and self.preset_mode == ADVANTAGE_AIR_MYZONE:
             return self._myzone["setTemp"]
         return self._ac["setTemp"]
@@ -175,6 +183,17 @@ class AdvantageAirAC(AdvantageAirAcEntity, ClimateEntity):
         if self._ac["state"] == ADVANTAGE_AIR_STATE_ON:
             return ADVANTAGE_AIR_HVAC_MODES.get(self._ac["mode"])
         return HVACMode.OFF
+
+    @property
+    def hvac_action(self) -> HVACAction | None:
+        """Return the current running HVAC action."""
+        if self._ac["state"] == ADVANTAGE_AIR_STATE_OFF:
+            return HVACAction.OFF
+        if self._ac["mode"] == "myauto":
+            return HVAC_ACTIONS.get(
+                self._ac.get(ADVANTAGE_AIR_MYAUTO_MODE_SET, HVACAction.OFF)
+            )
+        return HVAC_ACTIONS.get(self._ac["mode"])
 
     @property
     def fan_mode(self) -> str | None:
@@ -261,11 +280,12 @@ class AdvantageAirZone(AdvantageAirZoneEntity, ClimateEntity):
     _attr_target_temperature_step = PRECISION_WHOLE
     _attr_max_temp = 32
     _attr_min_temp = 16
-    _enable_turn_on_off_backwards_compatibility = False
 
-    def __init__(self, instance: AdvantageAirData, ac_key: str, zone_key: str) -> None:
+    def __init__(
+        self, coordinator: AdvantageAirCoordinator, ac_key: str, zone_key: str
+    ) -> None:
         """Initialize an AdvantageAir Zone control."""
-        super().__init__(instance, ac_key, zone_key)
+        super().__init__(coordinator, ac_key, zone_key)
         self._attr_name = self._zone["name"]
 
     @property
@@ -274,6 +294,26 @@ class AdvantageAirZone(AdvantageAirZoneEntity, ClimateEntity):
         if self._zone["state"] == ADVANTAGE_AIR_STATE_OPEN:
             return HVACMode.HEAT_COOL
         return HVACMode.OFF
+
+    @property
+    def hvac_action(self) -> HVACAction | None:
+        """Return the HVAC action.
+
+        Inherits from master AC if zone is open but idle if air
+        is <= 5%.
+        """
+        if self._ac["state"] == ADVANTAGE_AIR_STATE_OFF:
+            return HVACAction.OFF
+        master_action = HVAC_ACTIONS.get(self._ac["mode"], HVACAction.OFF)
+        if self._ac["mode"] == "myauto":
+            master_action = HVAC_ACTIONS.get(
+                str(self._ac.get(ADVANTAGE_AIR_MYAUTO_MODE_SET)), HVACAction.OFF
+            )
+        if self._zone["state"] == ADVANTAGE_AIR_STATE_OPEN:
+            if self._zone["value"] <= Decimal(5):
+                return HVACAction.IDLE
+            return master_action
+        return HVACAction.OFF
 
     @property
     def current_temperature(self) -> float | None:

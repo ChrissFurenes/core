@@ -1,7 +1,5 @@
 """Support for israel rail."""
 
-from __future__ import annotations
-
 from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import datetime
@@ -12,16 +10,21 @@ from homeassistant.components.sensor import (
     SensorDeviceClass,
     SensorEntity,
     SensorEntityDescription,
+    SensorStateClass,
 )
+from homeassistant.const import UnitOfTime
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.device_registry import DeviceEntryType, DeviceInfo
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 from homeassistant.helpers.typing import StateType
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from . import IsraelRailConfigEntry
 from .const import ATTRIBUTION, DEPARTURES_COUNT, DOMAIN
-from .coordinator import DataConnection, IsraelRailDataUpdateCoordinator
+from .coordinator import (
+    DataConnection,
+    IsraelRailConfigEntry,
+    IsraelRailDataUpdateCoordinator,
+)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -49,28 +52,53 @@ DEPARTURE_SENSORS: tuple[IsraelRailSensorEntityDescription, ...] = (
 )
 
 SENSORS: tuple[IsraelRailSensorEntityDescription, ...] = (
-    IsraelRailSensorEntityDescription(
-        key="platform",
-        translation_key="platform",
-        value_fn=lambda data_connection: data_connection.platform,
-    ),
-    IsraelRailSensorEntityDescription(
-        key="trains",
-        translation_key="trains",
-        value_fn=lambda data_connection: data_connection.trains,
-    ),
-    IsraelRailSensorEntityDescription(
-        key="train_number",
-        translation_key="train_number",
-        value_fn=lambda data_connection: data_connection.train_number,
-    ),
+    *[
+        IsraelRailSensorEntityDescription(
+            key=f"platform{i or ''}",
+            translation_key=f"platform{i or ''}",
+            value_fn=lambda data_connection: data_connection.platform,
+            index=i,
+        )
+        for i in range(DEPARTURES_COUNT)
+    ],
+    *[
+        IsraelRailSensorEntityDescription(
+            key=f"trains{i or ''}",
+            translation_key=f"trains{i or ''}",
+            value_fn=lambda data_connection: data_connection.trains,
+            index=i,
+        )
+        for i in range(DEPARTURES_COUNT)
+    ],
+    *[
+        IsraelRailSensorEntityDescription(
+            key=f"train_number{i or ''}",
+            translation_key=f"train_number{i or ''}",
+            value_fn=lambda data_connection: data_connection.train_number,
+            index=i,
+        )
+        for i in range(DEPARTURES_COUNT)
+    ],
+    *[
+        IsraelRailSensorEntityDescription(
+            key=f"departure_delay{i or ''}",
+            translation_key=f"departure_delay{i or ''}",
+            device_class=SensorDeviceClass.DURATION,
+            native_unit_of_measurement=UnitOfTime.MINUTES,
+            state_class=SensorStateClass.MEASUREMENT,
+            suggested_display_precision=0,
+            value_fn=lambda data_connection: data_connection.departure_delay,
+            index=i,
+        )
+        for i in range(DEPARTURES_COUNT)
+    ],
 )
 
 
 async def async_setup_entry(
     hass: HomeAssistant,
     config_entry: IsraelRailConfigEntry,
-    async_add_entities: AddEntitiesCallback,
+    async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up the sensor from a config entry created in the integrations UI."""
     coordinator = config_entry.runtime_data
@@ -113,6 +141,8 @@ class IsraelRailEntitySensor(
     @property
     def native_value(self) -> StateType | datetime:
         """Return the state of the sensor."""
+        if self.entity_description.index >= len(self.coordinator.data):
+            return None
         return self.entity_description.value_fn(
             self.coordinator.data[self.entity_description.index]
         )

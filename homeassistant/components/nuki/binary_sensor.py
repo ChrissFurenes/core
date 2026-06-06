@@ -1,7 +1,5 @@
 """Doorsensor Support for the Nuki Lock."""
 
-from __future__ import annotations
-
 from pynuki.constants import STATE_DOORSENSOR_OPENED
 from pynuki.device import NukiDevice
 
@@ -9,20 +7,21 @@ from homeassistant.components.binary_sensor import (
     BinarySensorDeviceClass,
     BinarySensorEntity,
 )
-from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import EntityCategory
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
-from . import NukiEntity, NukiEntryData
-from .const import ATTR_NUKI_ID, DOMAIN as NUKI_DOMAIN
+from .coordinator import NukiConfigEntry
+from .entity import NukiEntity
 
 
 async def async_setup_entry(
-    hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback
+    hass: HomeAssistant,
+    entry: NukiConfigEntry,
+    async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up the Nuki binary sensors."""
-    entry_data: NukiEntryData = hass.data[NUKI_DOMAIN][entry.entry_id]
+    entry_data = entry.runtime_data
 
     entities: list[NukiEntity] = []
 
@@ -51,14 +50,6 @@ class NukiDoorsensorEntity(NukiEntity[NukiDevice], BinarySensorEntity):
         """Return a unique ID."""
         return f"{self._nuki_device.nuki_id}_doorsensor"
 
-    # Deprecated, can be removed in 2024.10
-    @property
-    def extra_state_attributes(self):
-        """Return the device specific state attributes."""
-        return {
-            ATTR_NUKI_ID: self._nuki_device.nuki_id,
-        }
-
     @property
     def available(self) -> bool:
         """Return true if door sensor is present and activated."""
@@ -75,7 +66,7 @@ class NukiDoorsensorEntity(NukiEntity[NukiDevice], BinarySensorEntity):
         return self._nuki_device.door_sensor_state_name
 
     @property
-    def is_on(self):
+    def is_on(self) -> bool:
         """Return true if the door is open."""
         return self.door_sensor_state == STATE_DOORSENSOR_OPENED
 
@@ -90,14 +81,6 @@ class NukiRingactionEntity(NukiEntity[NukiDevice], BinarySensorEntity):
     def unique_id(self) -> str:
         """Return a unique ID."""
         return f"{self._nuki_device.nuki_id}_ringaction"
-
-    # Deprecated, can be removed in 2024.10
-    @property
-    def extra_state_attributes(self):
-        """Return the device specific state attributes."""
-        return {
-            ATTR_NUKI_ID: self._nuki_device.nuki_id,
-        }
 
     @property
     def is_on(self) -> bool:

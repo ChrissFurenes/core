@@ -10,10 +10,13 @@ from homeassistant.util import dt as dt_util
 
 from .test_common import CONSUMPTION_DATA_1, PRODUCTION_DATA_1, mock_get_homes
 
+from tests.common import MockConfigEntry
 from tests.components.recorder.common import async_wait_recording_done
 
 
-async def test_async_setup_entry(recorder_mock: Recorder, hass: HomeAssistant) -> None:
+async def test_async_setup_entry(
+    recorder_mock: Recorder, hass: HomeAssistant, config_entry: MockConfigEntry
+) -> None:
     """Test setup Tibber."""
     tibber_connection = AsyncMock()
     tibber_connection.name = "tibber"
@@ -21,7 +24,11 @@ async def test_async_setup_entry(recorder_mock: Recorder, hass: HomeAssistant) -
     tibber_connection.fetch_production_data_active_homes.return_value = None
     tibber_connection.get_homes = mock_get_homes
 
-    coordinator = TibberDataCoordinator(hass, tibber_connection)
+    runtime_data = AsyncMock()
+    runtime_data.async_get_client.return_value = tibber_connection
+    config_entry.runtime_data = runtime_data
+
+    coordinator = TibberDataCoordinator(hass, config_entry, tibber_connection)
     await coordinator._async_update_data()
     await async_wait_recording_done(hass)
 

@@ -56,6 +56,44 @@ async def test_async_step_user_no_devices_found(hass: HomeAssistant) -> None:
 
 async def test_async_step_user_with_found_devices(hass: HomeAssistant) -> None:
     """Test setup from service info cache with devices found."""
+    with (
+        patch(
+            "homeassistant.components.thermopro.config_flow.async_discovered_service_info",
+            return_value=[TP357_SERVICE_INFO],
+        ),
+        patch(
+            "homeassistant.components.thermopro.config_flow.bluetooth.async_request_active_scan"
+        ) as mock_request_active_scan,
+    ):
+        result = await hass.config_entries.flow.async_init(
+            DOMAIN,
+            context={"source": config_entries.SOURCE_USER},
+        )
+    assert result["type"] is FlowResultType.FORM
+    assert result["step_id"] == "user"
+    mock_request_active_scan.assert_awaited_once_with(hass)
+    with patch(
+        "homeassistant.components.thermopro.async_setup_entry", return_value=True
+    ):
+        result2 = await hass.config_entries.flow.async_configure(
+            result["flow_id"],
+            user_input={"address": "4125DDBA-2774-4851-9889-6AADDD4CAC3D"},
+        )
+    assert result2["type"] is FlowResultType.CREATE_ENTRY
+    assert result2["title"] == "TP357 (2142) AC3D"
+    assert result2["data"] == {}
+    assert result2["result"].unique_id == "4125DDBA-2774-4851-9889-6AADDD4CAC3D"
+
+
+async def test_async_step_user_replace_ignored(hass: HomeAssistant) -> None:
+    """Test setup from service info and replace an ignored entry."""
+    entry = MockConfigEntry(
+        domain=DOMAIN,
+        unique_id=TP357_SERVICE_INFO.address,
+        data={},
+        source=config_entries.SOURCE_IGNORE,
+    )
+    entry.add_to_hass(hass)
     with patch(
         "homeassistant.components.thermopro.config_flow.async_discovered_service_info",
         return_value=[TP357_SERVICE_INFO],

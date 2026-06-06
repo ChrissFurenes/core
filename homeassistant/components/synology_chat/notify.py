@@ -1,10 +1,9 @@
 """SynologyChat platform for notify component."""
 
-from __future__ import annotations
-
 from http import HTTPStatus
 import json
 import logging
+from typing import Any
 
 import requests
 import voluptuous as vol
@@ -16,7 +15,7 @@ from homeassistant.components.notify import (
 )
 from homeassistant.const import CONF_RESOURCE, CONF_VERIFY_SSL
 from homeassistant.core import HomeAssistant
-import homeassistant.helpers.config_validation as cv
+from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
 
 ATTR_FILE_URL = "file_url"
@@ -51,7 +50,7 @@ class SynologyChatNotificationService(BaseNotificationService):
         self._resource = resource
         self._verify_ssl = verify_ssl
 
-    def send_message(self, message="", **kwargs):
+    def send_message(self, message: str = "", **kwargs: Any) -> None:
         """Send a message to a user."""
         data = {"text": message}
 

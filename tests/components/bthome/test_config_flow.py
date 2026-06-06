@@ -90,7 +90,7 @@ async def test_async_step_bluetooth_valid_device_with_encryption(
 async def test_async_step_bluetooth_valid_device_encryption_wrong_key(
     hass: HomeAssistant,
 ) -> None:
-    """Test discovery via bluetooth with a valid device, with encryption and invalid key."""
+    """Test bluetooth discovery with a valid device, encryption and invalid key."""
     result = await hass.config_entries.flow.async_init(
         DOMAIN,
         context={"source": config_entries.SOURCE_BLUETOOTH},
@@ -122,7 +122,7 @@ async def test_async_step_bluetooth_valid_device_encryption_wrong_key(
 async def test_async_step_bluetooth_valid_device_encryption_wrong_key_length(
     hass: HomeAssistant,
 ) -> None:
-    """Test discovery via bluetooth with a valid device, with encryption and wrong key length."""
+    """Test bluetooth discovery with a valid device, encryption and wrong key length."""
     result = await hass.config_entries.flow.async_init(
         DOMAIN,
         context={"source": config_entries.SOURCE_BLUETOOTH},
@@ -213,6 +213,36 @@ async def test_async_step_user_with_found_devices(hass: HomeAssistant) -> None:
     assert result2["result"].unique_id == "54:48:E6:8F:80:A5"
 
 
+async def test_async_step_user_replaces_ignored(hass: HomeAssistant) -> None:
+    """Test setup from service info cache replaces an ignored entry."""
+    entry = MockConfigEntry(
+        domain=DOMAIN,
+        unique_id="54:48:E6:8F:80:A5",
+        data={},
+        source=config_entries.SOURCE_IGNORE,
+    )
+    entry.add_to_hass(hass)
+    with patch(
+        "homeassistant.components.bthome.config_flow.async_discovered_service_info",
+        return_value=[PRST_SERVICE_INFO],
+    ):
+        result = await hass.config_entries.flow.async_init(
+            DOMAIN,
+            context={"source": config_entries.SOURCE_USER},
+        )
+    assert result["type"] is FlowResultType.FORM
+    assert result["step_id"] == "user"
+    with patch("homeassistant.components.bthome.async_setup_entry", return_value=True):
+        result2 = await hass.config_entries.flow.async_configure(
+            result["flow_id"],
+            user_input={"address": "54:48:E6:8F:80:A5"},
+        )
+    assert result2["type"] is FlowResultType.CREATE_ENTRY
+    assert result2["title"] == "b-parasite 80A5"
+    assert result2["data"] == {}
+    assert result2["result"].unique_id == "54:48:E6:8F:80:A5"
+
+
 async def test_async_step_user_with_found_devices_encryption(
     hass: HomeAssistant,
 ) -> None:
@@ -250,7 +280,7 @@ async def test_async_step_user_with_found_devices_encryption(
 async def test_async_step_user_with_found_devices_encryption_wrong_key(
     hass: HomeAssistant,
 ) -> None:
-    """Test setup from service info cache with devices found, with encryption and wrong key."""
+    """Test setup from service info cache with devices, encryption and wrong key."""
     # Get a list of devices
     with patch(
         "homeassistant.components.bthome.config_flow.async_discovered_service_info",
@@ -296,7 +326,7 @@ async def test_async_step_user_with_found_devices_encryption_wrong_key(
 async def test_async_step_user_with_found_devices_encryption_wrong_key_length(
     hass: HomeAssistant,
 ) -> None:
-    """Test setup from service info cache with devices found, with encryption and wrong key length."""
+    """Test setup from service info cache, encryption and wrong key length."""
     # Get a list of devices
     with patch(
         "homeassistant.components.bthome.config_flow.async_discovered_service_info",
@@ -471,7 +501,9 @@ async def test_async_step_reauth(hass: HomeAssistant) -> None:
     entry.add_to_hass(hass)
     saved_callback = None
 
-    def _async_register_callback(_hass, _callback, _matcher, _mode):
+    def _async_register_callback(
+        _hass, _callback, _matcher, _mode, *, scan_interval=None, scan_duration=None
+    ):
         nonlocal saved_callback
         saved_callback = _callback
         return lambda: None
@@ -511,7 +543,9 @@ async def test_async_step_reauth_wrong_key(hass: HomeAssistant) -> None:
     entry.add_to_hass(hass)
     saved_callback = None
 
-    def _async_register_callback(_hass, _callback, _matcher, _mode):
+    def _async_register_callback(
+        _hass, _callback, _matcher, _mode, *, scan_interval=None, scan_duration=None
+    ):
         nonlocal saved_callback
         saved_callback = _callback
         return lambda: None
@@ -563,16 +597,7 @@ async def test_async_step_reauth_abort_early(hass: HomeAssistant) -> None:
 
     device = DeviceData()
 
-    result = await hass.config_entries.flow.async_init(
-        DOMAIN,
-        context={
-            "source": config_entries.SOURCE_REAUTH,
-            "entry_id": entry.entry_id,
-            "title_placeholders": {"name": entry.title},
-            "unique_id": entry.unique_id,
-        },
-        data=entry.data | {"device": device},
-    )
+    result = await entry.start_reauth_flow(hass, data={"device": device})
 
     assert result["type"] is FlowResultType.ABORT
     assert result["reason"] == "reauth_successful"

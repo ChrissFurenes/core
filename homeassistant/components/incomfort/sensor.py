@@ -1,9 +1,7 @@
 """Support for an Intergas heater via an InComfort/InTouch Lan2RF gateway."""
 
-from __future__ import annotations
-
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, override
 
 from incomfortclient import Heater as InComfortHeater
 
@@ -13,14 +11,15 @@ from homeassistant.components.sensor import (
     SensorEntityDescription,
     SensorStateClass,
 )
-from homeassistant.const import UnitOfPressure, UnitOfTemperature
+from homeassistant.const import EntityCategory, UnitOfPressure, UnitOfTemperature
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 from homeassistant.helpers.typing import StateType
 
-from . import InComfortConfigEntry
-from .coordinator import InComfortDataCoordinator
+from .coordinator import InComfortConfigEntry, InComfortDataCoordinator
 from .entity import IncomfortBoilerEntity
+
+PARALLEL_UPDATES = 0
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -29,6 +28,7 @@ class IncomfortSensorEntityDescription(SensorEntityDescription):
 
     value_key: str
     extra_key: str | None = None
+    entity_category = EntityCategory.DIAGNOSTIC
 
 
 SENSOR_TYPES: tuple[IncomfortSensorEntityDescription, ...] = (
@@ -38,6 +38,7 @@ SENSOR_TYPES: tuple[IncomfortSensorEntityDescription, ...] = (
         state_class=SensorStateClass.MEASUREMENT,
         native_unit_of_measurement=UnitOfPressure.BAR,
         value_key="pressure",
+        entity_registry_enabled_default=False,
     ),
     IncomfortSensorEntityDescription(
         key="cv_temp",
@@ -46,6 +47,7 @@ SENSOR_TYPES: tuple[IncomfortSensorEntityDescription, ...] = (
         native_unit_of_measurement=UnitOfTemperature.CELSIUS,
         extra_key="is_pumping",
         value_key="heater_temp",
+        entity_registry_enabled_default=False,
     ),
     IncomfortSensorEntityDescription(
         key="tap_temp",
@@ -55,6 +57,17 @@ SENSOR_TYPES: tuple[IncomfortSensorEntityDescription, ...] = (
         native_unit_of_measurement=UnitOfTemperature.CELSIUS,
         extra_key="is_tapping",
         value_key="tap_temp",
+        entity_registry_enabled_default=False,
+    ),
+    # A lower RSSI value is better
+    # A typical RSSI value is 28 for connection just in range
+    IncomfortSensorEntityDescription(
+        key="rf_message_rssi",
+        translation_key="rf_message_rssi",
+        state_class=SensorStateClass.MEASUREMENT,
+        value_key="rf_message_rssi",
+        extra_key="rfstatus_cntr",
+        entity_registry_enabled_default=False,
     ),
 )
 
@@ -62,7 +75,7 @@ SENSOR_TYPES: tuple[IncomfortSensorEntityDescription, ...] = (
 async def async_setup_entry(
     hass: HomeAssistant,
     entry: InComfortConfigEntry,
-    async_add_entities: AddEntitiesCallback,
+    async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up InComfort/InTouch sensor entities."""
     incomfort_coordinator = entry.runtime_data
@@ -91,11 +104,13 @@ class IncomfortSensor(IncomfortBoilerEntity, SensorEntity):
         self._attr_unique_id = f"{heater.serial_no}_{description.key}"
 
     @property
+    @override
     def native_value(self) -> StateType:
         """Return the state of the sensor."""
-        return self._heater.status[self.entity_description.value_key]
+        return self._heater.status[self.entity_description.value_key]  # type: ignore [no-any-return]
 
     @property
+    @override
     def extra_state_attributes(self) -> dict[str, Any] | None:
         """Return the device state attributes."""
         if (extra_key := self.entity_description.extra_key) is None:

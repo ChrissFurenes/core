@@ -1,7 +1,5 @@
 """Support for Litter-Robot updates."""
 
-from __future__ import annotations
-
 from datetime import timedelta
 from typing import Any
 
@@ -15,10 +13,13 @@ from homeassistant.components.update import (
 )
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import HomeAssistantError
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
-from . import LitterRobotConfigEntry
-from .entity import LitterRobotEntity
+from .const import DOMAIN
+from .coordinator import LitterRobotConfigEntry
+from .entity import LitterRobotEntity, whisker_command
+
+PARALLEL_UPDATES = 1
 
 SCAN_INTERVAL = timedelta(days=1)
 
@@ -26,26 +27,44 @@ FIRMWARE_UPDATE_ENTITY = UpdateEntityDescription(
     key="firmware",
     device_class=UpdateDeviceClass.FIRMWARE,
 )
+RELEASE_URL = "https://www.litter-robot.com/releases.html"
 
 
 async def async_setup_entry(
     hass: HomeAssistant,
     entry: LitterRobotConfigEntry,
-    async_add_entities: AddEntitiesCallback,
+    async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up Litter-Robot update platform."""
-    hub = entry.runtime_data
-    entities = [
-        RobotUpdateEntity(robot=robot, hub=hub, description=FIRMWARE_UPDATE_ENTITY)
-        for robot in hub.litter_robots()
-        if isinstance(robot, LitterRobot4)
-    ]
-    async_add_entities(entities, True)
+    coordinator = entry.runtime_data
+    known_robots: set[str] = set()
+
+    def _check_robots() -> None:
+        all_robots = list(coordinator.litter_robots())
+        current_robots = {robot.serial for robot in all_robots}
+        new_robots = current_robots - known_robots
+        if new_robots:
+            known_robots.update(new_robots)
+            entities = (
+                RobotUpdateEntity(
+                    robot=robot,
+                    coordinator=coordinator,
+                    description=FIRMWARE_UPDATE_ENTITY,
+                )
+                for robot in all_robots
+                if robot.serial in new_robots
+                if isinstance(robot, LitterRobot4)
+            )
+            async_add_entities(entities, True)
+
+    _check_robots()
+    entry.async_on_unload(coordinator.async_add_listener(_check_robots))
 
 
 class RobotUpdateEntity(LitterRobotEntity[LitterRobot4], UpdateEntity):
     """A class that describes robot update entities."""
 
+    _attr_release_url = RELEASE_URL
     _attr_supported_features = (
         UpdateEntityFeature.INSTALL | UpdateEntityFeature.PROGRESS
     )
@@ -76,11 +95,15 @@ class RobotUpdateEntity(LitterRobotEntity[LitterRobot4], UpdateEntity):
                 latest_version = self.robot.firmware
             self._attr_latest_version = latest_version
 
+    @whisker_command
     async def async_install(
         self, version: str | None, backup: bool, **kwargs: Any
     ) -> None:
         """Install an update."""
         if await self.robot.has_firmware_update(True):
             if not await self.robot.update_firmware():
-                message = f"Unable to start firmware update on {self.robot.name}"
-                raise HomeAssistantError(message)
+                raise HomeAssistantError(
+                    translation_domain=DOMAIN,
+                    translation_key="firmware_update_failed",
+                    translation_placeholders={"name": self.robot.name},
+                )

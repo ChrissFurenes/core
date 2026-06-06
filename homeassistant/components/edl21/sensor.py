@@ -1,9 +1,6 @@
 """Support for EDL21 Smart Meters."""
 
-from __future__ import annotations
-
 from collections.abc import Mapping
-from datetime import timedelta
 from typing import Any
 
 from sml import SmlGetListResponse
@@ -30,8 +27,7 @@ from homeassistant.helpers.dispatcher import (
     async_dispatcher_connect,
     async_dispatcher_send,
 )
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
-from homeassistant.util.dt import utcnow
+from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
 from .const import (
     CONF_SERIAL_PORT,
@@ -40,8 +36,6 @@ from .const import (
     LOGGER,
     SIGNAL_EDL21_TELEGRAM,
 )
-
-MIN_TIME_BETWEEN_UPDATES = timedelta(seconds=60)
 
 # OBIS format: A-B:C.D.E*F
 SENSOR_TYPES: tuple[SensorEntityDescription, ...] = (
@@ -289,11 +283,11 @@ SENSOR_UNIT_MAPPING = {
 async def async_setup_entry(
     hass: HomeAssistant,
     config_entry: ConfigEntry,
-    async_add_entities: AddEntitiesCallback,
+    async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up the EDL21 sensor."""
-    hass.data[DOMAIN] = EDL21(hass, config_entry.data, async_add_entities)
-    await hass.data[DOMAIN].connect()
+    api = EDL21(hass, config_entry.data, async_add_entities)
+    await api.connect()
 
 
 class EDL21:
@@ -317,7 +311,7 @@ class EDL21:
         self,
         hass: HomeAssistant,
         config: Mapping[str, Any],
-        async_add_entities: AddEntitiesCallback,
+        async_add_entities: AddConfigEntryEntitiesCallback,
     ) -> None:
         """Initialize an EDL21 object."""
         self._registered_obis: set[tuple[str, str]] = set()
@@ -393,8 +387,6 @@ class EDL21Entity(SensorEntity):
         self._electricity_id = electricity_id
         self._obis = obis
         self._telegram = telegram
-        self._min_time = MIN_TIME_BETWEEN_UPDATES
-        self._last_update = utcnow()
         self._async_remove_dispatcher = None
         self.entity_description = entity_description
         self._attr_unique_id = f"{electricity_id}_{obis}"
@@ -416,12 +408,7 @@ class EDL21Entity(SensorEntity):
             if self._telegram == telegram:
                 return
 
-            now = utcnow()
-            if now - self._last_update < self._min_time:
-                return
-
             self._telegram = telegram
-            self._last_update = now
             self.async_write_ha_state()
 
         self._async_remove_dispatcher = async_dispatcher_connect(

@@ -11,7 +11,7 @@ from homeassistant.components.notify import ATTR_MESSAGE
 from homeassistant.const import ATTR_ENTITY_ID, ATTR_FRIENDLY_NAME, STATE_UNKNOWN
 from homeassistant.core import HomeAssistant
 
-from .test_common import (
+from .common import (
     help_test_availability_when_connection_lost,
     help_test_availability_without_topic,
     help_test_custom_availability_payload,
@@ -54,7 +54,7 @@ DEFAULT_CONFIG = {
                 notify.DOMAIN: {
                     "command_topic": "command-topic",
                     "name": "test",
-                    "object_id": "test_notify",
+                    "default_entity_id": "notify.test_notify",
                     "qos": "2",
                 }
             }
@@ -79,7 +79,7 @@ async def test_sending_mqtt_commands(
     )
 
     mqtt_mock.async_publish.assert_called_once_with(
-        "command-topic", "Beer message", 2, False
+        "command-topic", "Beer message", 2, False, message_expiry_interval=None
     )
     mqtt_mock.async_publish.reset_mock()
     state = hass.states.get("notify.test_notify")
@@ -118,7 +118,11 @@ async def test_command_template(
     )
 
     mqtt_mock.async_publish.assert_called_once_with(
-        "command-topic", '{ "notify.test": "Beer message" }', 0, False
+        "command-topic",
+        '{ "notify.test": "Beer message" }',
+        0,
+        False,
+        message_expiry_interval=None,
     )
     mqtt_mock.async_publish.reset_mock()
 

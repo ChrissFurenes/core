@@ -5,10 +5,11 @@ import logging
 
 from awesomeversion import AwesomeVersion, AwesomeVersionStrategy
 
-from homeassistant.components.hassio import get_supervisor_info, is_hassio
+from homeassistant.components.hassio import HassioNotReadyError, get_supervisor_info
 from homeassistant.const import __version__
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
+from homeassistant.helpers.hassio import is_hassio
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 
 from .const import DOMAIN, REQUEST_TIMEOUT, UPDATE_INTERVAL
@@ -39,6 +40,7 @@ class AlertUpdateCoordinator(DataUpdateCoordinator[dict[str, IntegrationAlert]])
         super().__init__(
             hass,
             _LOGGER,
+            config_entry=None,
             name=DOMAIN,
             update_interval=UPDATE_INTERVAL,
         )
@@ -76,7 +78,9 @@ class AlertUpdateCoordinator(DataUpdateCoordinator[dict[str, IntegrationAlert]])
                         continue
 
             if self.supervisor and "supervisor" in alert:
-                if (supervisor_info := get_supervisor_info(self.hass)) is None:
+                try:
+                    supervisor_info = get_supervisor_info(self.hass)
+                except HassioNotReadyError:
                     continue
 
                 if "affected_from_version" in alert["supervisor"]:

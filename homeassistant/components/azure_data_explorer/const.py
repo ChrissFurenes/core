@@ -1,7 +1,5 @@
 """Constants for the Azure Data Explorer integration."""
 
-from __future__ import annotations
-
 from typing import Any
 
 from homeassistant.const import STATE_UNAVAILABLE, STATE_UNKNOWN
@@ -16,9 +14,8 @@ CONF_APP_REG_SECRET = "client_secret"
 CONF_AUTHORITY_ID = "authority_id"
 CONF_SEND_INTERVAL = "send_interval"
 CONF_MAX_DELAY = "max_delay"
-CONF_FILTER = DATA_FILTER = "filter"
+CONF_FILTER = "filter"
 CONF_USE_QUEUED_CLIENT = "use_queued_ingestion"
-DATA_HUB = "hub"
 STEP_USER = "user"
 
 

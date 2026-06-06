@@ -1,7 +1,5 @@
 """Support for IHC binary sensors."""
 
-from __future__ import annotations
-
 from ihcsdk.ihccontroller import IHCController
 
 from homeassistant.components.binary_sensor import (
@@ -15,7 +13,7 @@ from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
 from homeassistant.util.enum import try_parse_enum
 
 from .const import CONF_INVERTING, DOMAIN, IHC_CONTROLLER
-from .ihcdevice import IHCDevice
+from .entity import IHCEntity
 
 
 def setup_platform(
@@ -48,7 +46,7 @@ def setup_platform(
     add_entities(devices)
 
 
-class IHCBinarySensor(IHCDevice, BinarySensorEntity):
+class IHCBinarySensor(IHCEntity, BinarySensorEntity):
     """IHC Binary Sensor.
 
     The associated IHC resource can be any in or output from a IHC product

@@ -1,7 +1,5 @@
 """Constants for Nettigo Air Monitor integration."""
 
-from __future__ import annotations
-
 from datetime import timedelta
 from typing import Final
 
@@ -11,6 +9,7 @@ SUFFIX_P1: Final = "_p1"
 SUFFIX_P2: Final = "_p2"
 SUFFIX_P4: Final = "_p4"
 
+ATTR_BH1750_ILLUMINANCE: Final = "bh1750_illuminance"
 ATTR_BME280_HUMIDITY: Final = "bme280_humidity"
 ATTR_BME280_PRESSURE: Final = "bme280_pressure"
 ATTR_BME280_TEMPERATURE: Final = "bme280_temperature"

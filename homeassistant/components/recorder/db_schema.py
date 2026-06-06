@@ -1,12 +1,10 @@
 """Models for SQLAlchemy."""
 
-from __future__ import annotations
-
 from collections.abc import Callable
 from datetime import datetime, timedelta
 import logging
 import time
-from typing import Any, Self, cast
+from typing import Any, Final, Protocol, Self
 
 import ciso8601
 from fnv_hash_fast import fnv1a_32
@@ -45,22 +43,16 @@ from homeassistant.const import (
     MAX_LENGTH_STATE_ENTITY_ID,
     MAX_LENGTH_STATE_STATE,
 )
-from homeassistant.core import Context, Event, EventOrigin, EventStateChangedData, State
+from homeassistant.core import Event, EventStateChangedData
 from homeassistant.helpers.json import JSON_DUMP, json_bytes, json_bytes_strip_null
-import homeassistant.util.dt as dt_util
-from homeassistant.util.json import (
-    JSON_DECODE_EXCEPTIONS,
-    json_loads,
-    json_loads_object,
-)
+from homeassistant.util import dt as dt_util
 
 from .const import ALL_DOMAIN_EXCLUDE_ATTRS, SupportedDialect
 from .models import (
     StatisticData,
     StatisticDataTimestamp,
+    StatisticMeanType,
     StatisticMetaData,
-    bytes_to_ulid_or_none,
-    bytes_to_uuid_hex_or_none,
     datetime_to_timestamp_or_none,
     process_timestamp,
     ulid_to_bytes_or_none,
@@ -77,7 +69,7 @@ class LegacyBase(DeclarativeBase):
     """Base class for tables, used for schema migration."""
 
 
-SCHEMA_VERSION = 47
+SCHEMA_VERSION = 53
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -130,10 +122,11 @@ METADATA_ID_LAST_UPDATED_INDEX_TS = "ix_states_metadata_id_last_updated_ts"
 EVENTS_CONTEXT_ID_BIN_INDEX = "ix_events_context_id_bin"
 STATES_CONTEXT_ID_BIN_INDEX = "ix_states_context_id_bin"
 LEGACY_STATES_EVENT_ID_INDEX = "ix_states_event_id"
-LEGACY_STATES_ENTITY_ID_LAST_UPDATED_INDEX = "ix_states_entity_id_last_updated_ts"
+LEGACY_STATES_ENTITY_ID_LAST_UPDATED_TS_INDEX = "ix_states_entity_id_last_updated_ts"
+LEGACY_MAX_LENGTH_EVENT_CONTEXT_ID: Final = 36
 CONTEXT_ID_BIN_MAX_LENGTH = 16
 
-MYSQL_COLLATE = "utf8mb4_unicode_ci"
+MYSQL_COLLATE = "utf8mb4_bin"
 MYSQL_DEFAULT_CHARSET = "utf8mb4"
 MYSQL_ENGINE = "InnoDB"
 
@@ -162,14 +155,14 @@ class Unused(CHAR):
     """An unused column type that behaves like a string."""
 
 
-@compiles(UnusedDateTime, "mysql", "mariadb", "sqlite")  # type: ignore[misc,no-untyped-call]
-@compiles(Unused, "mysql", "mariadb", "sqlite")  # type: ignore[misc,no-untyped-call]
+@compiles(UnusedDateTime, "mysql", "mariadb", "sqlite")
+@compiles(Unused, "mysql", "mariadb", "sqlite")
 def compile_char_zero(type_: TypeDecorator, compiler: Any, **kw: Any) -> str:
     """Compile UnusedDateTime and Unused as CHAR(0) on mysql, mariadb, and sqlite."""
     return "CHAR(0)"  # Uses 1 byte on MySQL (no change on sqlite)
 
 
-@compiles(Unused, "postgresql")  # type: ignore[misc,no-untyped-call]
+@compiles(Unused, "postgresql")
 def compile_char_one(type_: TypeDecorator, compiler: Any, **kw: Any) -> str:
     """Compile Unused as CHAR(1) on postgresql."""
     return "CHAR(1)"  # Uses 1 byte
@@ -184,39 +177,40 @@ class FAST_PYSQLITE_DATETIME(sqlite.DATETIME):
 
 
 class NativeLargeBinary(LargeBinary):
-    """A faster version of LargeBinary for engines that support python bytes natively."""
+    """A faster version of LargeBinary for native bytes engines."""
 
     def result_processor(self, dialect: Dialect, coltype: Any) -> Callable | None:
         """No conversion needed for engines that support native bytes."""
         return None
 
 
-# Although all integers are same in SQLite, it does not allow an identity column to be BIGINT
+# Although all integers are same in SQLite, it does not allow
+# an identity column to be BIGINT
 # https://sqlite.org/forum/info/2dfa968a702e1506e885cb06d92157d492108b22bf39459506ab9f7125bca7fd
 ID_TYPE = BigInteger().with_variant(sqlite.INTEGER, "sqlite")
 # For MariaDB and MySQL we can use an unsigned integer type since it will fit 2**32
 # for sqlite and postgresql we use a bigint
 UINT_32_TYPE = BigInteger().with_variant(
-    mysql.INTEGER(unsigned=True),  # type: ignore[no-untyped-call]
+    mysql.INTEGER(unsigned=True),
     "mysql",
     "mariadb",
 )
 JSON_VARIANT_CAST = Text().with_variant(
-    postgresql.JSON(none_as_null=True),  # type: ignore[no-untyped-call]
+    postgresql.JSON(none_as_null=True),
     "postgresql",
 )
 JSONB_VARIANT_CAST = Text().with_variant(
-    postgresql.JSONB(none_as_null=True),  # type: ignore[no-untyped-call]
+    postgresql.JSONB(none_as_null=True),
     "postgresql",
 )
 DATETIME_TYPE = (
     DateTime(timezone=True)
-    .with_variant(mysql.DATETIME(timezone=True, fsp=6), "mysql", "mariadb")  # type: ignore[no-untyped-call]
+    .with_variant(mysql.DATETIME(timezone=True, fsp=6), "mysql", "mariadb")
     .with_variant(FAST_PYSQLITE_DATETIME(), "sqlite")  # type: ignore[no-untyped-call]
 )
 DOUBLE_TYPE = (
     Float()
-    .with_variant(mysql.DOUBLE(asdecimal=False), "mysql", "mariadb")  # type: ignore[no-untyped-call]
+    .with_variant(mysql.DOUBLE(asdecimal=False), "mysql", "mariadb")
     .with_variant(oracle.DOUBLE_PRECISION(), "oracle")
     .with_variant(postgresql.DOUBLE_PRECISION(), "postgresql")
 )
@@ -232,10 +226,14 @@ CONTEXT_BINARY_TYPE = LargeBinary(CONTEXT_ID_BIN_MAX_LENGTH).with_variant(
 TIMESTAMP_TYPE = DOUBLE_TYPE
 
 
+class _LiteralProcessorType(Protocol):
+    def __call__(self, value: Any) -> str: ...
+
+
 class JSONLiteral(JSON):
     """Teach SA how to literalize json."""
 
-    def literal_processor(self, dialect: Dialect) -> Callable[[Any], str]:
+    def literal_processor(self, dialect: Dialect) -> _LiteralProcessorType:
         """Processor to convert a value to JSON."""
 
         def process(value: Any) -> str:
@@ -243,9 +241,6 @@ class JSONLiteral(JSON):
             return JSON_DUMP(value)
 
         return process
-
-
-EVENT_ORIGIN_ORDER = [EventOrigin.local, EventOrigin.remote]
 
 
 class Events(Base):
@@ -327,27 +322,16 @@ class Events(Base):
             context_parent_id_bin=ulid_to_bytes_or_none(context.parent_id),
         )
 
-    def to_native(self, validate_entity_id: bool = True) -> Event | None:
-        """Convert to a native HA Event."""
-        context = Context(
-            id=bytes_to_ulid_or_none(self.context_id_bin),
-            user_id=bytes_to_uuid_hex_or_none(self.context_user_id_bin),
-            parent_id=bytes_to_ulid_or_none(self.context_parent_id_bin),
-        )
-        try:
-            return Event(
-                self.event_type or "",
-                json_loads_object(self.event_data) if self.event_data else {},
-                EventOrigin(self.origin)
-                if self.origin
-                else EVENT_ORIGIN_ORDER[self.origin_idx or 0],
-                self.time_fired_ts or 0,
-                context=context,
-            )
-        except JSON_DECODE_EXCEPTIONS:
-            # When json_loads fails
-            _LOGGER.exception("Error converting to event: %s", self)
-            return None
+
+class LegacyEvents(LegacyBase):
+    """Event history data with event_id, used for schema migration."""
+
+    __table_args__ = (_DEFAULT_TABLE_ARGS,)
+    __tablename__ = TABLE_EVENTS
+    event_id: Mapped[int] = mapped_column(ID_TYPE, Identity(), primary_key=True)
+    context_id: Mapped[str | None] = mapped_column(
+        String(LEGACY_MAX_LENGTH_EVENT_CONTEXT_ID), index=True
+    )
 
 
 class EventData(Base):
@@ -375,9 +359,8 @@ class EventData(Base):
         event: Event, dialect: SupportedDialect | None
     ) -> bytes:
         """Create shared_data from an event."""
-        if dialect == SupportedDialect.POSTGRESQL:
-            bytes_result = json_bytes_strip_null(event.data)
-        bytes_result = json_bytes(event.data)
+        encoder = json_bytes_strip_null if dialect == PSQL_DIALECT else json_bytes
+        bytes_result = encoder(event.data)
         if len(bytes_result) > MAX_EVENT_DATA_BYTES:
             _LOGGER.warning(
                 "Event data for %s exceed maximum size of %s bytes. "
@@ -393,17 +376,6 @@ class EventData(Base):
     def hash_shared_data_bytes(shared_data_bytes: bytes) -> int:
         """Return the hash of json encoded shared data."""
         return fnv1a_32(shared_data_bytes)
-
-    def to_native(self) -> dict[str, Any]:
-        """Convert to an event data dictionary."""
-        shared_data = self.shared_data
-        if shared_data is None:
-            return {}
-        try:
-            return cast(dict[str, Any], json_loads(shared_data))
-        except JSON_DECODE_EXCEPTIONS:
-            _LOGGER.exception("Error converting row to event data: %s", self)
-            return {}
 
 
 class EventTypes(Base):
@@ -521,7 +493,7 @@ class States(Base):
         context = event.context
         return States(
             state=state_value,
-            entity_id=event.data["entity_id"],
+            entity_id=None,
             attributes=None,
             context_id=None,
             context_id_bin=ulid_to_bytes_or_none(context.id),
@@ -537,43 +509,27 @@ class States(Base):
             last_reported_ts=last_reported_ts,
         )
 
-    def to_native(self, validate_entity_id: bool = True) -> State | None:
-        """Convert to an HA state object."""
-        context = Context(
-            id=bytes_to_ulid_or_none(self.context_id_bin),
-            user_id=bytes_to_uuid_hex_or_none(self.context_user_id_bin),
-            parent_id=bytes_to_ulid_or_none(self.context_parent_id_bin),
-        )
-        try:
-            attrs = json_loads_object(self.attributes) if self.attributes else {}
-        except JSON_DECODE_EXCEPTIONS:
-            # When json_loads fails
-            _LOGGER.exception("Error converting row to state: %s", self)
-            return None
-        last_updated = dt_util.utc_from_timestamp(self.last_updated_ts or 0)
-        if self.last_changed_ts is None or self.last_changed_ts == self.last_updated_ts:
-            last_changed = dt_util.utc_from_timestamp(self.last_updated_ts or 0)
-        else:
-            last_changed = dt_util.utc_from_timestamp(self.last_changed_ts or 0)
-        if (
-            self.last_reported_ts is None
-            or self.last_reported_ts == self.last_updated_ts
-        ):
-            last_reported = dt_util.utc_from_timestamp(self.last_updated_ts or 0)
-        else:
-            last_reported = dt_util.utc_from_timestamp(self.last_reported_ts or 0)
-        return State(
-            self.entity_id or "",
-            self.state,  # type: ignore[arg-type]
-            # Join the state_attributes table on attributes_id to get the attributes
-            # for newer states
-            attrs,
-            last_changed=last_changed,
-            last_reported=last_reported,
-            last_updated=last_updated,
-            context=context,
-            validate_entity_id=validate_entity_id,
-        )
+
+class LegacyStates(LegacyBase):
+    """State change history with entity_id, used for schema migration."""
+
+    __table_args__ = (
+        Index(
+            LEGACY_STATES_ENTITY_ID_LAST_UPDATED_TS_INDEX,
+            "entity_id",
+            "last_updated_ts",
+        ),
+        _DEFAULT_TABLE_ARGS,
+    )
+    __tablename__ = TABLE_STATES
+    state_id: Mapped[int] = mapped_column(ID_TYPE, Identity(), primary_key=True)
+    entity_id: Mapped[str | None] = mapped_column(UNUSED_LEGACY_COLUMN)
+    last_updated_ts: Mapped[float | None] = mapped_column(
+        TIMESTAMP_TYPE, default=time.time, index=True
+    )
+    context_id: Mapped[str | None] = mapped_column(
+        String(LEGACY_MAX_LENGTH_EVENT_CONTEXT_ID), index=True
+    )
 
 
 class StateAttributes(Base):
@@ -637,18 +593,6 @@ class StateAttributes(Base):
         """Return the hash of json encoded shared attributes."""
         return fnv1a_32(shared_attrs_bytes)
 
-    def to_native(self) -> dict[str, Any]:
-        """Convert to a state attributes dictionary."""
-        shared_attrs = self.shared_attrs
-        if shared_attrs is None:
-            return {}
-        try:
-            return cast(dict[str, Any], json_loads(shared_attrs))
-        except JSON_DECODE_EXCEPTIONS:
-            # When json_loads fails
-            _LOGGER.exception("Error converting row to state attributes: %s", self)
-            return {}
-
 
 class StatesMeta(Base):
     """Metadata for states."""
@@ -682,6 +626,7 @@ class StatisticsBase:
     start: Mapped[datetime | None] = mapped_column(UNUSED_LEGACY_DATETIME_COLUMN)
     start_ts: Mapped[float | None] = mapped_column(TIMESTAMP_TYPE, index=True)
     mean: Mapped[float | None] = mapped_column(DOUBLE_TYPE)
+    mean_weight: Mapped[float | None] = mapped_column(DOUBLE_TYPE)
     min: Mapped[float | None] = mapped_column(DOUBLE_TYPE)
     max: Mapped[float | None] = mapped_column(DOUBLE_TYPE)
     last_reset: Mapped[datetime | None] = mapped_column(UNUSED_LEGACY_DATETIME_COLUMN)
@@ -692,15 +637,18 @@ class StatisticsBase:
     duration: timedelta
 
     @classmethod
-    def from_stats(cls, metadata_id: int, stats: StatisticData) -> Self:
-        """Create object from a statistics with datatime objects."""
+    def from_stats(
+        cls, metadata_id: int, stats: StatisticData, now_timestamp: float | None = None
+    ) -> Self:
+        """Create object from a statistics with datetime objects."""
         return cls(  # type: ignore[call-arg]
             metadata_id=metadata_id,
             created=None,
-            created_ts=time.time(),
+            created_ts=now_timestamp or time.time(),
             start=None,
-            start_ts=dt_util.utc_to_timestamp(stats["start"]),
+            start_ts=stats["start"].timestamp(),
             mean=stats.get("mean"),
+            mean_weight=stats.get("mean_weight"),
             min=stats.get("min"),
             max=stats.get("max"),
             last_reset=None,
@@ -710,15 +658,21 @@ class StatisticsBase:
         )
 
     @classmethod
-    def from_stats_ts(cls, metadata_id: int, stats: StatisticDataTimestamp) -> Self:
+    def from_stats_ts(
+        cls,
+        metadata_id: int,
+        stats: StatisticDataTimestamp,
+        now_timestamp: float | None = None,
+    ) -> Self:
         """Create object from a statistics with timestamps."""
         return cls(  # type: ignore[call-arg]
             metadata_id=metadata_id,
             created=None,
-            created_ts=time.time(),
+            created_ts=now_timestamp or time.time(),
             start=None,
             start_ts=stats["start_ts"],
             mean=stats.get("mean"),
+            mean_weight=stats.get("mean_weight"),
             min=stats.get("min"),
             max=stats.get("max"),
             last_reset=None,
@@ -801,9 +755,13 @@ class _StatisticsMeta:
     )
     source: Mapped[str | None] = mapped_column(String(32))
     unit_of_measurement: Mapped[str | None] = mapped_column(String(255))
+    unit_class: Mapped[str | None] = mapped_column(String(255))
     has_mean: Mapped[bool | None] = mapped_column(Boolean)
     has_sum: Mapped[bool | None] = mapped_column(Boolean)
     name: Mapped[str | None] = mapped_column(String(255))
+    mean_type: Mapped[StatisticMeanType] = mapped_column(
+        SmallInteger, nullable=False, default=StatisticMeanType.NONE.value
+    )  # See StatisticMeanType
 
     @staticmethod
     def from_meta(meta: StatisticMetaData) -> StatisticsMeta:
@@ -851,10 +809,6 @@ class RecorderRuns(Base):
             f" closed_incorrect={self.closed_incorrect},"
             f" created='{self.created.isoformat(sep=' ', timespec='seconds')}')>"
         )
-
-    def to_native(self, validate_entity_id: bool = True) -> Self:
-        """Return self, native format is this model."""
-        return self
 
 
 class MigrationChanges(Base):

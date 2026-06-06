@@ -1,7 +1,5 @@
 """Describe bthome logbook events."""
 
-from __future__ import annotations
-
 from collections.abc import Callable
 
 from homeassistant.components.logbook import LOGBOOK_ENTRY_MESSAGE, LOGBOOK_ENTRY_NAME
@@ -26,7 +24,7 @@ def async_describe_events(
         """Describe bthome logbook event."""
         data = event.data
         device = dev_reg.async_get(data["device_id"])
-        name = device and device.name or f'BTHome {data["address"]}'
+        name = (device and device.name) or f"BTHome {data['address']}"
         if properties := data["event_properties"]:
             message = f"{data['event_class']} {data['event_type']}: {properties}"
         else:

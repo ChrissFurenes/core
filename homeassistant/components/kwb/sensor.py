@@ -1,7 +1,5 @@
 """Support for KWB Easyfire."""
 
-from __future__ import annotations
-
 from pykwb import kwb
 import voluptuous as vol
 
@@ -18,7 +16,7 @@ from homeassistant.const import (
     EVENT_HOMEASSISTANT_STOP,
 )
 from homeassistant.core import HomeAssistant
-import homeassistant.helpers.config_validation as cv
+from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
 

@@ -1,7 +1,5 @@
 """Config flow for flume integration."""
 
-from __future__ import annotations
-
 from collections.abc import Mapping
 import logging
 import os
@@ -111,7 +109,12 @@ class FlumeConfigFlow(ConfigFlow, domain=DOMAIN):
                 errors[CONF_PASSWORD] = "invalid_auth"
 
         return self.async_show_form(
-            step_id="user", data_schema=DATA_SCHEMA, errors=errors
+            step_id="user",
+            data_schema=DATA_SCHEMA,
+            errors=errors,
+            description_placeholders={
+                "api_url": "https://portal.flumetech.com/settings#token"
+            },
         )
 
     async def async_step_reauth(

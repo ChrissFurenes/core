@@ -1,6 +1,6 @@
 """Support for SimpliSafe freeze sensor."""
 
-from __future__ import annotations
+from typing import TYPE_CHECKING, cast
 
 from simplipy.device import DeviceTypes
 from simplipy.device.sensor.v3 import SensorV3
@@ -11,31 +11,35 @@ from homeassistant.components.sensor import (
     SensorEntity,
     SensorStateClass,
 )
-from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import UnitOfTemperature
 from homeassistant.core import HomeAssistant, callback
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
-from . import SimpliSafe, SimpliSafeEntity
-from .const import DOMAIN, LOGGER
+from . import SimpliSafe, SimpliSafeConfigEntry
+from .const import LOGGER
+from .entity import SimpliSafeEntity
 
 
 async def async_setup_entry(
-    hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback
+    hass: HomeAssistant,
+    entry: SimpliSafeConfigEntry,
+    async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up SimpliSafe freeze sensors based on a config entry."""
-    simplisafe = hass.data[DOMAIN][entry.entry_id]
+    simplisafe = entry.runtime_data
     sensors: list[SimplisafeFreezeSensor] = []
 
     for system in simplisafe.systems.values():
         if system.version == 2:
-            LOGGER.info("Skipping sensor setup for V2 system: %s", system.system_id)
+            LOGGER.warning("Skipping sensor setup for V2 system: %s", system.system_id)
             continue
 
+        if TYPE_CHECKING:
+            assert isinstance(system, SystemV3)
         sensors.extend(
-            SimplisafeFreezeSensor(simplisafe, system, sensor)
+            SimplisafeFreezeSensor(simplisafe, system, cast(SensorV3, sensor))
             for sensor in system.sensors.values()
-            if sensor.type == DeviceTypes.TEMPERATURE
+            if sensor.type is DeviceTypes.TEMPERATURE
         )
 
     async_add_entities(sensors)

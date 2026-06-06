@@ -1,22 +1,18 @@
 """Support for Rabbit Air fan entity."""
 
-from __future__ import annotations
-
 from typing import Any
 
 from rabbitair import Mode, Model, Speed
 
 from homeassistant.components.fan import FanEntity, FanEntityFeature
-from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant, callback
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 from homeassistant.util.percentage import (
     ordered_list_item_to_percentage,
     percentage_to_ordered_list_item,
 )
 
-from .const import DOMAIN
-from .coordinator import RabbitAirDataUpdateCoordinator
+from .coordinator import RabbitAirConfigEntry, RabbitAirDataUpdateCoordinator
 from .entity import RabbitAirBaseEntity
 
 SPEED_LIST = [
@@ -39,11 +35,12 @@ PRESET_MODES = {
 
 
 async def async_setup_entry(
-    hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback
+    hass: HomeAssistant,
+    entry: RabbitAirConfigEntry,
+    async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up a config entry."""
-    coordinator: RabbitAirDataUpdateCoordinator = hass.data[DOMAIN][entry.entry_id]
-    async_add_entities([RabbitAirFanEntity(coordinator, entry)])
+    async_add_entities([RabbitAirFanEntity(entry.runtime_data, entry)])
 
 
 class RabbitAirFanEntity(RabbitAirBaseEntity, FanEntity):
@@ -55,12 +52,11 @@ class RabbitAirFanEntity(RabbitAirBaseEntity, FanEntity):
         | FanEntityFeature.TURN_ON
         | FanEntityFeature.TURN_OFF
     )
-    _enable_turn_on_off_backwards_compatibility = False
 
     def __init__(
         self,
         coordinator: RabbitAirDataUpdateCoordinator,
-        entry: ConfigEntry,
+        entry: RabbitAirConfigEntry,
     ) -> None:
         """Initialize the entity."""
         super().__init__(coordinator, entry)
@@ -105,7 +101,7 @@ class RabbitAirFanEntity(RabbitAirBaseEntity, FanEntity):
         else:
             # Get key by value in dictionary
             self._attr_preset_mode = next(
-                k for k, v in PRESET_MODES.items() if v == data.mode
+                k for k, v in PRESET_MODES.items() if v is data.mode
             )
 
     async def async_set_preset_mode(self, preset_mode: str) -> None:

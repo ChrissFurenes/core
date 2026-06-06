@@ -1,12 +1,11 @@
 """Config flow for Trend integration."""
 
-from __future__ import annotations
-
 from collections.abc import Mapping
 from typing import Any, cast
 
 import voluptuous as vol
 
+from homeassistant.components.counter import DOMAIN as COUNTER_DOMAIN
 from homeassistant.components.sensor import DOMAIN as SENSOR_DOMAIN
 from homeassistant.const import CONF_ATTRIBUTE, CONF_ENTITY_ID, CONF_NAME, UnitOfTime
 from homeassistant.helpers import selector
@@ -29,11 +28,16 @@ from .const import (
     DOMAIN,
 )
 
+ALLOWED_DOMAINS = [COUNTER_DOMAIN, SENSOR_DOMAIN]
+
 
 async def get_base_options_schema(handler: SchemaCommonFlowHandler) -> vol.Schema:
     """Get base options schema."""
     return vol.Schema(
         {
+            vol.Optional(CONF_ENTITY_ID): selector.EntitySelector(
+                selector.EntitySelectorConfig(multiple=False, read_only=True),
+            ),
             vol.Optional(CONF_ATTRIBUTE): selector.AttributeSelector(
                 selector.AttributeSelectorConfig(
                     entity_id=handler.options[CONF_ENTITY_ID]
@@ -89,7 +93,7 @@ CONFIG_SCHEMA = vol.Schema(
     {
         vol.Required(CONF_NAME): selector.TextSelector(),
         vol.Required(CONF_ENTITY_ID): selector.EntitySelector(
-            selector.EntitySelectorConfig(domain=SENSOR_DOMAIN, multiple=False),
+            selector.EntitySelectorConfig(domain=ALLOWED_DOMAINS, multiple=False),
         ),
     }
 )
@@ -98,6 +102,8 @@ CONFIG_SCHEMA = vol.Schema(
 class ConfigFlowHandler(SchemaConfigFlowHandler, domain=DOMAIN):
     """Handle a config or options flow for Trend."""
 
+    MINOR_VERSION = 2
+
     config_flow = {
         "user": SchemaFlowFormStep(schema=CONFIG_SCHEMA, next_step="settings"),
         "settings": SchemaFlowFormStep(get_base_options_schema),
@@ -105,6 +111,7 @@ class ConfigFlowHandler(SchemaConfigFlowHandler, domain=DOMAIN):
     options_flow = {
         "init": SchemaFlowFormStep(get_extended_options_schema),
     }
+    options_flow_reloads = True
 
     def async_config_entry_title(self, options: Mapping[str, Any]) -> str:
         """Return config entry title."""

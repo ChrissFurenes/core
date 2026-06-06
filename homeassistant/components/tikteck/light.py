@@ -1,7 +1,5 @@
 """Support for Tikteck lights."""
 
-from __future__ import annotations
-
 import logging
 from typing import Any
 
@@ -17,10 +15,10 @@ from homeassistant.components.light import (
 )
 from homeassistant.const import CONF_DEVICES, CONF_NAME, CONF_PASSWORD
 from homeassistant.core import HomeAssistant
-import homeassistant.helpers.config_validation as cv
+from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
-import homeassistant.util.color as color_util
+from homeassistant.util import color as color_util
 
 _LOGGER = logging.getLogger(__name__)
 

@@ -1,7 +1,5 @@
 """Support for Matrix notifications."""
 
-from __future__ import annotations
-
 from typing import Any
 
 import voluptuous as vol
@@ -14,7 +12,7 @@ from homeassistant.components.notify import (
     BaseNotificationService,
 )
 from homeassistant.core import HomeAssistant
-import homeassistant.helpers.config_validation as cv
+from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
 
 from . import RoomID

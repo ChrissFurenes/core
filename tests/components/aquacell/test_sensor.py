@@ -1,10 +1,8 @@
 """Test the Aquacell init module."""
 
-from __future__ import annotations
-
 from unittest.mock import AsyncMock
 
-from syrupy import SnapshotAssertion
+from syrupy.assertion import SnapshotAssertion
 
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import entity_registry as er

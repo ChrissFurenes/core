@@ -1,13 +1,11 @@
 """Diagnostics support for myUplink."""
 
-from __future__ import annotations
-
 from typing import Any
 
 from homeassistant.components.diagnostics import async_redact_data
 from homeassistant.core import HomeAssistant
 
-from . import MyUplinkConfigEntry
+from .coordinator import MyUplinkConfigEntry
 
 TO_REDACT = {"access_token", "refresh_token", "serialNumber"}
 

@@ -1,10 +1,8 @@
 """Parent class for every Overkiz device."""
 
-from __future__ import annotations
-
 from typing import cast
 
-from pyoverkiz.enums import OverkizAttribute, OverkizState
+from pyoverkiz.enums import APIType, OverkizAttribute, OverkizCommandParam, OverkizState
 from pyoverkiz.models import Device
 
 from homeassistant.helpers.device_registry import DeviceInfo
@@ -35,7 +33,6 @@ class OverkizEntity(CoordinatorEntity[OverkizDataUpdateCoordinator]):
         self.executor = OverkizExecutor(device_url, coordinator)
 
         self._attr_assumed_state = not self.device.states
-        self._attr_available = self.device.available
         self._attr_unique_id = self.device.device_url
 
         if self.is_sub_device:
@@ -43,6 +40,25 @@ class OverkizEntity(CoordinatorEntity[OverkizDataUpdateCoordinator]):
             self._attr_name = self.device.label
 
         self._attr_device_info = self.generate_device_info()
+
+    @property
+    def available(self) -> bool:
+        """Return True if entity is available."""
+        if self.device.available:
+            return super().available
+
+        # Workaround: local API may incorrectly report
+        # available=False (Somfy-TaHoma-Developer-Mode#217)
+        if self.coordinator.client.api_type != APIType.LOCAL:
+            return False
+
+        if status_state := self.device.states.get(OverkizState.CORE_STATUS):
+            return (
+                status_state.value == OverkizCommandParam.AVAILABLE
+                and super().available
+            )
+
+        return False
 
     @property
     def is_sub_device(self) -> bool:
@@ -78,7 +94,7 @@ class OverkizEntity(CoordinatorEntity[OverkizDataUpdateCoordinator]):
                 OverkizState.CORE_PRODUCT_MODEL_NAME,
                 OverkizState.IO_MODEL,
             )
-            or self.device.widget.value
+            or self.device.ui_class.value
         )
 
         suggested_area = (
@@ -96,6 +112,7 @@ class OverkizEntity(CoordinatorEntity[OverkizDataUpdateCoordinator]):
                 str,
                 self.executor.select_attribute(OverkizAttribute.CORE_FIRMWARE_REVISION),
             ),
+            model_id=self.device.widget,
             hw_version=self.device.controllable_name,
             suggested_area=suggested_area,
             via_device=(DOMAIN, self.executor.get_gateway_id()),

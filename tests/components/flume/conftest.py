@@ -3,8 +3,7 @@
 from collections.abc import Generator
 import datetime
 from http import HTTPStatus
-import json
-from unittest.mock import mock_open, patch
+from unittest.mock import patch
 
 import jwt
 import pytest
@@ -42,6 +41,7 @@ SENSOR_DEVICE = {
     "type": 2,  # Sensor
     "location": {
         "name": "Sensor Location",
+        "tz": "America/New_York",
     },
     "name": "Flume Sensor",
     "connected": True,
@@ -53,7 +53,11 @@ NOTIFICATION = {
     "device_id": "6248148189204194987",
     "user_id": USER_ID,
     "type": 1,
-    "message": "Low Flow Leak triggered at Home. Water has been running for 2 hours averaging 0.43 gallons every minute.",
+    "message": (
+        "Low Flow Leak triggered at Home."
+        " Water has been running for 2 hours"
+        " averaging 0.43 gallons every minute."
+    ),
     "created_datetime": "2020-01-15T16:33:39.000Z",
     "title": "Potential Leak Detected!",
     "read": True,
@@ -116,7 +120,7 @@ def access_token_fixture(requests_mock: Mocker) -> Generator[None]:
         status_code=HTTPStatus.OK,
         json={"data": [token_response]},
     )
-    with patch("builtins.open", mock_open(read_data=json.dumps(token_response))):
+    with patch("homeassistant.components.flume.coordinator.FlumeAuth.write_token_file"):
         yield
 
 

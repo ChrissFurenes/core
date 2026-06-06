@@ -1,7 +1,5 @@
 """Extend the basic Accessory and Bridge functions."""
 
-from __future__ import annotations
-
 import logging
 from typing import Any, cast
 from uuid import UUID
@@ -15,6 +13,7 @@ from pyhap.service import Service
 from pyhap.util import callback as pyhap_callback
 
 from homeassistant.components.cover import CoverDeviceClass, CoverEntityFeature
+from homeassistant.components.lawn_mower import LawnMowerEntityFeature
 from homeassistant.components.media_player import MediaPlayerDeviceClass
 from homeassistant.components.remote import RemoteEntityFeature
 from homeassistant.components.sensor import SensorDeviceClass
@@ -84,6 +83,8 @@ from .const import (
     SERV_ACCESSORY_INFO,
     SERV_BATTERY_SERVICE,
     SIGNAL_RELOAD_ENTITIES,
+    TYPE_AIR_PURIFIER,
+    TYPE_FAN,
     TYPE_FAUCET,
     TYPE_OUTLET,
     TYPE_SHOWER,
@@ -110,6 +111,10 @@ SWITCH_TYPES = {
     TYPE_SPRINKLER: "ValveSwitch",
     TYPE_SWITCH: "Switch",
     TYPE_VALVE: "ValveSwitch",
+}
+FAN_TYPES = {
+    TYPE_AIR_PURIFIER: "AirPurifier",
+    TYPE_FAN: "Fan",
 }
 TYPES: Registry[str, type[HomeAccessory]] = Registry()
 
@@ -177,7 +182,10 @@ def get_accessory(  # noqa: C901
             a_type = "WindowCovering"
 
     elif state.domain == "fan":
-        a_type = "Fan"
+        if fan_type := config.get(CONF_TYPE):
+            a_type = FAN_TYPES[fan_type]
+        else:
+            a_type = "Fan"
 
     elif state.domain == "humidifier":
         a_type = "HumidifierDehumidifier"
@@ -210,31 +218,40 @@ def get_accessory(  # noqa: C901
             a_type = "TemperatureSensor"
         elif device_class == SensorDeviceClass.HUMIDITY and unit == PERCENTAGE:
             a_type = "HumiditySensor"
-        elif (
-            device_class == SensorDeviceClass.PM10
-            or SensorDeviceClass.PM10 in state.entity_id
-        ):
+        elif device_class == SensorDeviceClass.PM10:
             a_type = "PM10Sensor"
-        elif (
-            device_class == SensorDeviceClass.PM25
-            or SensorDeviceClass.PM25 in state.entity_id
-        ):
+        elif device_class == SensorDeviceClass.PM25:
             a_type = "PM25Sensor"
         elif device_class == SensorDeviceClass.NITROGEN_DIOXIDE:
             a_type = "NitrogenDioxideSensor"
         elif device_class == SensorDeviceClass.VOLATILE_ORGANIC_COMPOUNDS:
             a_type = "VolatileOrganicCompoundsSensor"
-        elif (
-            device_class == SensorDeviceClass.GAS
-            or SensorDeviceClass.GAS in state.entity_id
-        ):
+        elif device_class == SensorDeviceClass.GAS:
             a_type = "AirQualitySensor"
         elif device_class == SensorDeviceClass.CO:
             a_type = "CarbonMonoxideSensor"
-        elif device_class == SensorDeviceClass.CO2 or "co2" in state.entity_id:
+        elif device_class == SensorDeviceClass.CO2:
             a_type = "CarbonDioxideSensor"
         elif device_class == SensorDeviceClass.ILLUMINANCE or unit == LIGHT_LUX:
             a_type = "LightSensor"
+
+        # Fallbacks based on entity_id
+        elif SensorDeviceClass.PM10 in state.entity_id:
+            a_type = "PM10Sensor"
+        elif SensorDeviceClass.PM25 in state.entity_id:
+            a_type = "PM25Sensor"
+        elif SensorDeviceClass.GAS in state.entity_id:
+            a_type = "AirQualitySensor"
+        elif "co2" in state.entity_id:
+            a_type = "CarbonDioxideSensor"
+
+        else:
+            _LOGGER.debug(
+                "%s: Unsupported sensor type (device_class=%s) (unit=%s)",
+                state.entity_id,
+                device_class,
+                unit,
+            )
 
     elif state.domain == "switch":
         if switch_type := config.get(CONF_TYPE):
@@ -249,6 +266,13 @@ def get_accessory(  # noqa: C901
 
     elif state.domain == "vacuum":
         a_type = "Vacuum"
+
+    elif (
+        state.domain == "lawn_mower"
+        and features & LawnMowerEntityFeature.DOCK
+        and features & LawnMowerEntityFeature.START_MOWING
+    ):
+        a_type = "LawnMower"
 
     elif state.domain == "remote" and features & RemoteEntityFeature.ACTIVITY:
         a_type = "ActivityRemote"
@@ -432,7 +456,7 @@ class HomeAccessory(Accessory):  # type: ignore[misc]
         return self._available
 
     @ha_callback
-    @pyhap_callback  # type: ignore[misc]
+    @pyhap_callback  # type: ignore[untyped-decorator]
     def run(self) -> None:
         """Handle accessory driver started event."""
         if state := self.hass.states.get(self.entity_id):
@@ -503,7 +527,8 @@ class HomeAccessory(Accessory):  # type: ignore[misc]
             for attr in self._reload_on_change_attrs:
                 if old_attributes.get(attr) != new_attributes.get(attr):
                     _LOGGER.debug(
-                        "%s: Reloading HomeKit accessory since %s has changed from %s -> %s",
+                        "%s: Reloading HomeKit accessory since"
+                        " %s has changed from %s -> %s",
                         self.entity_id,
                         attr,
                         old_attributes.get(attr),
@@ -604,12 +629,12 @@ class HomeAccessory(Accessory):  # type: ignore[misc]
         self,
         domain: str,
         service: str,
-        service_data: dict[str, Any] | None,
+        service_data: dict[str, Any],
         value: Any | None = None,
     ) -> None:
         """Fire event and call service for changes from HomeKit."""
         event_data = {
-            ATTR_ENTITY_ID: self.entity_id,
+            ATTR_ENTITY_ID: service_data.get(ATTR_ENTITY_ID, self.entity_id),
             ATTR_DISPLAY_NAME: self.display_name,
             ATTR_SERVICE: service,
             ATTR_VALUE: value,
@@ -626,7 +651,10 @@ class HomeAccessory(Accessory):  # type: ignore[misc]
 
     @ha_callback
     def async_reload(self) -> None:
-        """Reload and recreate an accessory and update the c# value in the mDNS record."""
+        """Reload and recreate an accessory.
+
+        Update the c# value in the mDNS record.
+        """
         async_dispatcher_send(
             self.hass,
             SIGNAL_RELOAD_ENTITIES.format(self.driver.entry_id),
@@ -701,7 +729,7 @@ class HomeDriver(AccessoryDriver):  # type: ignore[misc]
         self._entry_title = entry_title
         self.iid_storage = iid_storage
 
-    @pyhap_callback  # type: ignore[misc]
+    @pyhap_callback  # type: ignore[untyped-decorator]
     def pair(
         self, client_username_bytes: bytes, client_public: str, client_permissions: int
     ) -> bool:
@@ -711,7 +739,7 @@ class HomeDriver(AccessoryDriver):  # type: ignore[misc]
             async_dismiss_setup_message(self.hass, self.entry_id)
         return cast(bool, success)
 
-    @pyhap_callback  # type: ignore[misc]
+    @pyhap_callback  # type: ignore[untyped-decorator]
     def unpair(self, client_uuid: UUID) -> None:
         """Override super function to show setup message if unpaired."""
         super().unpair(client_uuid)

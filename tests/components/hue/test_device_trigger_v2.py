@@ -9,6 +9,7 @@ from homeassistant.components import hue
 from homeassistant.components.device_automation import DeviceAutomationType
 from homeassistant.components.hue.v2.device import async_setup_devices
 from homeassistant.components.hue.v2.hue_event import async_setup_hue_events
+from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import device_registry as dr, entity_registry as er
 from homeassistant.util.json import JsonArrayType
@@ -23,7 +24,9 @@ async def test_hue_event(
 ) -> None:
     """Test hue button events."""
     await mock_bridge_v2.api.load_test_data(v2_resources_test_data)
-    await setup_platform(hass, mock_bridge_v2, ["binary_sensor", "sensor"])
+    await setup_platform(
+        hass, mock_bridge_v2, [Platform.BINARY_SENSOR, Platform.SENSOR]
+    )
     await async_setup_devices(mock_bridge_v2)
     await async_setup_hue_events(mock_bridge_v2)
 
@@ -62,7 +65,9 @@ async def test_get_triggers(
 ) -> None:
     """Test we get the expected triggers from a hue remote."""
     await mock_bridge_v2.api.load_test_data(v2_resources_test_data)
-    await setup_platform(hass, mock_bridge_v2, ["binary_sensor", "sensor"])
+    await setup_platform(
+        hass, mock_bridge_v2, [Platform.BINARY_SENSOR, Platform.SENSOR]
+    )
 
     # Get triggers for `Wall switch with 2 controls`
     hue_wall_switch_device = device_registry.async_get_device(
@@ -111,3 +116,30 @@ async def test_get_triggers(
     ]
 
     assert triggers == unordered(expected_triggers)
+
+
+async def test_get_triggers_for_removed_device(
+    hass: HomeAssistant,
+    mock_bridge_v2: Mock,
+    v2_resources_test_data: JsonArrayType,
+    device_registry: dr.DeviceRegistry,
+) -> None:
+    """Test triggers for a device removed from the bridge.
+
+    Regression test for https://github.com/home-assistant/core/issues/152937
+    """
+    await mock_bridge_v2.api.load_test_data(v2_resources_test_data)
+    await setup_platform(
+        hass, mock_bridge_v2, [Platform.BINARY_SENSOR, Platform.SENSOR]
+    )
+
+    # Create a device entry with a Hue ID that doesn't exist on the bridge
+    orphaned_device = device_registry.async_get_or_create(
+        config_entry_id=mock_bridge_v2.config_entry.entry_id,
+        identifiers={(hue.DOMAIN, "non-existent-hue-device-id")},
+    )
+
+    triggers = await async_get_device_automations(
+        hass, DeviceAutomationType.TRIGGER, orphaned_device.id
+    )
+    assert triggers == []

@@ -1,7 +1,5 @@
 """InfluxDB component which allows you to get data from an Influx database."""
 
-from __future__ import annotations
-
 import datetime
 import logging
 from typing import Final
@@ -23,7 +21,7 @@ from homeassistant.const import (
 )
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import PlatformNotReady, TemplateError
-import homeassistant.helpers.config_validation as cv
+from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
 from homeassistant.util import Throttle

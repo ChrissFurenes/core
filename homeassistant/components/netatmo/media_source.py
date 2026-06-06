@@ -1,18 +1,18 @@
 """Netatmo Media Source Implementation."""
-
-from __future__ import annotations
+# pylint: disable=home-assistant-use-runtime-data  # Uses legacy hass.data[DOMAIN] pattern
 
 import datetime as dt
 import logging
 import re
 
 from homeassistant.components.media_player import BrowseError, MediaClass, MediaType
-from homeassistant.components.media_source.error import MediaSourceError, Unresolvable
-from homeassistant.components.media_source.models import (
+from homeassistant.components.media_source import (
     BrowseMediaSource,
     MediaSource,
+    MediaSourceError,
     MediaSourceItem,
     PlayMedia,
+    Unresolvable,
 )
 from homeassistant.core import HomeAssistant, callback
 

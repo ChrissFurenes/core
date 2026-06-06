@@ -1,7 +1,5 @@
 """Switch logic for loading/unloading pulseaudio loopback modules."""
 
-from __future__ import annotations
-
 import logging
 from typing import Any
 
@@ -14,7 +12,7 @@ from homeassistant.components.switch import (
 )
 from homeassistant.const import CONF_HOST, CONF_NAME, CONF_PORT
 from homeassistant.core import HomeAssistant
-import homeassistant.helpers.config_validation as cv
+from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
 
@@ -115,7 +113,7 @@ class PALoopbackSwitch(SwitchEntity):
         return self._name
 
     @property
-    def is_on(self):
+    def is_on(self) -> bool:
         """Return true if device is on."""
         return self._module_idx is not None
 

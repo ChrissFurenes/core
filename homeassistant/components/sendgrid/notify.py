@@ -1,9 +1,8 @@
 """SendGrid notification service."""
 
-from __future__ import annotations
-
 from http import HTTPStatus
 import logging
+from typing import Any
 
 from sendgrid import SendGridAPIClient
 import voluptuous as vol
@@ -21,7 +20,7 @@ from homeassistant.const import (
     CONTENT_TYPE_TEXT_PLAIN,
 )
 from homeassistant.core import HomeAssistant
-import homeassistant.helpers.config_validation as cv
+from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
 
 _LOGGER = logging.getLogger(__name__)
@@ -61,7 +60,7 @@ class SendgridNotificationService(BaseNotificationService):
 
         self._sg = SendGridAPIClient(self.api_key)
 
-    def send_message(self, message="", **kwargs):
+    def send_message(self, message: str = "", **kwargs: Any) -> None:
         """Send an email to a user via SendGrid."""
         subject = kwargs.get(ATTR_TITLE, ATTR_TITLE_DEFAULT)
 

@@ -1,13 +1,15 @@
 # serializer version: 1
 # name: test_sensors[AA:AA:AA:AA:AA:AA][sensor.station_a_absolute_pressure-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': dict({
       'state_class': <SensorStateClass.MEASUREMENT: 'measurement'>,
     }),
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -21,6 +23,7 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Absolute pressure',
     'options': dict({
       'sensor': dict({
         'suggested_display_precision': 1,
@@ -34,6 +37,7 @@
     'original_name': 'Absolute pressure',
     'platform': 'ambient_network',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'absolute_pressure',
     'unique_id': 'AA:AA:AA:AA:AA:AA_baromabsin',
@@ -60,13 +64,15 @@
 # ---
 # name: test_sensors[AA:AA:AA:AA:AA:AA][sensor.station_a_daily_rain-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': dict({
-      'state_class': <SensorStateClass.TOTAL: 'total'>,
+      'state_class': <SensorStateClass.TOTAL_INCREASING: 'total_increasing'>,
     }),
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -80,6 +86,7 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Daily rain',
     'options': dict({
       'sensor': dict({
         'suggested_display_precision': 1,
@@ -93,6 +100,7 @@
     'original_name': 'Daily rain',
     'platform': 'ambient_network',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'daily_rain',
     'unique_id': 'AA:AA:AA:AA:AA:AA_dailyrainin',
@@ -106,7 +114,7 @@
       'device_class': 'precipitation',
       'friendly_name': 'Station A Daily rain',
       'last_measured': HAFakeDatetime(2023, 11, 8, 12, 12, 0, 914000, tzinfo=zoneinfo.ZoneInfo(key='US/Pacific')),
-      'state_class': <SensorStateClass.TOTAL: 'total'>,
+      'state_class': <SensorStateClass.TOTAL_INCREASING: 'total_increasing'>,
       'unit_of_measurement': <UnitOfLength.MILLIMETERS: 'mm'>,
     }),
     'context': <ANY>,
@@ -119,13 +127,15 @@
 # ---
 # name: test_sensors[AA:AA:AA:AA:AA:AA][sensor.station_a_dew_point-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': dict({
       'state_class': <SensorStateClass.MEASUREMENT: 'measurement'>,
     }),
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -139,6 +149,7 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Dew point',
     'options': dict({
       'sensor': dict({
         'suggested_display_precision': 1,
@@ -149,6 +160,7 @@
     'original_name': 'Dew point',
     'platform': 'ambient_network',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'dew_point',
     'unique_id': 'AA:AA:AA:AA:AA:AA_dewPoint',
@@ -175,13 +187,15 @@
 # ---
 # name: test_sensors[AA:AA:AA:AA:AA:AA][sensor.station_a_feels_like-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': dict({
       'state_class': <SensorStateClass.MEASUREMENT: 'measurement'>,
     }),
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -195,6 +209,7 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Feels like',
     'options': dict({
       'sensor': dict({
         'suggested_display_precision': 1,
@@ -205,6 +220,7 @@
     'original_name': 'Feels like',
     'platform': 'ambient_network',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'feels_like',
     'unique_id': 'AA:AA:AA:AA:AA:AA_feelsLike',
@@ -231,13 +247,15 @@
 # ---
 # name: test_sensors[AA:AA:AA:AA:AA:AA][sensor.station_a_hourly_rain-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': dict({
       'state_class': <SensorStateClass.MEASUREMENT: 'measurement'>,
     }),
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -251,6 +269,7 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Hourly rain',
     'options': dict({
       'sensor': dict({
         'suggested_display_precision': 1,
@@ -264,6 +283,7 @@
     'original_name': 'Hourly rain',
     'platform': 'ambient_network',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'hourly_rain',
     'unique_id': 'AA:AA:AA:AA:AA:AA_hourlyrainin',
@@ -290,13 +310,15 @@
 # ---
 # name: test_sensors[AA:AA:AA:AA:AA:AA][sensor.station_a_humidity-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': dict({
       'state_class': <SensorStateClass.MEASUREMENT: 'measurement'>,
     }),
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -310,6 +332,7 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Humidity',
     'options': dict({
       'sensor': dict({
         'suggested_display_precision': 1,
@@ -320,6 +343,7 @@
     'original_name': 'Humidity',
     'platform': 'ambient_network',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': None,
     'unique_id': 'AA:AA:AA:AA:AA:AA_humidity',
@@ -346,13 +370,15 @@
 # ---
 # name: test_sensors[AA:AA:AA:AA:AA:AA][sensor.station_a_irradiance-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': dict({
       'state_class': <SensorStateClass.MEASUREMENT: 'measurement'>,
     }),
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -366,6 +392,7 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Irradiance',
     'options': dict({
       'sensor': dict({
         'suggested_display_precision': 1,
@@ -376,6 +403,7 @@
     'original_name': 'Irradiance',
     'platform': 'ambient_network',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': None,
     'unique_id': 'AA:AA:AA:AA:AA:AA_solarradiation',
@@ -402,11 +430,13 @@
 # ---
 # name: test_sensors[AA:AA:AA:AA:AA:AA][sensor.station_a_last_rain-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': None,
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -420,6 +450,7 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Last rain',
     'options': dict({
     }),
     'original_device_class': <SensorDeviceClass.TIMESTAMP: 'timestamp'>,
@@ -427,6 +458,7 @@
     'original_name': 'Last rain',
     'platform': 'ambient_network',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'last_rain',
     'unique_id': 'AA:AA:AA:AA:AA:AA_lastRain',
@@ -451,13 +483,15 @@
 # ---
 # name: test_sensors[AA:AA:AA:AA:AA:AA][sensor.station_a_max_daily_gust-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': dict({
       'state_class': <SensorStateClass.MEASUREMENT: 'measurement'>,
     }),
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -471,6 +505,7 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Max daily gust',
     'options': dict({
       'sensor': dict({
         'suggested_display_precision': 1,
@@ -484,6 +519,7 @@
     'original_name': 'Max daily gust',
     'platform': 'ambient_network',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'max_daily_gust',
     'unique_id': 'AA:AA:AA:AA:AA:AA_maxdailygust',
@@ -510,13 +546,15 @@
 # ---
 # name: test_sensors[AA:AA:AA:AA:AA:AA][sensor.station_a_monthly_rain-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': dict({
-      'state_class': <SensorStateClass.TOTAL: 'total'>,
+      'state_class': <SensorStateClass.TOTAL_INCREASING: 'total_increasing'>,
     }),
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -530,6 +568,7 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Monthly rain',
     'options': dict({
       'sensor': dict({
         'suggested_display_precision': 1,
@@ -543,6 +582,7 @@
     'original_name': 'Monthly rain',
     'platform': 'ambient_network',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'monthly_rain',
     'unique_id': 'AA:AA:AA:AA:AA:AA_monthlyrainin',
@@ -556,7 +596,7 @@
       'device_class': 'precipitation',
       'friendly_name': 'Station A Monthly rain',
       'last_measured': HAFakeDatetime(2023, 11, 8, 12, 12, 0, 914000, tzinfo=zoneinfo.ZoneInfo(key='US/Pacific')),
-      'state_class': <SensorStateClass.TOTAL: 'total'>,
+      'state_class': <SensorStateClass.TOTAL_INCREASING: 'total_increasing'>,
       'unit_of_measurement': <UnitOfLength.MILLIMETERS: 'mm'>,
     }),
     'context': <ANY>,
@@ -569,13 +609,15 @@
 # ---
 # name: test_sensors[AA:AA:AA:AA:AA:AA][sensor.station_a_relative_pressure-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': dict({
       'state_class': <SensorStateClass.MEASUREMENT: 'measurement'>,
     }),
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -589,6 +631,7 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Relative pressure',
     'options': dict({
       'sensor': dict({
         'suggested_display_precision': 1,
@@ -602,6 +645,7 @@
     'original_name': 'Relative pressure',
     'platform': 'ambient_network',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'relative_pressure',
     'unique_id': 'AA:AA:AA:AA:AA:AA_baromrelin',
@@ -628,13 +672,15 @@
 # ---
 # name: test_sensors[AA:AA:AA:AA:AA:AA][sensor.station_a_temperature-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': dict({
       'state_class': <SensorStateClass.MEASUREMENT: 'measurement'>,
     }),
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -648,6 +694,7 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Temperature',
     'options': dict({
       'sensor': dict({
         'suggested_display_precision': 1,
@@ -658,6 +705,7 @@
     'original_name': 'Temperature',
     'platform': 'ambient_network',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': None,
     'unique_id': 'AA:AA:AA:AA:AA:AA_tempf',
@@ -684,13 +732,15 @@
 # ---
 # name: test_sensors[AA:AA:AA:AA:AA:AA][sensor.station_a_uv_index-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': dict({
       'state_class': <SensorStateClass.MEASUREMENT: 'measurement'>,
     }),
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -704,6 +754,7 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'UV index',
     'options': dict({
       'sensor': dict({
         'suggested_display_precision': 1,
@@ -714,6 +765,7 @@
     'original_name': 'UV index',
     'platform': 'ambient_network',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'uv_index',
     'unique_id': 'AA:AA:AA:AA:AA:AA_uv',
@@ -739,13 +791,15 @@
 # ---
 # name: test_sensors[AA:AA:AA:AA:AA:AA][sensor.station_a_weekly_rain-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': dict({
-      'state_class': <SensorStateClass.TOTAL: 'total'>,
+      'state_class': <SensorStateClass.TOTAL_INCREASING: 'total_increasing'>,
     }),
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -759,6 +813,7 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Weekly rain',
     'options': dict({
       'sensor': dict({
         'suggested_display_precision': 1,
@@ -772,6 +827,7 @@
     'original_name': 'Weekly rain',
     'platform': 'ambient_network',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'weekly_rain',
     'unique_id': 'AA:AA:AA:AA:AA:AA_weeklyrainin',
@@ -785,7 +841,7 @@
       'device_class': 'precipitation',
       'friendly_name': 'Station A Weekly rain',
       'last_measured': HAFakeDatetime(2023, 11, 8, 12, 12, 0, 914000, tzinfo=zoneinfo.ZoneInfo(key='US/Pacific')),
-      'state_class': <SensorStateClass.TOTAL: 'total'>,
+      'state_class': <SensorStateClass.TOTAL_INCREASING: 'total_increasing'>,
       'unit_of_measurement': <UnitOfLength.MILLIMETERS: 'mm'>,
     }),
     'context': <ANY>,
@@ -798,11 +854,15 @@
 # ---
 # name: test_sensors[AA:AA:AA:AA:AA:AA][sensor.station_a_wind_direction-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
-    'capabilities': None,
+    'capabilities': dict({
+      'state_class': <SensorStateClass.MEASUREMENT_ANGLE: 'measurement_angle'>,
+    }),
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -816,16 +876,18 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Wind direction',
     'options': dict({
       'sensor': dict({
         'suggested_display_precision': 0,
       }),
     }),
-    'original_device_class': None,
+    'original_device_class': <SensorDeviceClass.WIND_DIRECTION: 'wind_direction'>,
     'original_icon': None,
     'original_name': 'Wind direction',
     'platform': 'ambient_network',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'wind_direction',
     'unique_id': 'AA:AA:AA:AA:AA:AA_winddir',
@@ -836,8 +898,10 @@
   StateSnapshot({
     'attributes': ReadOnlyDict({
       'attribution': 'Data provided by ambientnetwork.net',
+      'device_class': 'wind_direction',
       'friendly_name': 'Station A Wind direction',
       'last_measured': HAFakeDatetime(2023, 11, 8, 12, 12, 0, 914000, tzinfo=zoneinfo.ZoneInfo(key='US/Pacific')),
+      'state_class': <SensorStateClass.MEASUREMENT_ANGLE: 'measurement_angle'>,
       'unit_of_measurement': '°',
     }),
     'context': <ANY>,
@@ -850,13 +914,15 @@
 # ---
 # name: test_sensors[AA:AA:AA:AA:AA:AA][sensor.station_a_wind_gust-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': dict({
       'state_class': <SensorStateClass.MEASUREMENT: 'measurement'>,
     }),
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -870,6 +936,7 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Wind gust',
     'options': dict({
       'sensor': dict({
         'suggested_display_precision': 1,
@@ -883,6 +950,7 @@
     'original_name': 'Wind gust',
     'platform': 'ambient_network',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'wind_gust',
     'unique_id': 'AA:AA:AA:AA:AA:AA_windgustmph',
@@ -909,13 +977,15 @@
 # ---
 # name: test_sensors[AA:AA:AA:AA:AA:AA][sensor.station_a_wind_speed-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': dict({
       'state_class': <SensorStateClass.MEASUREMENT: 'measurement'>,
     }),
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -929,6 +999,7 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Wind speed',
     'options': dict({
       'sensor': dict({
         'suggested_display_precision': 1,
@@ -942,6 +1013,7 @@
     'original_name': 'Wind speed',
     'platform': 'ambient_network',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': None,
     'unique_id': 'AA:AA:AA:AA:AA:AA_windspeedmph',
@@ -968,13 +1040,15 @@
 # ---
 # name: test_sensors[CC:CC:CC:CC:CC:CC][sensor.station_c_absolute_pressure-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': dict({
       'state_class': <SensorStateClass.MEASUREMENT: 'measurement'>,
     }),
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -988,6 +1062,7 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Absolute pressure',
     'options': dict({
       'sensor': dict({
         'suggested_display_precision': 1,
@@ -1001,6 +1076,7 @@
     'original_name': 'Absolute pressure',
     'platform': 'ambient_network',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'absolute_pressure',
     'unique_id': 'CC:CC:CC:CC:CC:CC_baromabsin',
@@ -1027,13 +1103,15 @@
 # ---
 # name: test_sensors[CC:CC:CC:CC:CC:CC][sensor.station_c_daily_rain-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': dict({
-      'state_class': <SensorStateClass.TOTAL: 'total'>,
+      'state_class': <SensorStateClass.TOTAL_INCREASING: 'total_increasing'>,
     }),
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -1047,6 +1125,7 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Daily rain',
     'options': dict({
       'sensor': dict({
         'suggested_display_precision': 1,
@@ -1060,6 +1139,7 @@
     'original_name': 'Daily rain',
     'platform': 'ambient_network',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'daily_rain',
     'unique_id': 'CC:CC:CC:CC:CC:CC_dailyrainin',
@@ -1073,7 +1153,7 @@
       'device_class': 'precipitation',
       'friendly_name': 'Station C Daily rain',
       'last_measured': HAFakeDatetime(2024, 6, 6, 8, 28, 3, tzinfo=zoneinfo.ZoneInfo(key='US/Pacific')),
-      'state_class': <SensorStateClass.TOTAL: 'total'>,
+      'state_class': <SensorStateClass.TOTAL_INCREASING: 'total_increasing'>,
       'unit_of_measurement': <UnitOfLength.MILLIMETERS: 'mm'>,
     }),
     'context': <ANY>,
@@ -1086,13 +1166,15 @@
 # ---
 # name: test_sensors[CC:CC:CC:CC:CC:CC][sensor.station_c_dew_point-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': dict({
       'state_class': <SensorStateClass.MEASUREMENT: 'measurement'>,
     }),
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -1106,6 +1188,7 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Dew point',
     'options': dict({
       'sensor': dict({
         'suggested_display_precision': 1,
@@ -1116,6 +1199,7 @@
     'original_name': 'Dew point',
     'platform': 'ambient_network',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'dew_point',
     'unique_id': 'CC:CC:CC:CC:CC:CC_dewPoint',
@@ -1142,13 +1226,15 @@
 # ---
 # name: test_sensors[CC:CC:CC:CC:CC:CC][sensor.station_c_feels_like-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': dict({
       'state_class': <SensorStateClass.MEASUREMENT: 'measurement'>,
     }),
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -1162,6 +1248,7 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Feels like',
     'options': dict({
       'sensor': dict({
         'suggested_display_precision': 1,
@@ -1172,6 +1259,7 @@
     'original_name': 'Feels like',
     'platform': 'ambient_network',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'feels_like',
     'unique_id': 'CC:CC:CC:CC:CC:CC_feelsLike',
@@ -1198,13 +1286,15 @@
 # ---
 # name: test_sensors[CC:CC:CC:CC:CC:CC][sensor.station_c_hourly_rain-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': dict({
       'state_class': <SensorStateClass.MEASUREMENT: 'measurement'>,
     }),
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -1218,6 +1308,7 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Hourly rain',
     'options': dict({
       'sensor': dict({
         'suggested_display_precision': 1,
@@ -1231,6 +1322,7 @@
     'original_name': 'Hourly rain',
     'platform': 'ambient_network',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'hourly_rain',
     'unique_id': 'CC:CC:CC:CC:CC:CC_hourlyrainin',
@@ -1257,13 +1349,15 @@
 # ---
 # name: test_sensors[CC:CC:CC:CC:CC:CC][sensor.station_c_humidity-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': dict({
       'state_class': <SensorStateClass.MEASUREMENT: 'measurement'>,
     }),
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -1277,6 +1371,7 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Humidity',
     'options': dict({
       'sensor': dict({
         'suggested_display_precision': 1,
@@ -1287,6 +1382,7 @@
     'original_name': 'Humidity',
     'platform': 'ambient_network',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': None,
     'unique_id': 'CC:CC:CC:CC:CC:CC_humidity',
@@ -1313,13 +1409,15 @@
 # ---
 # name: test_sensors[CC:CC:CC:CC:CC:CC][sensor.station_c_irradiance-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': dict({
       'state_class': <SensorStateClass.MEASUREMENT: 'measurement'>,
     }),
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -1333,6 +1431,7 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Irradiance',
     'options': dict({
       'sensor': dict({
         'suggested_display_precision': 1,
@@ -1343,6 +1442,7 @@
     'original_name': 'Irradiance',
     'platform': 'ambient_network',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': None,
     'unique_id': 'CC:CC:CC:CC:CC:CC_solarradiation',
@@ -1369,11 +1469,13 @@
 # ---
 # name: test_sensors[CC:CC:CC:CC:CC:CC][sensor.station_c_last_rain-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': None,
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -1387,6 +1489,7 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Last rain',
     'options': dict({
     }),
     'original_device_class': <SensorDeviceClass.TIMESTAMP: 'timestamp'>,
@@ -1394,6 +1497,7 @@
     'original_name': 'Last rain',
     'platform': 'ambient_network',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'last_rain',
     'unique_id': 'CC:CC:CC:CC:CC:CC_lastRain',
@@ -1418,13 +1522,15 @@
 # ---
 # name: test_sensors[CC:CC:CC:CC:CC:CC][sensor.station_c_max_daily_gust-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': dict({
       'state_class': <SensorStateClass.MEASUREMENT: 'measurement'>,
     }),
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -1438,6 +1544,7 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Max daily gust',
     'options': dict({
       'sensor': dict({
         'suggested_display_precision': 1,
@@ -1451,6 +1558,7 @@
     'original_name': 'Max daily gust',
     'platform': 'ambient_network',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'max_daily_gust',
     'unique_id': 'CC:CC:CC:CC:CC:CC_maxdailygust',
@@ -1477,13 +1585,15 @@
 # ---
 # name: test_sensors[CC:CC:CC:CC:CC:CC][sensor.station_c_monthly_rain-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': dict({
-      'state_class': <SensorStateClass.TOTAL: 'total'>,
+      'state_class': <SensorStateClass.TOTAL_INCREASING: 'total_increasing'>,
     }),
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -1497,6 +1607,7 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Monthly rain',
     'options': dict({
       'sensor': dict({
         'suggested_display_precision': 1,
@@ -1510,6 +1621,7 @@
     'original_name': 'Monthly rain',
     'platform': 'ambient_network',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'monthly_rain',
     'unique_id': 'CC:CC:CC:CC:CC:CC_monthlyrainin',
@@ -1523,7 +1635,7 @@
       'device_class': 'precipitation',
       'friendly_name': 'Station C Monthly rain',
       'last_measured': HAFakeDatetime(2024, 6, 6, 8, 28, 3, tzinfo=zoneinfo.ZoneInfo(key='US/Pacific')),
-      'state_class': <SensorStateClass.TOTAL: 'total'>,
+      'state_class': <SensorStateClass.TOTAL_INCREASING: 'total_increasing'>,
       'unit_of_measurement': <UnitOfLength.MILLIMETERS: 'mm'>,
     }),
     'context': <ANY>,
@@ -1536,13 +1648,15 @@
 # ---
 # name: test_sensors[CC:CC:CC:CC:CC:CC][sensor.station_c_relative_pressure-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': dict({
       'state_class': <SensorStateClass.MEASUREMENT: 'measurement'>,
     }),
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -1556,6 +1670,7 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Relative pressure',
     'options': dict({
       'sensor': dict({
         'suggested_display_precision': 1,
@@ -1569,6 +1684,7 @@
     'original_name': 'Relative pressure',
     'platform': 'ambient_network',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'relative_pressure',
     'unique_id': 'CC:CC:CC:CC:CC:CC_baromrelin',
@@ -1595,13 +1711,15 @@
 # ---
 # name: test_sensors[CC:CC:CC:CC:CC:CC][sensor.station_c_temperature-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': dict({
       'state_class': <SensorStateClass.MEASUREMENT: 'measurement'>,
     }),
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -1615,6 +1733,7 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Temperature',
     'options': dict({
       'sensor': dict({
         'suggested_display_precision': 1,
@@ -1625,6 +1744,7 @@
     'original_name': 'Temperature',
     'platform': 'ambient_network',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': None,
     'unique_id': 'CC:CC:CC:CC:CC:CC_tempf',
@@ -1651,13 +1771,15 @@
 # ---
 # name: test_sensors[CC:CC:CC:CC:CC:CC][sensor.station_c_uv_index-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': dict({
       'state_class': <SensorStateClass.MEASUREMENT: 'measurement'>,
     }),
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -1671,6 +1793,7 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'UV index',
     'options': dict({
       'sensor': dict({
         'suggested_display_precision': 1,
@@ -1681,6 +1804,7 @@
     'original_name': 'UV index',
     'platform': 'ambient_network',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'uv_index',
     'unique_id': 'CC:CC:CC:CC:CC:CC_uv',
@@ -1706,13 +1830,15 @@
 # ---
 # name: test_sensors[CC:CC:CC:CC:CC:CC][sensor.station_c_weekly_rain-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': dict({
-      'state_class': <SensorStateClass.TOTAL: 'total'>,
+      'state_class': <SensorStateClass.TOTAL_INCREASING: 'total_increasing'>,
     }),
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -1726,6 +1852,7 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Weekly rain',
     'options': dict({
       'sensor': dict({
         'suggested_display_precision': 1,
@@ -1739,6 +1866,7 @@
     'original_name': 'Weekly rain',
     'platform': 'ambient_network',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'weekly_rain',
     'unique_id': 'CC:CC:CC:CC:CC:CC_weeklyrainin',
@@ -1752,7 +1880,7 @@
       'device_class': 'precipitation',
       'friendly_name': 'Station C Weekly rain',
       'last_measured': HAFakeDatetime(2024, 6, 6, 8, 28, 3, tzinfo=zoneinfo.ZoneInfo(key='US/Pacific')),
-      'state_class': <SensorStateClass.TOTAL: 'total'>,
+      'state_class': <SensorStateClass.TOTAL_INCREASING: 'total_increasing'>,
       'unit_of_measurement': <UnitOfLength.MILLIMETERS: 'mm'>,
     }),
     'context': <ANY>,
@@ -1765,11 +1893,15 @@
 # ---
 # name: test_sensors[CC:CC:CC:CC:CC:CC][sensor.station_c_wind_direction-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
-    'capabilities': None,
+    'capabilities': dict({
+      'state_class': <SensorStateClass.MEASUREMENT_ANGLE: 'measurement_angle'>,
+    }),
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -1783,16 +1915,18 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Wind direction',
     'options': dict({
       'sensor': dict({
         'suggested_display_precision': 0,
       }),
     }),
-    'original_device_class': None,
+    'original_device_class': <SensorDeviceClass.WIND_DIRECTION: 'wind_direction'>,
     'original_icon': None,
     'original_name': 'Wind direction',
     'platform': 'ambient_network',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'wind_direction',
     'unique_id': 'CC:CC:CC:CC:CC:CC_winddir',
@@ -1803,8 +1937,10 @@
   StateSnapshot({
     'attributes': ReadOnlyDict({
       'attribution': 'Data provided by ambientnetwork.net',
+      'device_class': 'wind_direction',
       'friendly_name': 'Station C Wind direction',
       'last_measured': HAFakeDatetime(2024, 6, 6, 8, 28, 3, tzinfo=zoneinfo.ZoneInfo(key='US/Pacific')),
+      'state_class': <SensorStateClass.MEASUREMENT_ANGLE: 'measurement_angle'>,
       'unit_of_measurement': '°',
     }),
     'context': <ANY>,
@@ -1817,13 +1953,15 @@
 # ---
 # name: test_sensors[CC:CC:CC:CC:CC:CC][sensor.station_c_wind_gust-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': dict({
       'state_class': <SensorStateClass.MEASUREMENT: 'measurement'>,
     }),
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -1837,6 +1975,7 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Wind gust',
     'options': dict({
       'sensor': dict({
         'suggested_display_precision': 1,
@@ -1850,6 +1989,7 @@
     'original_name': 'Wind gust',
     'platform': 'ambient_network',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'wind_gust',
     'unique_id': 'CC:CC:CC:CC:CC:CC_windgustmph',
@@ -1876,13 +2016,15 @@
 # ---
 # name: test_sensors[CC:CC:CC:CC:CC:CC][sensor.station_c_wind_speed-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': dict({
       'state_class': <SensorStateClass.MEASUREMENT: 'measurement'>,
     }),
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -1896,6 +2038,7 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Wind speed',
     'options': dict({
       'sensor': dict({
         'suggested_display_precision': 1,
@@ -1909,6 +2052,7 @@
     'original_name': 'Wind speed',
     'platform': 'ambient_network',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': None,
     'unique_id': 'CC:CC:CC:CC:CC:CC_windspeedmph',
@@ -1935,13 +2079,15 @@
 # ---
 # name: test_sensors[DD:DD:DD:DD:DD:DD][sensor.station_d_absolute_pressure-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': dict({
       'state_class': <SensorStateClass.MEASUREMENT: 'measurement'>,
     }),
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -1955,6 +2101,7 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Absolute pressure',
     'options': dict({
       'sensor': dict({
         'suggested_display_precision': 1,
@@ -1968,6 +2115,7 @@
     'original_name': 'Absolute pressure',
     'platform': 'ambient_network',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'absolute_pressure',
     'unique_id': 'DD:DD:DD:DD:DD:DD_baromabsin',
@@ -1993,13 +2141,15 @@
 # ---
 # name: test_sensors[DD:DD:DD:DD:DD:DD][sensor.station_d_daily_rain-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': dict({
-      'state_class': <SensorStateClass.TOTAL: 'total'>,
+      'state_class': <SensorStateClass.TOTAL_INCREASING: 'total_increasing'>,
     }),
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -2013,6 +2163,7 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Daily rain',
     'options': dict({
       'sensor': dict({
         'suggested_display_precision': 1,
@@ -2026,6 +2177,7 @@
     'original_name': 'Daily rain',
     'platform': 'ambient_network',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'daily_rain',
     'unique_id': 'DD:DD:DD:DD:DD:DD_dailyrainin',
@@ -2038,7 +2190,7 @@
       'attribution': 'Data provided by ambientnetwork.net',
       'device_class': 'precipitation',
       'friendly_name': 'Station D Daily rain',
-      'state_class': <SensorStateClass.TOTAL: 'total'>,
+      'state_class': <SensorStateClass.TOTAL_INCREASING: 'total_increasing'>,
       'unit_of_measurement': <UnitOfLength.MILLIMETERS: 'mm'>,
     }),
     'context': <ANY>,
@@ -2051,13 +2203,15 @@
 # ---
 # name: test_sensors[DD:DD:DD:DD:DD:DD][sensor.station_d_dew_point-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': dict({
       'state_class': <SensorStateClass.MEASUREMENT: 'measurement'>,
     }),
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -2071,6 +2225,7 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Dew point',
     'options': dict({
       'sensor': dict({
         'suggested_display_precision': 1,
@@ -2081,6 +2236,7 @@
     'original_name': 'Dew point',
     'platform': 'ambient_network',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'dew_point',
     'unique_id': 'DD:DD:DD:DD:DD:DD_dewPoint',
@@ -2106,13 +2262,15 @@
 # ---
 # name: test_sensors[DD:DD:DD:DD:DD:DD][sensor.station_d_feels_like-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': dict({
       'state_class': <SensorStateClass.MEASUREMENT: 'measurement'>,
     }),
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -2126,6 +2284,7 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Feels like',
     'options': dict({
       'sensor': dict({
         'suggested_display_precision': 1,
@@ -2136,6 +2295,7 @@
     'original_name': 'Feels like',
     'platform': 'ambient_network',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'feels_like',
     'unique_id': 'DD:DD:DD:DD:DD:DD_feelsLike',
@@ -2161,13 +2321,15 @@
 # ---
 # name: test_sensors[DD:DD:DD:DD:DD:DD][sensor.station_d_hourly_rain-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': dict({
       'state_class': <SensorStateClass.MEASUREMENT: 'measurement'>,
     }),
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -2181,6 +2343,7 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Hourly rain',
     'options': dict({
       'sensor': dict({
         'suggested_display_precision': 1,
@@ -2194,6 +2357,7 @@
     'original_name': 'Hourly rain',
     'platform': 'ambient_network',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'hourly_rain',
     'unique_id': 'DD:DD:DD:DD:DD:DD_hourlyrainin',
@@ -2219,13 +2383,15 @@
 # ---
 # name: test_sensors[DD:DD:DD:DD:DD:DD][sensor.station_d_humidity-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': dict({
       'state_class': <SensorStateClass.MEASUREMENT: 'measurement'>,
     }),
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -2239,6 +2405,7 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Humidity',
     'options': dict({
       'sensor': dict({
         'suggested_display_precision': 1,
@@ -2249,6 +2416,7 @@
     'original_name': 'Humidity',
     'platform': 'ambient_network',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': None,
     'unique_id': 'DD:DD:DD:DD:DD:DD_humidity',
@@ -2274,13 +2442,15 @@
 # ---
 # name: test_sensors[DD:DD:DD:DD:DD:DD][sensor.station_d_irradiance-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': dict({
       'state_class': <SensorStateClass.MEASUREMENT: 'measurement'>,
     }),
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -2294,6 +2464,7 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Irradiance',
     'options': dict({
       'sensor': dict({
         'suggested_display_precision': 1,
@@ -2304,6 +2475,7 @@
     'original_name': 'Irradiance',
     'platform': 'ambient_network',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': None,
     'unique_id': 'DD:DD:DD:DD:DD:DD_solarradiation',
@@ -2329,13 +2501,15 @@
 # ---
 # name: test_sensors[DD:DD:DD:DD:DD:DD][sensor.station_d_max_daily_gust-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': dict({
       'state_class': <SensorStateClass.MEASUREMENT: 'measurement'>,
     }),
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -2349,6 +2523,7 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Max daily gust',
     'options': dict({
       'sensor': dict({
         'suggested_display_precision': 1,
@@ -2362,6 +2537,7 @@
     'original_name': 'Max daily gust',
     'platform': 'ambient_network',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'max_daily_gust',
     'unique_id': 'DD:DD:DD:DD:DD:DD_maxdailygust',
@@ -2387,13 +2563,15 @@
 # ---
 # name: test_sensors[DD:DD:DD:DD:DD:DD][sensor.station_d_monthly_rain-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': dict({
-      'state_class': <SensorStateClass.TOTAL: 'total'>,
+      'state_class': <SensorStateClass.TOTAL_INCREASING: 'total_increasing'>,
     }),
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -2407,6 +2585,7 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Monthly rain',
     'options': dict({
       'sensor': dict({
         'suggested_display_precision': 1,
@@ -2420,6 +2599,7 @@
     'original_name': 'Monthly rain',
     'platform': 'ambient_network',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'monthly_rain',
     'unique_id': 'DD:DD:DD:DD:DD:DD_monthlyrainin',
@@ -2432,7 +2612,7 @@
       'attribution': 'Data provided by ambientnetwork.net',
       'device_class': 'precipitation',
       'friendly_name': 'Station D Monthly rain',
-      'state_class': <SensorStateClass.TOTAL: 'total'>,
+      'state_class': <SensorStateClass.TOTAL_INCREASING: 'total_increasing'>,
       'unit_of_measurement': <UnitOfLength.MILLIMETERS: 'mm'>,
     }),
     'context': <ANY>,
@@ -2445,13 +2625,15 @@
 # ---
 # name: test_sensors[DD:DD:DD:DD:DD:DD][sensor.station_d_relative_pressure-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': dict({
       'state_class': <SensorStateClass.MEASUREMENT: 'measurement'>,
     }),
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -2465,6 +2647,7 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Relative pressure',
     'options': dict({
       'sensor': dict({
         'suggested_display_precision': 1,
@@ -2478,6 +2661,7 @@
     'original_name': 'Relative pressure',
     'platform': 'ambient_network',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'relative_pressure',
     'unique_id': 'DD:DD:DD:DD:DD:DD_baromrelin',
@@ -2503,13 +2687,15 @@
 # ---
 # name: test_sensors[DD:DD:DD:DD:DD:DD][sensor.station_d_temperature-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': dict({
       'state_class': <SensorStateClass.MEASUREMENT: 'measurement'>,
     }),
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -2523,6 +2709,7 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Temperature',
     'options': dict({
       'sensor': dict({
         'suggested_display_precision': 1,
@@ -2533,6 +2720,7 @@
     'original_name': 'Temperature',
     'platform': 'ambient_network',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': None,
     'unique_id': 'DD:DD:DD:DD:DD:DD_tempf',
@@ -2558,13 +2746,15 @@
 # ---
 # name: test_sensors[DD:DD:DD:DD:DD:DD][sensor.station_d_uv_index-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': dict({
       'state_class': <SensorStateClass.MEASUREMENT: 'measurement'>,
     }),
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -2578,6 +2768,7 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'UV index',
     'options': dict({
       'sensor': dict({
         'suggested_display_precision': 1,
@@ -2588,6 +2779,7 @@
     'original_name': 'UV index',
     'platform': 'ambient_network',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'uv_index',
     'unique_id': 'DD:DD:DD:DD:DD:DD_uv',
@@ -2612,13 +2804,15 @@
 # ---
 # name: test_sensors[DD:DD:DD:DD:DD:DD][sensor.station_d_weekly_rain-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': dict({
-      'state_class': <SensorStateClass.TOTAL: 'total'>,
+      'state_class': <SensorStateClass.TOTAL_INCREASING: 'total_increasing'>,
     }),
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -2632,6 +2826,7 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Weekly rain',
     'options': dict({
       'sensor': dict({
         'suggested_display_precision': 1,
@@ -2645,6 +2840,7 @@
     'original_name': 'Weekly rain',
     'platform': 'ambient_network',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'weekly_rain',
     'unique_id': 'DD:DD:DD:DD:DD:DD_weeklyrainin',
@@ -2657,7 +2853,7 @@
       'attribution': 'Data provided by ambientnetwork.net',
       'device_class': 'precipitation',
       'friendly_name': 'Station D Weekly rain',
-      'state_class': <SensorStateClass.TOTAL: 'total'>,
+      'state_class': <SensorStateClass.TOTAL_INCREASING: 'total_increasing'>,
       'unit_of_measurement': <UnitOfLength.MILLIMETERS: 'mm'>,
     }),
     'context': <ANY>,
@@ -2670,11 +2866,15 @@
 # ---
 # name: test_sensors[DD:DD:DD:DD:DD:DD][sensor.station_d_wind_direction-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
-    'capabilities': None,
+    'capabilities': dict({
+      'state_class': <SensorStateClass.MEASUREMENT_ANGLE: 'measurement_angle'>,
+    }),
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -2688,16 +2888,18 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Wind direction',
     'options': dict({
       'sensor': dict({
         'suggested_display_precision': 0,
       }),
     }),
-    'original_device_class': None,
+    'original_device_class': <SensorDeviceClass.WIND_DIRECTION: 'wind_direction'>,
     'original_icon': None,
     'original_name': 'Wind direction',
     'platform': 'ambient_network',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'wind_direction',
     'unique_id': 'DD:DD:DD:DD:DD:DD_winddir',
@@ -2708,7 +2910,9 @@
   StateSnapshot({
     'attributes': ReadOnlyDict({
       'attribution': 'Data provided by ambientnetwork.net',
+      'device_class': 'wind_direction',
       'friendly_name': 'Station D Wind direction',
+      'state_class': <SensorStateClass.MEASUREMENT_ANGLE: 'measurement_angle'>,
       'unit_of_measurement': '°',
     }),
     'context': <ANY>,
@@ -2721,13 +2925,15 @@
 # ---
 # name: test_sensors[DD:DD:DD:DD:DD:DD][sensor.station_d_wind_gust-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': dict({
       'state_class': <SensorStateClass.MEASUREMENT: 'measurement'>,
     }),
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -2741,6 +2947,7 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Wind gust',
     'options': dict({
       'sensor': dict({
         'suggested_display_precision': 1,
@@ -2754,6 +2961,7 @@
     'original_name': 'Wind gust',
     'platform': 'ambient_network',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'wind_gust',
     'unique_id': 'DD:DD:DD:DD:DD:DD_windgustmph',
@@ -2779,13 +2987,15 @@
 # ---
 # name: test_sensors[DD:DD:DD:DD:DD:DD][sensor.station_d_wind_speed-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': dict({
       'state_class': <SensorStateClass.MEASUREMENT: 'measurement'>,
     }),
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -2799,6 +3009,7 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Wind speed',
     'options': dict({
       'sensor': dict({
         'suggested_display_precision': 1,
@@ -2812,6 +3023,7 @@
     'original_name': 'Wind speed',
     'platform': 'ambient_network',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': None,
     'unique_id': 'DD:DD:DD:DD:DD:DD_windspeedmph',

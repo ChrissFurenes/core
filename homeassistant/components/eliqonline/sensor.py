@@ -1,7 +1,5 @@
 """Monitors home energy use for the ELIQ Online service."""
 
-from __future__ import annotations
-
 from datetime import timedelta
 import logging
 
@@ -16,8 +14,8 @@ from homeassistant.components.sensor import (
 )
 from homeassistant.const import CONF_ACCESS_TOKEN, CONF_NAME, UnitOfPower
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
-import homeassistant.helpers.config_validation as cv
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
 

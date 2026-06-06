@@ -1,7 +1,5 @@
 """Support for August binary sensors."""
 
-from __future__ import annotations
-
 from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import datetime, timedelta
@@ -21,7 +19,7 @@ from homeassistant.components.binary_sensor import (
 )
 from homeassistant.const import EntityCategory
 from homeassistant.core import HomeAssistant, callback
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 from homeassistant.helpers.event import async_call_later
 
 from . import AugustConfigEntry, AugustData
@@ -92,7 +90,7 @@ SENSOR_TYPES_DOORBELL: tuple[AugustDoorbellBinarySensorEntityDescription, ...] =
 async def async_setup_entry(
     hass: HomeAssistant,
     config_entry: AugustConfigEntry,
-    async_add_entities: AddEntitiesCallback,
+    async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up the August binary sensors."""
     data = config_entry.runtime_data
@@ -109,12 +107,11 @@ async def async_setup_entry(
                 for description in SENSOR_TYPES_DOORBELL
             )
 
-    for doorbell in data.doorbells:
-        entities.extend(
-            AugustDoorbellBinarySensor(data, doorbell, description)
-            for description in SENSOR_TYPES_DOORBELL + SENSOR_TYPES_VIDEO_DOORBELL
-        )
-
+    entities.extend(
+        AugustDoorbellBinarySensor(data, doorbell, description)
+        for description in SENSOR_TYPES_DOORBELL + SENSOR_TYPES_VIDEO_DOORBELL
+        for doorbell in data.doorbells
+    )
     async_add_entities(entities)
 
 
@@ -167,7 +164,7 @@ class AugustDoorbellBinarySensor(AugustDescriptionEntity, BinarySensorEntity):
             self.async_write_ha_state()
 
     def _schedule_update_to_recheck_turn_off_sensor(self) -> None:
-        """Schedule an update to recheck the sensor to see if it is ready to turn off."""
+        """Schedule an update to recheck if sensor is ready to turn off."""
         # If the sensor is already off there is nothing to do
         if not self.is_on:
             return

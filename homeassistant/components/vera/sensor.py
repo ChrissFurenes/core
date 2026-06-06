@@ -1,7 +1,5 @@
 """Support for Vera sensors."""
 
-from __future__ import annotations
-
 from datetime import timedelta
 from typing import cast
 
@@ -11,41 +9,48 @@ from homeassistant.components.sensor import (
     ENTITY_ID_FORMAT,
     SensorDeviceClass,
     SensorEntity,
+    SensorStateClass,
 )
-from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
     LIGHT_LUX,
     PERCENTAGE,
     Platform,
+    UnitOfEnergy,
     UnitOfPower,
     UnitOfTemperature,
 )
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
-from . import VeraDevice
-from .common import ControllerData, get_controller_data
+from .common import ControllerData, VeraConfigEntry
+from .entity import VeraEntity
 
 SCAN_INTERVAL = timedelta(seconds=5)
 
 
 async def async_setup_entry(
     hass: HomeAssistant,
-    entry: ConfigEntry,
-    async_add_entities: AddEntitiesCallback,
+    entry: VeraConfigEntry,
+    async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up the sensor config entry."""
-    controller_data = get_controller_data(hass, entry)
-    async_add_entities(
-        [
-            VeraSensor(device, controller_data)
-            for device in controller_data.devices[Platform.SENSOR]
-        ],
-        True,
-    )
+    controller_data = entry.runtime_data
+
+    entities: list[SensorEntity] = [
+        VeraSensor(device, controller_data)
+        for device in controller_data.devices[Platform.SENSOR]
+    ]
+
+    for device in controller_data.devices[Platform.SWITCH]:
+        if device.power is not None:
+            entities.append(VeraPowerSensor(device, controller_data))
+        if device.energy is not None:
+            entities.append(VeraEnergySensor(device, controller_data))
+
+    async_add_entities(entities, True)
 
 
-class VeraSensor(VeraDevice[veraApi.VeraSensor], SensorEntity):
+class VeraSensor(VeraEntity[veraApi.VeraSensor], SensorEntity):
     """Representation of a Vera Sensor."""
 
     def __init__(
@@ -54,7 +59,7 @@ class VeraSensor(VeraDevice[veraApi.VeraSensor], SensorEntity):
         """Initialize the sensor."""
         self._temperature_units: str | None = None
         self.last_changed_time = None
-        VeraDevice.__init__(self, vera_device, controller_data)
+        VeraEntity.__init__(self, vera_device, controller_data)
         self.entity_id = ENTITY_ID_FORMAT.format(self.vera_id)
         if self.vera_device.category == veraApi.CATEGORY_TEMPERATURE_SENSOR:
             self._attr_device_class = SensorDeviceClass.TEMPERATURE
@@ -109,3 +114,45 @@ class VeraSensor(VeraDevice[veraApi.VeraSensor], SensorEntity):
             self._attr_native_value = "Tripped" if tripped else "Not Tripped"
         else:
             self._attr_native_value = "Unknown"
+
+
+class VeraPowerSensor(VeraEntity[veraApi.VeraSwitch], SensorEntity):
+    """Power sensor derived from a Vera switch with metering."""
+
+    _attr_device_class = SensorDeviceClass.POWER
+    _attr_has_entity_name = True
+    _attr_state_class = SensorStateClass.MEASUREMENT
+    _attr_native_unit_of_measurement = UnitOfPower.WATT
+
+    def __init__(
+        self, vera_device: veraApi.VeraSwitch, controller_data: ControllerData
+    ) -> None:
+        """Initialize the power sensor."""
+        VeraEntity.__init__(self, vera_device, controller_data)
+        self._unique_id = f"{self._unique_id}_power"
+
+    def update(self) -> None:
+        """Update the sensor state."""
+        super().update()
+        self._attr_native_value = self.vera_device.power
+
+
+class VeraEnergySensor(VeraEntity[veraApi.VeraSwitch], SensorEntity):
+    """Energy sensor derived from a Vera switch with metering."""
+
+    _attr_device_class = SensorDeviceClass.ENERGY
+    _attr_has_entity_name = True
+    _attr_state_class = SensorStateClass.TOTAL_INCREASING
+    _attr_native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR
+
+    def __init__(
+        self, vera_device: veraApi.VeraSwitch, controller_data: ControllerData
+    ) -> None:
+        """Initialize the energy sensor."""
+        VeraEntity.__init__(self, vera_device, controller_data)
+        self._unique_id = f"{self._unique_id}_energy"
+
+    def update(self) -> None:
+        """Update the sensor state."""
+        super().update()
+        self._attr_native_value = self.vera_device.energy

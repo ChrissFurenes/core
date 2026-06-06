@@ -1,47 +1,42 @@
 """Support for Modern Forms Fan lights."""
 
-from __future__ import annotations
-
 from typing import Any
 
 from aiomodernforms.const import LIGHT_POWER_OFF, LIGHT_POWER_ON
 import voluptuous as vol
 
 from homeassistant.components.light import ATTR_BRIGHTNESS, ColorMode, LightEntity
-from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import entity_platform
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 from homeassistant.util.percentage import (
     percentage_to_ranged_value,
     ranged_value_to_percentage,
 )
 
-from . import ModernFormsDeviceEntity, modernforms_exception_handler
+from . import modernforms_exception_handler
 from .const import (
     ATTR_SLEEP_TIME,
     CLEAR_TIMER,
-    DOMAIN,
     OPT_BRIGHTNESS,
     OPT_ON,
     SERVICE_CLEAR_LIGHT_SLEEP_TIMER,
     SERVICE_SET_LIGHT_SLEEP_TIMER,
 )
-from .coordinator import ModernFormsDataUpdateCoordinator
+from .coordinator import ModernFormsConfigEntry, ModernFormsDataUpdateCoordinator
+from .entity import ModernFormsDeviceEntity
 
 BRIGHTNESS_RANGE = (1, 255)
 
 
 async def async_setup_entry(
     hass: HomeAssistant,
-    config_entry: ConfigEntry,
-    async_add_entities: AddEntitiesCallback,
+    config_entry: ModernFormsConfigEntry,
+    async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up a Modern Forms platform from config entry."""
 
-    coordinator: ModernFormsDataUpdateCoordinator = hass.data[DOMAIN][
-        config_entry.entry_id
-    ]
+    coordinator = config_entry.runtime_data
 
     # if no light unit installed no light entity
     if not coordinator.data.info.light_type:
@@ -105,11 +100,13 @@ class ModernFormsLightEntity(ModernFormsDeviceEntity, LightEntity):
         """Return the state of the light."""
         return bool(self.coordinator.data.state.light_on)
 
+    # pylint: disable-next=home-assistant-action-swallowed-exception
     @modernforms_exception_handler
     async def async_turn_off(self, **kwargs: Any) -> None:
         """Turn off the light."""
         await self.coordinator.modern_forms.light(on=LIGHT_POWER_OFF)
 
+    # pylint: disable-next=home-assistant-action-swallowed-exception
     @modernforms_exception_handler
     async def async_turn_on(self, **kwargs: Any) -> None:
         """Turn on the light."""
@@ -122,6 +119,7 @@ class ModernFormsLightEntity(ModernFormsDeviceEntity, LightEntity):
 
         await self.coordinator.modern_forms.light(**data)
 
+    # pylint: disable-next=home-assistant-action-swallowed-exception
     @modernforms_exception_handler
     async def async_set_light_sleep_timer(
         self,
@@ -130,6 +128,7 @@ class ModernFormsLightEntity(ModernFormsDeviceEntity, LightEntity):
         """Set a Modern Forms light sleep timer."""
         await self.coordinator.modern_forms.light(sleep=sleep_time * 60)
 
+    # pylint: disable-next=home-assistant-action-swallowed-exception
     @modernforms_exception_handler
     async def async_clear_light_sleep_timer(
         self,

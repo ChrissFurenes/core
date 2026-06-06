@@ -1,7 +1,5 @@
 """Harmony data object which contains the Harmony Client."""
 
-from __future__ import annotations
-
 from collections.abc import Iterable
 import logging
 
@@ -124,8 +122,7 @@ class HarmonyData(HarmonySubscriberMixin):
         except (ValueError, AttributeError) as err:
             await self._client.close()
             raise ConfigEntryNotReady(
-                f"{self.name}: Error {err} while connected HUB at:"
-                f" {self._address}:8088"
+                f"{self.name}: Error {err} while connected HUB at: {self._address}:8088"
             ) from err
         if not connected:
             await self._client.close()

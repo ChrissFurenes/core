@@ -1,7 +1,5 @@
 """Support to enter a value into a text box."""
 
-from __future__ import annotations
-
 import logging
 from typing import Any, Self
 
@@ -15,11 +13,11 @@ from homeassistant.const import (
     CONF_MODE,
     CONF_NAME,
     CONF_UNIT_OF_MEASUREMENT,
+    MAX_LENGTH_STATE_STATE,
     SERVICE_RELOAD,
 )
 from homeassistant.core import HomeAssistant, ServiceCall, callback
-from homeassistant.helpers import collection
-import homeassistant.helpers.config_validation as cv
+from homeassistant.helpers import collection, config_validation as cv
 from homeassistant.helpers.entity_component import EntityComponent
 from homeassistant.helpers.restore_state import RestoreEntity
 import homeassistant.helpers.service
@@ -52,8 +50,12 @@ STORAGE_VERSION = 1
 
 STORAGE_FIELDS: VolDictType = {
     vol.Required(CONF_NAME): vol.All(str, vol.Length(min=1)),
-    vol.Optional(CONF_MIN, default=CONF_MIN_VALUE): vol.Coerce(int),
-    vol.Optional(CONF_MAX, default=CONF_MAX_VALUE): vol.Coerce(int),
+    vol.Optional(CONF_MIN, default=CONF_MIN_VALUE): vol.All(
+        vol.Coerce(int), vol.Range(0, MAX_LENGTH_STATE_STATE)
+    ),
+    vol.Optional(CONF_MAX, default=CONF_MAX_VALUE): vol.All(
+        vol.Coerce(int), vol.Range(1, MAX_LENGTH_STATE_STATE)
+    ),
     vol.Optional(CONF_INITIAL, ""): cv.string,
     vol.Optional(CONF_ICON): cv.icon,
     vol.Optional(CONF_UNIT_OF_MEASUREMENT): cv.string,
@@ -85,8 +87,12 @@ CONFIG_SCHEMA = vol.Schema(
                 lambda value: value or {},
                 {
                     vol.Optional(CONF_NAME): cv.string,
-                    vol.Optional(CONF_MIN, default=CONF_MIN_VALUE): vol.Coerce(int),
-                    vol.Optional(CONF_MAX, default=CONF_MAX_VALUE): vol.Coerce(int),
+                    vol.Optional(CONF_MIN, default=CONF_MIN_VALUE): vol.All(
+                        vol.Coerce(int), vol.Range(0, MAX_LENGTH_STATE_STATE)
+                    ),
+                    vol.Optional(CONF_MAX, default=CONF_MAX_VALUE): vol.All(
+                        vol.Coerce(int), vol.Range(1, MAX_LENGTH_STATE_STATE)
+                    ),
                     vol.Optional(CONF_INITIAL): cv.string,
                     vol.Optional(CONF_ICON): cv.icon,
                     vol.Optional(CONF_UNIT_OF_MEASUREMENT): cv.string,
@@ -137,8 +143,6 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     async def reload_service_handler(service_call: ServiceCall) -> None:
         """Reload yaml entities."""
         conf = await component.async_prepare_reload(skip_reset=True)
-        if conf is None:
-            conf = {DOMAIN: {}}
         await yaml_collection.async_load(
             [{CONF_ID: id_, **(cfg or {})} for id_, cfg in conf.get(DOMAIN, {}).items()]
         )

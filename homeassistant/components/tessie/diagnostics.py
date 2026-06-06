@@ -1,7 +1,5 @@
 """Provides diagnostics for Tessie."""
 
-from __future__ import annotations
-
 from typing import Any
 
 from homeassistant.components.diagnostics import async_redact_data
@@ -35,13 +33,14 @@ async def async_get_config_entry_diagnostics(
     vehicles = [
         {
             "data": async_redact_data(x.data_coordinator.data, VEHICLE_REDACT),
-            # Battery diag will go here when implemented
         }
         for x in entry.runtime_data.vehicles
     ]
     energysites = [
         {
-            "live": async_redact_data(x.live_coordinator.data, ENERGY_LIVE_REDACT),
+            "live": async_redact_data(x.live_coordinator.data, ENERGY_LIVE_REDACT)
+            if x.live_coordinator
+            else None,
             "info": async_redact_data(x.info_coordinator.data, ENERGY_INFO_REDACT),
         }
         for x in entry.runtime_data.energysites

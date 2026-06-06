@@ -1,20 +1,21 @@
 # serializer version: 1
 # name: test_sensor[sensor.home_air_quality_day_0-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': dict({
       'options': list([
         'good',
-        'hazardous',
-        'high',
-        'low',
         'moderate',
         'unhealthy',
+        'very_unhealthy',
+        'hazardous',
       ]),
     }),
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -28,6 +29,7 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Air quality day 0',
     'options': dict({
     }),
     'original_device_class': <SensorDeviceClass.ENUM: 'enum'>,
@@ -35,6 +37,7 @@
     'original_name': 'Air quality day 0',
     'platform': 'accuweather',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'air_quality',
     'unique_id': '0123456-airquality-0',
@@ -49,11 +52,10 @@
       'friendly_name': 'Home Air quality day 0',
       'options': list([
         'good',
-        'hazardous',
-        'high',
-        'low',
         'moderate',
         'unhealthy',
+        'very_unhealthy',
+        'hazardous',
       ]),
     }),
     'context': <ANY>,
@@ -66,20 +68,21 @@
 # ---
 # name: test_sensor[sensor.home_air_quality_day_1-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': dict({
       'options': list([
         'good',
-        'hazardous',
-        'high',
-        'low',
         'moderate',
         'unhealthy',
+        'very_unhealthy',
+        'hazardous',
       ]),
     }),
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -93,6 +96,7 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Air quality day 1',
     'options': dict({
     }),
     'original_device_class': <SensorDeviceClass.ENUM: 'enum'>,
@@ -100,6 +104,7 @@
     'original_name': 'Air quality day 1',
     'platform': 'accuweather',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'air_quality',
     'unique_id': '0123456-airquality-1',
@@ -114,11 +119,10 @@
       'friendly_name': 'Home Air quality day 1',
       'options': list([
         'good',
-        'hazardous',
-        'high',
-        'low',
         'moderate',
         'unhealthy',
+        'very_unhealthy',
+        'hazardous',
       ]),
     }),
     'context': <ANY>,
@@ -131,20 +135,21 @@
 # ---
 # name: test_sensor[sensor.home_air_quality_day_2-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': dict({
       'options': list([
         'good',
-        'hazardous',
-        'high',
-        'low',
         'moderate',
         'unhealthy',
+        'very_unhealthy',
+        'hazardous',
       ]),
     }),
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -158,6 +163,7 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Air quality day 2',
     'options': dict({
     }),
     'original_device_class': <SensorDeviceClass.ENUM: 'enum'>,
@@ -165,6 +171,7 @@
     'original_name': 'Air quality day 2',
     'platform': 'accuweather',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'air_quality',
     'unique_id': '0123456-airquality-2',
@@ -179,11 +186,10 @@
       'friendly_name': 'Home Air quality day 2',
       'options': list([
         'good',
-        'hazardous',
-        'high',
-        'low',
         'moderate',
         'unhealthy',
+        'very_unhealthy',
+        'hazardous',
       ]),
     }),
     'context': <ANY>,
@@ -196,20 +202,21 @@
 # ---
 # name: test_sensor[sensor.home_air_quality_day_3-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': dict({
       'options': list([
         'good',
-        'hazardous',
-        'high',
-        'low',
         'moderate',
         'unhealthy',
+        'very_unhealthy',
+        'hazardous',
       ]),
     }),
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -223,6 +230,7 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Air quality day 3',
     'options': dict({
     }),
     'original_device_class': <SensorDeviceClass.ENUM: 'enum'>,
@@ -230,6 +238,7 @@
     'original_name': 'Air quality day 3',
     'platform': 'accuweather',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'air_quality',
     'unique_id': '0123456-airquality-3',
@@ -244,11 +253,10 @@
       'friendly_name': 'Home Air quality day 3',
       'options': list([
         'good',
-        'hazardous',
-        'high',
-        'low',
         'moderate',
         'unhealthy',
+        'very_unhealthy',
+        'hazardous',
       ]),
     }),
     'context': <ANY>,
@@ -261,20 +269,21 @@
 # ---
 # name: test_sensor[sensor.home_air_quality_day_4-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': dict({
       'options': list([
         'good',
-        'hazardous',
-        'high',
-        'low',
         'moderate',
         'unhealthy',
+        'very_unhealthy',
+        'hazardous',
       ]),
     }),
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -288,6 +297,7 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Air quality day 4',
     'options': dict({
     }),
     'original_device_class': <SensorDeviceClass.ENUM: 'enum'>,
@@ -295,6 +305,7 @@
     'original_name': 'Air quality day 4',
     'platform': 'accuweather',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'air_quality',
     'unique_id': '0123456-airquality-4',
@@ -309,11 +320,10 @@
       'friendly_name': 'Home Air quality day 4',
       'options': list([
         'good',
-        'hazardous',
-        'high',
-        'low',
         'moderate',
         'unhealthy',
+        'very_unhealthy',
+        'hazardous',
       ]),
     }),
     'context': <ANY>,
@@ -326,13 +336,15 @@
 # ---
 # name: test_sensor[sensor.home_apparent_temperature-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': dict({
       'state_class': <SensorStateClass.MEASUREMENT: 'measurement'>,
     }),
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -346,13 +358,18 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Apparent temperature',
     'options': dict({
+      'sensor': dict({
+        'suggested_display_precision': 1,
+      }),
     }),
     'original_device_class': <SensorDeviceClass.TEMPERATURE: 'temperature'>,
     'original_icon': None,
     'original_name': 'Apparent temperature',
     'platform': 'accuweather',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'apparent_temperature',
     'unique_id': '0123456-apparenttemperature',
@@ -378,13 +395,15 @@
 # ---
 # name: test_sensor[sensor.home_cloud_ceiling-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': dict({
       'state_class': <SensorStateClass.MEASUREMENT: 'measurement'>,
     }),
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -398,6 +417,7 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Cloud ceiling',
     'options': dict({
       'sensor': dict({
         'suggested_display_precision': 0,
@@ -408,6 +428,7 @@
     'original_name': 'Cloud ceiling',
     'platform': 'accuweather',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'cloud_ceiling',
     'unique_id': '0123456-ceiling',
@@ -433,13 +454,15 @@
 # ---
 # name: test_sensor[sensor.home_cloud_cover-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': dict({
       'state_class': <SensorStateClass.MEASUREMENT: 'measurement'>,
     }),
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -453,6 +476,7 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Cloud cover',
     'options': dict({
     }),
     'original_device_class': None,
@@ -460,6 +484,7 @@
     'original_name': 'Cloud cover',
     'platform': 'accuweather',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'cloud_cover',
     'unique_id': '0123456-cloudcover',
@@ -484,11 +509,13 @@
 # ---
 # name: test_sensor[sensor.home_cloud_cover_day_0-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': None,
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -502,6 +529,7 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Cloud cover day 0',
     'options': dict({
     }),
     'original_device_class': None,
@@ -509,6 +537,7 @@
     'original_name': 'Cloud cover day 0',
     'platform': 'accuweather',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'cloud_cover_day',
     'unique_id': '0123456-cloudcoverday-0',
@@ -532,11 +561,13 @@
 # ---
 # name: test_sensor[sensor.home_cloud_cover_day_1-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': None,
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -550,6 +581,7 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Cloud cover day 1',
     'options': dict({
     }),
     'original_device_class': None,
@@ -557,6 +589,7 @@
     'original_name': 'Cloud cover day 1',
     'platform': 'accuweather',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'cloud_cover_day',
     'unique_id': '0123456-cloudcoverday-1',
@@ -580,11 +613,13 @@
 # ---
 # name: test_sensor[sensor.home_cloud_cover_day_2-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': None,
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -598,6 +633,7 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Cloud cover day 2',
     'options': dict({
     }),
     'original_device_class': None,
@@ -605,6 +641,7 @@
     'original_name': 'Cloud cover day 2',
     'platform': 'accuweather',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'cloud_cover_day',
     'unique_id': '0123456-cloudcoverday-2',
@@ -628,11 +665,13 @@
 # ---
 # name: test_sensor[sensor.home_cloud_cover_day_3-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': None,
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -646,6 +685,7 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Cloud cover day 3',
     'options': dict({
     }),
     'original_device_class': None,
@@ -653,6 +693,7 @@
     'original_name': 'Cloud cover day 3',
     'platform': 'accuweather',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'cloud_cover_day',
     'unique_id': '0123456-cloudcoverday-3',
@@ -676,11 +717,13 @@
 # ---
 # name: test_sensor[sensor.home_cloud_cover_day_4-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': None,
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -694,6 +737,7 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Cloud cover day 4',
     'options': dict({
     }),
     'original_device_class': None,
@@ -701,6 +745,7 @@
     'original_name': 'Cloud cover day 4',
     'platform': 'accuweather',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'cloud_cover_day',
     'unique_id': '0123456-cloudcoverday-4',
@@ -724,11 +769,13 @@
 # ---
 # name: test_sensor[sensor.home_cloud_cover_night_0-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': None,
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -742,6 +789,7 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Cloud cover night 0',
     'options': dict({
     }),
     'original_device_class': None,
@@ -749,6 +797,7 @@
     'original_name': 'Cloud cover night 0',
     'platform': 'accuweather',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'cloud_cover_night',
     'unique_id': '0123456-cloudcovernight-0',
@@ -772,11 +821,13 @@
 # ---
 # name: test_sensor[sensor.home_cloud_cover_night_1-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': None,
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -790,6 +841,7 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Cloud cover night 1',
     'options': dict({
     }),
     'original_device_class': None,
@@ -797,6 +849,7 @@
     'original_name': 'Cloud cover night 1',
     'platform': 'accuweather',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'cloud_cover_night',
     'unique_id': '0123456-cloudcovernight-1',
@@ -820,11 +873,13 @@
 # ---
 # name: test_sensor[sensor.home_cloud_cover_night_2-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': None,
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -838,6 +893,7 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Cloud cover night 2',
     'options': dict({
     }),
     'original_device_class': None,
@@ -845,6 +901,7 @@
     'original_name': 'Cloud cover night 2',
     'platform': 'accuweather',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'cloud_cover_night',
     'unique_id': '0123456-cloudcovernight-2',
@@ -868,11 +925,13 @@
 # ---
 # name: test_sensor[sensor.home_cloud_cover_night_3-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': None,
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -886,6 +945,7 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Cloud cover night 3',
     'options': dict({
     }),
     'original_device_class': None,
@@ -893,6 +953,7 @@
     'original_name': 'Cloud cover night 3',
     'platform': 'accuweather',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'cloud_cover_night',
     'unique_id': '0123456-cloudcovernight-3',
@@ -916,11 +977,13 @@
 # ---
 # name: test_sensor[sensor.home_cloud_cover_night_4-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': None,
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -934,6 +997,7 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Cloud cover night 4',
     'options': dict({
     }),
     'original_device_class': None,
@@ -941,6 +1005,7 @@
     'original_name': 'Cloud cover night 4',
     'platform': 'accuweather',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'cloud_cover_night',
     'unique_id': '0123456-cloudcovernight-4',
@@ -964,11 +1029,13 @@
 # ---
 # name: test_sensor[sensor.home_condition_day_0-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': None,
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -982,6 +1049,7 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Condition day 0',
     'options': dict({
     }),
     'original_device_class': None,
@@ -989,6 +1057,7 @@
     'original_name': 'Condition day 0',
     'platform': 'accuweather',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'condition_day',
     'unique_id': '0123456-longphraseday-0',
@@ -1011,11 +1080,13 @@
 # ---
 # name: test_sensor[sensor.home_condition_day_1-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': None,
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -1029,6 +1100,7 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Condition day 1',
     'options': dict({
     }),
     'original_device_class': None,
@@ -1036,6 +1108,7 @@
     'original_name': 'Condition day 1',
     'platform': 'accuweather',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'condition_day',
     'unique_id': '0123456-longphraseday-1',
@@ -1058,11 +1131,13 @@
 # ---
 # name: test_sensor[sensor.home_condition_day_2-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': None,
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -1076,6 +1151,7 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Condition day 2',
     'options': dict({
     }),
     'original_device_class': None,
@@ -1083,6 +1159,7 @@
     'original_name': 'Condition day 2',
     'platform': 'accuweather',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'condition_day',
     'unique_id': '0123456-longphraseday-2',
@@ -1105,11 +1182,13 @@
 # ---
 # name: test_sensor[sensor.home_condition_day_3-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': None,
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -1123,6 +1202,7 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Condition day 3',
     'options': dict({
     }),
     'original_device_class': None,
@@ -1130,6 +1210,7 @@
     'original_name': 'Condition day 3',
     'platform': 'accuweather',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'condition_day',
     'unique_id': '0123456-longphraseday-3',
@@ -1152,11 +1233,13 @@
 # ---
 # name: test_sensor[sensor.home_condition_day_4-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': None,
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -1170,6 +1253,7 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Condition day 4',
     'options': dict({
     }),
     'original_device_class': None,
@@ -1177,6 +1261,7 @@
     'original_name': 'Condition day 4',
     'platform': 'accuweather',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'condition_day',
     'unique_id': '0123456-longphraseday-4',
@@ -1199,11 +1284,13 @@
 # ---
 # name: test_sensor[sensor.home_condition_night_0-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': None,
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -1217,6 +1304,7 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Condition night 0',
     'options': dict({
     }),
     'original_device_class': None,
@@ -1224,6 +1312,7 @@
     'original_name': 'Condition night 0',
     'platform': 'accuweather',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'condition_night',
     'unique_id': '0123456-longphrasenight-0',
@@ -1246,11 +1335,13 @@
 # ---
 # name: test_sensor[sensor.home_condition_night_1-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': None,
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -1264,6 +1355,7 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Condition night 1',
     'options': dict({
     }),
     'original_device_class': None,
@@ -1271,6 +1363,7 @@
     'original_name': 'Condition night 1',
     'platform': 'accuweather',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'condition_night',
     'unique_id': '0123456-longphrasenight-1',
@@ -1293,11 +1386,13 @@
 # ---
 # name: test_sensor[sensor.home_condition_night_2-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': None,
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -1311,6 +1406,7 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Condition night 2',
     'options': dict({
     }),
     'original_device_class': None,
@@ -1318,6 +1414,7 @@
     'original_name': 'Condition night 2',
     'platform': 'accuweather',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'condition_night',
     'unique_id': '0123456-longphrasenight-2',
@@ -1340,11 +1437,13 @@
 # ---
 # name: test_sensor[sensor.home_condition_night_3-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': None,
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -1358,6 +1457,7 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Condition night 3',
     'options': dict({
     }),
     'original_device_class': None,
@@ -1365,6 +1465,7 @@
     'original_name': 'Condition night 3',
     'platform': 'accuweather',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'condition_night',
     'unique_id': '0123456-longphrasenight-3',
@@ -1387,11 +1488,13 @@
 # ---
 # name: test_sensor[sensor.home_condition_night_4-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': None,
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -1405,6 +1508,7 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Condition night 4',
     'options': dict({
     }),
     'original_device_class': None,
@@ -1412,6 +1516,7 @@
     'original_name': 'Condition night 4',
     'platform': 'accuweather',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'condition_night',
     'unique_id': '0123456-longphrasenight-4',
@@ -1434,13 +1539,15 @@
 # ---
 # name: test_sensor[sensor.home_dew_point-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': dict({
       'state_class': <SensorStateClass.MEASUREMENT: 'measurement'>,
     }),
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -1454,13 +1561,18 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Dew point',
     'options': dict({
+      'sensor': dict({
+        'suggested_display_precision': 1,
+      }),
     }),
     'original_device_class': <SensorDeviceClass.TEMPERATURE: 'temperature'>,
     'original_icon': None,
     'original_name': 'Dew point',
     'platform': 'accuweather',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'dew_point',
     'unique_id': '0123456-dewpoint',
@@ -1486,11 +1598,13 @@
 # ---
 # name: test_sensor[sensor.home_grass_pollen_day_0-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': None,
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -1504,6 +1618,7 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Grass pollen day 0',
     'options': dict({
     }),
     'original_device_class': None,
@@ -1511,6 +1626,7 @@
     'original_name': 'Grass pollen day 0',
     'platform': 'accuweather',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'grass_pollen',
     'unique_id': '0123456-grass-0',
@@ -1535,11 +1651,13 @@
 # ---
 # name: test_sensor[sensor.home_grass_pollen_day_1-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': None,
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -1553,6 +1671,7 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Grass pollen day 1',
     'options': dict({
     }),
     'original_device_class': None,
@@ -1560,6 +1679,7 @@
     'original_name': 'Grass pollen day 1',
     'platform': 'accuweather',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'grass_pollen',
     'unique_id': '0123456-grass-1',
@@ -1584,11 +1704,13 @@
 # ---
 # name: test_sensor[sensor.home_grass_pollen_day_2-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': None,
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -1602,6 +1724,7 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Grass pollen day 2',
     'options': dict({
     }),
     'original_device_class': None,
@@ -1609,6 +1732,7 @@
     'original_name': 'Grass pollen day 2',
     'platform': 'accuweather',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'grass_pollen',
     'unique_id': '0123456-grass-2',
@@ -1633,11 +1757,13 @@
 # ---
 # name: test_sensor[sensor.home_grass_pollen_day_3-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': None,
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -1651,6 +1777,7 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Grass pollen day 3',
     'options': dict({
     }),
     'original_device_class': None,
@@ -1658,6 +1785,7 @@
     'original_name': 'Grass pollen day 3',
     'platform': 'accuweather',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'grass_pollen',
     'unique_id': '0123456-grass-3',
@@ -1682,11 +1810,13 @@
 # ---
 # name: test_sensor[sensor.home_grass_pollen_day_4-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': None,
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -1700,6 +1830,7 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Grass pollen day 4',
     'options': dict({
     }),
     'original_device_class': None,
@@ -1707,6 +1838,7 @@
     'original_name': 'Grass pollen day 4',
     'platform': 'accuweather',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'grass_pollen',
     'unique_id': '0123456-grass-4',
@@ -1731,11 +1863,13 @@
 # ---
 # name: test_sensor[sensor.home_hours_of_sun_day_0-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': None,
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -1749,6 +1883,7 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Hours of sun day 0',
     'options': dict({
     }),
     'original_device_class': None,
@@ -1756,6 +1891,7 @@
     'original_name': 'Hours of sun day 0',
     'platform': 'accuweather',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'hours_of_sun',
     'unique_id': '0123456-hoursofsun-0',
@@ -1779,11 +1915,13 @@
 # ---
 # name: test_sensor[sensor.home_hours_of_sun_day_1-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': None,
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -1797,6 +1935,7 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Hours of sun day 1',
     'options': dict({
     }),
     'original_device_class': None,
@@ -1804,6 +1943,7 @@
     'original_name': 'Hours of sun day 1',
     'platform': 'accuweather',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'hours_of_sun',
     'unique_id': '0123456-hoursofsun-1',
@@ -1827,11 +1967,13 @@
 # ---
 # name: test_sensor[sensor.home_hours_of_sun_day_2-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': None,
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -1845,6 +1987,7 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Hours of sun day 2',
     'options': dict({
     }),
     'original_device_class': None,
@@ -1852,6 +1995,7 @@
     'original_name': 'Hours of sun day 2',
     'platform': 'accuweather',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'hours_of_sun',
     'unique_id': '0123456-hoursofsun-2',
@@ -1875,11 +2019,13 @@
 # ---
 # name: test_sensor[sensor.home_hours_of_sun_day_3-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': None,
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -1893,6 +2039,7 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Hours of sun day 3',
     'options': dict({
     }),
     'original_device_class': None,
@@ -1900,6 +2047,7 @@
     'original_name': 'Hours of sun day 3',
     'platform': 'accuweather',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'hours_of_sun',
     'unique_id': '0123456-hoursofsun-3',
@@ -1923,11 +2071,13 @@
 # ---
 # name: test_sensor[sensor.home_hours_of_sun_day_4-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': None,
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -1941,6 +2091,7 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Hours of sun day 4',
     'options': dict({
     }),
     'original_device_class': None,
@@ -1948,6 +2099,7 @@
     'original_name': 'Hours of sun day 4',
     'platform': 'accuweather',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'hours_of_sun',
     'unique_id': '0123456-hoursofsun-4',
@@ -1969,13 +2121,71 @@
     'state': '9.2',
   })
 # ---
+# name: test_sensor[sensor.home_humidity-entry]
+  EntityRegistryEntrySnapshot({
+    'aliases': list([
+      None,
+    ]),
+    'area_id': None,
+    'capabilities': dict({
+      'state_class': <SensorStateClass.MEASUREMENT: 'measurement'>,
+    }),
+    'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
+    'device_class': None,
+    'device_id': <ANY>,
+    'disabled_by': None,
+    'domain': 'sensor',
+    'entity_category': None,
+    'entity_id': 'sensor.home_humidity',
+    'has_entity_name': True,
+    'hidden_by': None,
+    'icon': None,
+    'id': <ANY>,
+    'labels': set({
+    }),
+    'name': None,
+    'object_id_base': 'Humidity',
+    'options': dict({
+    }),
+    'original_device_class': <SensorDeviceClass.HUMIDITY: 'humidity'>,
+    'original_icon': None,
+    'original_name': 'Humidity',
+    'platform': 'accuweather',
+    'previous_unique_id': None,
+    'suggested_object_id': None,
+    'supported_features': 0,
+    'translation_key': 'humidity',
+    'unique_id': '0123456-relativehumidity',
+    'unit_of_measurement': '%',
+  })
+# ---
+# name: test_sensor[sensor.home_humidity-state]
+  StateSnapshot({
+    'attributes': ReadOnlyDict({
+      'attribution': 'Data provided by AccuWeather',
+      'device_class': 'humidity',
+      'friendly_name': 'Home Humidity',
+      'state_class': <SensorStateClass.MEASUREMENT: 'measurement'>,
+      'unit_of_measurement': '%',
+    }),
+    'context': <ANY>,
+    'entity_id': 'sensor.home_humidity',
+    'last_changed': <ANY>,
+    'last_reported': <ANY>,
+    'last_updated': <ANY>,
+    'state': '67',
+  })
+# ---
 # name: test_sensor[sensor.home_mold_pollen_day_0-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': None,
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -1989,6 +2199,7 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Mold pollen day 0',
     'options': dict({
     }),
     'original_device_class': None,
@@ -1996,6 +2207,7 @@
     'original_name': 'Mold pollen day 0',
     'platform': 'accuweather',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'mold_pollen',
     'unique_id': '0123456-mold-0',
@@ -2020,11 +2232,13 @@
 # ---
 # name: test_sensor[sensor.home_mold_pollen_day_1-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': None,
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -2038,6 +2252,7 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Mold pollen day 1',
     'options': dict({
     }),
     'original_device_class': None,
@@ -2045,6 +2260,7 @@
     'original_name': 'Mold pollen day 1',
     'platform': 'accuweather',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'mold_pollen',
     'unique_id': '0123456-mold-1',
@@ -2069,11 +2285,13 @@
 # ---
 # name: test_sensor[sensor.home_mold_pollen_day_2-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': None,
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -2087,6 +2305,7 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Mold pollen day 2',
     'options': dict({
     }),
     'original_device_class': None,
@@ -2094,6 +2313,7 @@
     'original_name': 'Mold pollen day 2',
     'platform': 'accuweather',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'mold_pollen',
     'unique_id': '0123456-mold-2',
@@ -2118,11 +2338,13 @@
 # ---
 # name: test_sensor[sensor.home_mold_pollen_day_3-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': None,
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -2136,6 +2358,7 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Mold pollen day 3',
     'options': dict({
     }),
     'original_device_class': None,
@@ -2143,6 +2366,7 @@
     'original_name': 'Mold pollen day 3',
     'platform': 'accuweather',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'mold_pollen',
     'unique_id': '0123456-mold-3',
@@ -2167,11 +2391,13 @@
 # ---
 # name: test_sensor[sensor.home_mold_pollen_day_4-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': None,
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -2185,6 +2411,7 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Mold pollen day 4',
     'options': dict({
     }),
     'original_device_class': None,
@@ -2192,6 +2419,7 @@
     'original_name': 'Mold pollen day 4',
     'platform': 'accuweather',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'mold_pollen',
     'unique_id': '0123456-mold-4',
@@ -2216,13 +2444,15 @@
 # ---
 # name: test_sensor[sensor.home_precipitation-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': dict({
       'state_class': <SensorStateClass.MEASUREMENT: 'measurement'>,
     }),
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -2236,13 +2466,18 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Precipitation',
     'options': dict({
+      'sensor': dict({
+        'suggested_display_precision': 0,
+      }),
     }),
     'original_device_class': <SensorDeviceClass.PRECIPITATION_INTENSITY: 'precipitation_intensity'>,
     'original_icon': None,
     'original_name': 'Precipitation',
     'platform': 'accuweather',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'precipitation',
     'unique_id': '0123456-precipitation',
@@ -2267,10 +2502,70 @@
     'state': '0.0',
   })
 # ---
+# name: test_sensor[sensor.home_pressure-entry]
+  EntityRegistryEntrySnapshot({
+    'aliases': list([
+      None,
+    ]),
+    'area_id': None,
+    'capabilities': dict({
+      'state_class': <SensorStateClass.MEASUREMENT: 'measurement'>,
+    }),
+    'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
+    'device_class': None,
+    'device_id': <ANY>,
+    'disabled_by': None,
+    'domain': 'sensor',
+    'entity_category': None,
+    'entity_id': 'sensor.home_pressure',
+    'has_entity_name': True,
+    'hidden_by': None,
+    'icon': None,
+    'id': <ANY>,
+    'labels': set({
+    }),
+    'name': None,
+    'object_id_base': 'Pressure',
+    'options': dict({
+      'sensor': dict({
+        'suggested_display_precision': 0,
+      }),
+    }),
+    'original_device_class': <SensorDeviceClass.PRESSURE: 'pressure'>,
+    'original_icon': None,
+    'original_name': 'Pressure',
+    'platform': 'accuweather',
+    'previous_unique_id': None,
+    'suggested_object_id': None,
+    'supported_features': 0,
+    'translation_key': 'pressure',
+    'unique_id': '0123456-pressure',
+    'unit_of_measurement': <UnitOfPressure.HPA: 'hPa'>,
+  })
+# ---
+# name: test_sensor[sensor.home_pressure-state]
+  StateSnapshot({
+    'attributes': ReadOnlyDict({
+      'attribution': 'Data provided by AccuWeather',
+      'device_class': 'pressure',
+      'friendly_name': 'Home Pressure',
+      'state_class': <SensorStateClass.MEASUREMENT: 'measurement'>,
+      'unit_of_measurement': <UnitOfPressure.HPA: 'hPa'>,
+    }),
+    'context': <ANY>,
+    'entity_id': 'sensor.home_pressure',
+    'last_changed': <ANY>,
+    'last_reported': <ANY>,
+    'last_updated': <ANY>,
+    'state': '1012.0',
+  })
+# ---
 # name: test_sensor[sensor.home_pressure_tendency-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': dict({
       'options': list([
@@ -2280,6 +2575,7 @@
       ]),
     }),
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -2293,6 +2589,7 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Pressure tendency',
     'options': dict({
     }),
     'original_device_class': <SensorDeviceClass.ENUM: 'enum'>,
@@ -2300,6 +2597,7 @@
     'original_name': 'Pressure tendency',
     'platform': 'accuweather',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'pressure_tendency',
     'unique_id': '0123456-pressuretendency',
@@ -2328,11 +2626,13 @@
 # ---
 # name: test_sensor[sensor.home_ragweed_pollen_day_0-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': None,
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -2346,6 +2646,7 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Ragweed pollen day 0',
     'options': dict({
     }),
     'original_device_class': None,
@@ -2353,6 +2654,7 @@
     'original_name': 'Ragweed pollen day 0',
     'platform': 'accuweather',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'ragweed_pollen',
     'unique_id': '0123456-ragweed-0',
@@ -2377,11 +2679,13 @@
 # ---
 # name: test_sensor[sensor.home_ragweed_pollen_day_1-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': None,
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -2395,6 +2699,7 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Ragweed pollen day 1',
     'options': dict({
     }),
     'original_device_class': None,
@@ -2402,6 +2707,7 @@
     'original_name': 'Ragweed pollen day 1',
     'platform': 'accuweather',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'ragweed_pollen',
     'unique_id': '0123456-ragweed-1',
@@ -2426,11 +2732,13 @@
 # ---
 # name: test_sensor[sensor.home_ragweed_pollen_day_2-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': None,
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -2444,6 +2752,7 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Ragweed pollen day 2',
     'options': dict({
     }),
     'original_device_class': None,
@@ -2451,6 +2760,7 @@
     'original_name': 'Ragweed pollen day 2',
     'platform': 'accuweather',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'ragweed_pollen',
     'unique_id': '0123456-ragweed-2',
@@ -2475,11 +2785,13 @@
 # ---
 # name: test_sensor[sensor.home_ragweed_pollen_day_3-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': None,
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -2493,6 +2805,7 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Ragweed pollen day 3',
     'options': dict({
     }),
     'original_device_class': None,
@@ -2500,6 +2813,7 @@
     'original_name': 'Ragweed pollen day 3',
     'platform': 'accuweather',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'ragweed_pollen',
     'unique_id': '0123456-ragweed-3',
@@ -2524,11 +2838,13 @@
 # ---
 # name: test_sensor[sensor.home_ragweed_pollen_day_4-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': None,
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -2542,6 +2858,7 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Ragweed pollen day 4',
     'options': dict({
     }),
     'original_device_class': None,
@@ -2549,6 +2866,7 @@
     'original_name': 'Ragweed pollen day 4',
     'platform': 'accuweather',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'ragweed_pollen',
     'unique_id': '0123456-ragweed-4',
@@ -2573,13 +2891,15 @@
 # ---
 # name: test_sensor[sensor.home_realfeel_temperature-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': dict({
       'state_class': <SensorStateClass.MEASUREMENT: 'measurement'>,
     }),
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -2593,13 +2913,18 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'RealFeel temperature',
     'options': dict({
+      'sensor': dict({
+        'suggested_display_precision': 1,
+      }),
     }),
     'original_device_class': <SensorDeviceClass.TEMPERATURE: 'temperature'>,
     'original_icon': None,
     'original_name': 'RealFeel temperature',
     'platform': 'accuweather',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'realfeel_temperature',
     'unique_id': '0123456-realfeeltemperature',
@@ -2625,11 +2950,13 @@
 # ---
 # name: test_sensor[sensor.home_realfeel_temperature_max_day_0-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': None,
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -2643,13 +2970,18 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'RealFeel temperature max day 0',
     'options': dict({
+      'sensor': dict({
+        'suggested_display_precision': 1,
+      }),
     }),
     'original_device_class': <SensorDeviceClass.TEMPERATURE: 'temperature'>,
     'original_icon': None,
     'original_name': 'RealFeel temperature max day 0',
     'platform': 'accuweather',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'realfeel_temperature_max',
     'unique_id': '0123456-realfeeltemperaturemax-0',
@@ -2674,11 +3006,13 @@
 # ---
 # name: test_sensor[sensor.home_realfeel_temperature_max_day_1-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': None,
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -2692,13 +3026,18 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'RealFeel temperature max day 1',
     'options': dict({
+      'sensor': dict({
+        'suggested_display_precision': 1,
+      }),
     }),
     'original_device_class': <SensorDeviceClass.TEMPERATURE: 'temperature'>,
     'original_icon': None,
     'original_name': 'RealFeel temperature max day 1',
     'platform': 'accuweather',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'realfeel_temperature_max',
     'unique_id': '0123456-realfeeltemperaturemax-1',
@@ -2723,11 +3062,13 @@
 # ---
 # name: test_sensor[sensor.home_realfeel_temperature_max_day_2-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': None,
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -2741,13 +3082,18 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'RealFeel temperature max day 2',
     'options': dict({
+      'sensor': dict({
+        'suggested_display_precision': 1,
+      }),
     }),
     'original_device_class': <SensorDeviceClass.TEMPERATURE: 'temperature'>,
     'original_icon': None,
     'original_name': 'RealFeel temperature max day 2',
     'platform': 'accuweather',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'realfeel_temperature_max',
     'unique_id': '0123456-realfeeltemperaturemax-2',
@@ -2772,11 +3118,13 @@
 # ---
 # name: test_sensor[sensor.home_realfeel_temperature_max_day_3-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': None,
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -2790,13 +3138,18 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'RealFeel temperature max day 3',
     'options': dict({
+      'sensor': dict({
+        'suggested_display_precision': 1,
+      }),
     }),
     'original_device_class': <SensorDeviceClass.TEMPERATURE: 'temperature'>,
     'original_icon': None,
     'original_name': 'RealFeel temperature max day 3',
     'platform': 'accuweather',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'realfeel_temperature_max',
     'unique_id': '0123456-realfeeltemperaturemax-3',
@@ -2821,11 +3174,13 @@
 # ---
 # name: test_sensor[sensor.home_realfeel_temperature_max_day_4-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': None,
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -2839,13 +3194,18 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'RealFeel temperature max day 4',
     'options': dict({
+      'sensor': dict({
+        'suggested_display_precision': 1,
+      }),
     }),
     'original_device_class': <SensorDeviceClass.TEMPERATURE: 'temperature'>,
     'original_icon': None,
     'original_name': 'RealFeel temperature max day 4',
     'platform': 'accuweather',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'realfeel_temperature_max',
     'unique_id': '0123456-realfeeltemperaturemax-4',
@@ -2870,11 +3230,13 @@
 # ---
 # name: test_sensor[sensor.home_realfeel_temperature_min_day_0-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': None,
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -2888,13 +3250,18 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'RealFeel temperature min day 0',
     'options': dict({
+      'sensor': dict({
+        'suggested_display_precision': 1,
+      }),
     }),
     'original_device_class': <SensorDeviceClass.TEMPERATURE: 'temperature'>,
     'original_icon': None,
     'original_name': 'RealFeel temperature min day 0',
     'platform': 'accuweather',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'realfeel_temperature_min',
     'unique_id': '0123456-realfeeltemperaturemin-0',
@@ -2919,11 +3286,13 @@
 # ---
 # name: test_sensor[sensor.home_realfeel_temperature_min_day_1-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': None,
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -2937,13 +3306,18 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'RealFeel temperature min day 1',
     'options': dict({
+      'sensor': dict({
+        'suggested_display_precision': 1,
+      }),
     }),
     'original_device_class': <SensorDeviceClass.TEMPERATURE: 'temperature'>,
     'original_icon': None,
     'original_name': 'RealFeel temperature min day 1',
     'platform': 'accuweather',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'realfeel_temperature_min',
     'unique_id': '0123456-realfeeltemperaturemin-1',
@@ -2968,11 +3342,13 @@
 # ---
 # name: test_sensor[sensor.home_realfeel_temperature_min_day_2-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': None,
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -2986,13 +3362,18 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'RealFeel temperature min day 2',
     'options': dict({
+      'sensor': dict({
+        'suggested_display_precision': 1,
+      }),
     }),
     'original_device_class': <SensorDeviceClass.TEMPERATURE: 'temperature'>,
     'original_icon': None,
     'original_name': 'RealFeel temperature min day 2',
     'platform': 'accuweather',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'realfeel_temperature_min',
     'unique_id': '0123456-realfeeltemperaturemin-2',
@@ -3017,11 +3398,13 @@
 # ---
 # name: test_sensor[sensor.home_realfeel_temperature_min_day_3-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': None,
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -3035,13 +3418,18 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'RealFeel temperature min day 3',
     'options': dict({
+      'sensor': dict({
+        'suggested_display_precision': 1,
+      }),
     }),
     'original_device_class': <SensorDeviceClass.TEMPERATURE: 'temperature'>,
     'original_icon': None,
     'original_name': 'RealFeel temperature min day 3',
     'platform': 'accuweather',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'realfeel_temperature_min',
     'unique_id': '0123456-realfeeltemperaturemin-3',
@@ -3066,11 +3454,13 @@
 # ---
 # name: test_sensor[sensor.home_realfeel_temperature_min_day_4-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': None,
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -3084,13 +3474,18 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'RealFeel temperature min day 4',
     'options': dict({
+      'sensor': dict({
+        'suggested_display_precision': 1,
+      }),
     }),
     'original_device_class': <SensorDeviceClass.TEMPERATURE: 'temperature'>,
     'original_icon': None,
     'original_name': 'RealFeel temperature min day 4',
     'platform': 'accuweather',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'realfeel_temperature_min',
     'unique_id': '0123456-realfeeltemperaturemin-4',
@@ -3115,13 +3510,15 @@
 # ---
 # name: test_sensor[sensor.home_realfeel_temperature_shade-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': dict({
       'state_class': <SensorStateClass.MEASUREMENT: 'measurement'>,
     }),
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -3135,13 +3532,18 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'RealFeel temperature shade',
     'options': dict({
+      'sensor': dict({
+        'suggested_display_precision': 1,
+      }),
     }),
     'original_device_class': <SensorDeviceClass.TEMPERATURE: 'temperature'>,
     'original_icon': None,
     'original_name': 'RealFeel temperature shade',
     'platform': 'accuweather',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'realfeel_temperature_shade',
     'unique_id': '0123456-realfeeltemperatureshade',
@@ -3167,11 +3569,13 @@
 # ---
 # name: test_sensor[sensor.home_realfeel_temperature_shade_max_day_0-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': None,
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -3185,13 +3589,18 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'RealFeel temperature shade max day 0',
     'options': dict({
+      'sensor': dict({
+        'suggested_display_precision': 1,
+      }),
     }),
     'original_device_class': <SensorDeviceClass.TEMPERATURE: 'temperature'>,
     'original_icon': None,
     'original_name': 'RealFeel temperature shade max day 0',
     'platform': 'accuweather',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'realfeel_temperature_shade_max',
     'unique_id': '0123456-realfeeltemperatureshademax-0',
@@ -3216,11 +3625,13 @@
 # ---
 # name: test_sensor[sensor.home_realfeel_temperature_shade_max_day_1-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': None,
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -3234,13 +3645,18 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'RealFeel temperature shade max day 1',
     'options': dict({
+      'sensor': dict({
+        'suggested_display_precision': 1,
+      }),
     }),
     'original_device_class': <SensorDeviceClass.TEMPERATURE: 'temperature'>,
     'original_icon': None,
     'original_name': 'RealFeel temperature shade max day 1',
     'platform': 'accuweather',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'realfeel_temperature_shade_max',
     'unique_id': '0123456-realfeeltemperatureshademax-1',
@@ -3265,11 +3681,13 @@
 # ---
 # name: test_sensor[sensor.home_realfeel_temperature_shade_max_day_2-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': None,
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -3283,13 +3701,18 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'RealFeel temperature shade max day 2',
     'options': dict({
+      'sensor': dict({
+        'suggested_display_precision': 1,
+      }),
     }),
     'original_device_class': <SensorDeviceClass.TEMPERATURE: 'temperature'>,
     'original_icon': None,
     'original_name': 'RealFeel temperature shade max day 2',
     'platform': 'accuweather',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'realfeel_temperature_shade_max',
     'unique_id': '0123456-realfeeltemperatureshademax-2',
@@ -3314,11 +3737,13 @@
 # ---
 # name: test_sensor[sensor.home_realfeel_temperature_shade_max_day_3-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': None,
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -3332,13 +3757,18 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'RealFeel temperature shade max day 3',
     'options': dict({
+      'sensor': dict({
+        'suggested_display_precision': 1,
+      }),
     }),
     'original_device_class': <SensorDeviceClass.TEMPERATURE: 'temperature'>,
     'original_icon': None,
     'original_name': 'RealFeel temperature shade max day 3',
     'platform': 'accuweather',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'realfeel_temperature_shade_max',
     'unique_id': '0123456-realfeeltemperatureshademax-3',
@@ -3363,11 +3793,13 @@
 # ---
 # name: test_sensor[sensor.home_realfeel_temperature_shade_max_day_4-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': None,
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -3381,13 +3813,18 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'RealFeel temperature shade max day 4',
     'options': dict({
+      'sensor': dict({
+        'suggested_display_precision': 1,
+      }),
     }),
     'original_device_class': <SensorDeviceClass.TEMPERATURE: 'temperature'>,
     'original_icon': None,
     'original_name': 'RealFeel temperature shade max day 4',
     'platform': 'accuweather',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'realfeel_temperature_shade_max',
     'unique_id': '0123456-realfeeltemperatureshademax-4',
@@ -3412,11 +3849,13 @@
 # ---
 # name: test_sensor[sensor.home_realfeel_temperature_shade_min_day_0-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': None,
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -3430,13 +3869,18 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'RealFeel temperature shade min day 0',
     'options': dict({
+      'sensor': dict({
+        'suggested_display_precision': 1,
+      }),
     }),
     'original_device_class': <SensorDeviceClass.TEMPERATURE: 'temperature'>,
     'original_icon': None,
     'original_name': 'RealFeel temperature shade min day 0',
     'platform': 'accuweather',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'realfeel_temperature_shade_min',
     'unique_id': '0123456-realfeeltemperatureshademin-0',
@@ -3461,11 +3905,13 @@
 # ---
 # name: test_sensor[sensor.home_realfeel_temperature_shade_min_day_1-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': None,
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -3479,13 +3925,18 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'RealFeel temperature shade min day 1',
     'options': dict({
+      'sensor': dict({
+        'suggested_display_precision': 1,
+      }),
     }),
     'original_device_class': <SensorDeviceClass.TEMPERATURE: 'temperature'>,
     'original_icon': None,
     'original_name': 'RealFeel temperature shade min day 1',
     'platform': 'accuweather',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'realfeel_temperature_shade_min',
     'unique_id': '0123456-realfeeltemperatureshademin-1',
@@ -3510,11 +3961,13 @@
 # ---
 # name: test_sensor[sensor.home_realfeel_temperature_shade_min_day_2-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': None,
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -3528,13 +3981,18 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'RealFeel temperature shade min day 2',
     'options': dict({
+      'sensor': dict({
+        'suggested_display_precision': 1,
+      }),
     }),
     'original_device_class': <SensorDeviceClass.TEMPERATURE: 'temperature'>,
     'original_icon': None,
     'original_name': 'RealFeel temperature shade min day 2',
     'platform': 'accuweather',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'realfeel_temperature_shade_min',
     'unique_id': '0123456-realfeeltemperatureshademin-2',
@@ -3559,11 +4017,13 @@
 # ---
 # name: test_sensor[sensor.home_realfeel_temperature_shade_min_day_3-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': None,
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -3577,13 +4037,18 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'RealFeel temperature shade min day 3',
     'options': dict({
+      'sensor': dict({
+        'suggested_display_precision': 1,
+      }),
     }),
     'original_device_class': <SensorDeviceClass.TEMPERATURE: 'temperature'>,
     'original_icon': None,
     'original_name': 'RealFeel temperature shade min day 3',
     'platform': 'accuweather',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'realfeel_temperature_shade_min',
     'unique_id': '0123456-realfeeltemperatureshademin-3',
@@ -3608,11 +4073,13 @@
 # ---
 # name: test_sensor[sensor.home_realfeel_temperature_shade_min_day_4-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': None,
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -3626,13 +4093,18 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'RealFeel temperature shade min day 4',
     'options': dict({
+      'sensor': dict({
+        'suggested_display_precision': 1,
+      }),
     }),
     'original_device_class': <SensorDeviceClass.TEMPERATURE: 'temperature'>,
     'original_icon': None,
     'original_name': 'RealFeel temperature shade min day 4',
     'platform': 'accuweather',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'realfeel_temperature_shade_min',
     'unique_id': '0123456-realfeeltemperatureshademin-4',
@@ -3657,11 +4129,13 @@
 # ---
 # name: test_sensor[sensor.home_solar_irradiance_day_0-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': None,
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -3675,13 +4149,18 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Solar irradiance day 0',
     'options': dict({
+      'sensor': dict({
+        'suggested_display_precision': 0,
+      }),
     }),
     'original_device_class': <SensorDeviceClass.IRRADIANCE: 'irradiance'>,
     'original_icon': None,
     'original_name': 'Solar irradiance day 0',
     'platform': 'accuweather',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'solar_irradiance_day',
     'unique_id': '0123456-solarirradianceday-0',
@@ -3706,11 +4185,13 @@
 # ---
 # name: test_sensor[sensor.home_solar_irradiance_day_1-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': None,
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -3724,13 +4205,18 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Solar irradiance day 1',
     'options': dict({
+      'sensor': dict({
+        'suggested_display_precision': 0,
+      }),
     }),
     'original_device_class': <SensorDeviceClass.IRRADIANCE: 'irradiance'>,
     'original_icon': None,
     'original_name': 'Solar irradiance day 1',
     'platform': 'accuweather',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'solar_irradiance_day',
     'unique_id': '0123456-solarirradianceday-1',
@@ -3755,11 +4241,13 @@
 # ---
 # name: test_sensor[sensor.home_solar_irradiance_day_2-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': None,
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -3773,13 +4261,18 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Solar irradiance day 2',
     'options': dict({
+      'sensor': dict({
+        'suggested_display_precision': 0,
+      }),
     }),
     'original_device_class': <SensorDeviceClass.IRRADIANCE: 'irradiance'>,
     'original_icon': None,
     'original_name': 'Solar irradiance day 2',
     'platform': 'accuweather',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'solar_irradiance_day',
     'unique_id': '0123456-solarirradianceday-2',
@@ -3804,11 +4297,13 @@
 # ---
 # name: test_sensor[sensor.home_solar_irradiance_day_3-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': None,
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -3822,13 +4317,18 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Solar irradiance day 3',
     'options': dict({
+      'sensor': dict({
+        'suggested_display_precision': 0,
+      }),
     }),
     'original_device_class': <SensorDeviceClass.IRRADIANCE: 'irradiance'>,
     'original_icon': None,
     'original_name': 'Solar irradiance day 3',
     'platform': 'accuweather',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'solar_irradiance_day',
     'unique_id': '0123456-solarirradianceday-3',
@@ -3853,11 +4353,13 @@
 # ---
 # name: test_sensor[sensor.home_solar_irradiance_day_4-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': None,
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -3871,13 +4373,18 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Solar irradiance day 4',
     'options': dict({
+      'sensor': dict({
+        'suggested_display_precision': 0,
+      }),
     }),
     'original_device_class': <SensorDeviceClass.IRRADIANCE: 'irradiance'>,
     'original_icon': None,
     'original_name': 'Solar irradiance day 4',
     'platform': 'accuweather',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'solar_irradiance_day',
     'unique_id': '0123456-solarirradianceday-4',
@@ -3902,11 +4409,13 @@
 # ---
 # name: test_sensor[sensor.home_solar_irradiance_night_0-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': None,
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -3920,13 +4429,18 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Solar irradiance night 0',
     'options': dict({
+      'sensor': dict({
+        'suggested_display_precision': 0,
+      }),
     }),
     'original_device_class': <SensorDeviceClass.IRRADIANCE: 'irradiance'>,
     'original_icon': None,
     'original_name': 'Solar irradiance night 0',
     'platform': 'accuweather',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'solar_irradiance_night',
     'unique_id': '0123456-solarirradiancenight-0',
@@ -3951,11 +4465,13 @@
 # ---
 # name: test_sensor[sensor.home_solar_irradiance_night_1-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': None,
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -3969,13 +4485,18 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Solar irradiance night 1',
     'options': dict({
+      'sensor': dict({
+        'suggested_display_precision': 0,
+      }),
     }),
     'original_device_class': <SensorDeviceClass.IRRADIANCE: 'irradiance'>,
     'original_icon': None,
     'original_name': 'Solar irradiance night 1',
     'platform': 'accuweather',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'solar_irradiance_night',
     'unique_id': '0123456-solarirradiancenight-1',
@@ -4000,11 +4521,13 @@
 # ---
 # name: test_sensor[sensor.home_solar_irradiance_night_2-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': None,
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -4018,13 +4541,18 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Solar irradiance night 2',
     'options': dict({
+      'sensor': dict({
+        'suggested_display_precision': 0,
+      }),
     }),
     'original_device_class': <SensorDeviceClass.IRRADIANCE: 'irradiance'>,
     'original_icon': None,
     'original_name': 'Solar irradiance night 2',
     'platform': 'accuweather',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'solar_irradiance_night',
     'unique_id': '0123456-solarirradiancenight-2',
@@ -4049,11 +4577,13 @@
 # ---
 # name: test_sensor[sensor.home_solar_irradiance_night_3-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': None,
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -4067,13 +4597,18 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Solar irradiance night 3',
     'options': dict({
+      'sensor': dict({
+        'suggested_display_precision': 0,
+      }),
     }),
     'original_device_class': <SensorDeviceClass.IRRADIANCE: 'irradiance'>,
     'original_icon': None,
     'original_name': 'Solar irradiance night 3',
     'platform': 'accuweather',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'solar_irradiance_night',
     'unique_id': '0123456-solarirradiancenight-3',
@@ -4098,11 +4633,13 @@
 # ---
 # name: test_sensor[sensor.home_solar_irradiance_night_4-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': None,
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -4116,13 +4653,18 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Solar irradiance night 4',
     'options': dict({
+      'sensor': dict({
+        'suggested_display_precision': 0,
+      }),
     }),
     'original_device_class': <SensorDeviceClass.IRRADIANCE: 'irradiance'>,
     'original_icon': None,
     'original_name': 'Solar irradiance night 4',
     'platform': 'accuweather',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'solar_irradiance_night',
     'unique_id': '0123456-solarirradiancenight-4',
@@ -4145,13 +4687,74 @@
     'state': '276.1',
   })
 # ---
+# name: test_sensor[sensor.home_temperature-entry]
+  EntityRegistryEntrySnapshot({
+    'aliases': list([
+      None,
+    ]),
+    'area_id': None,
+    'capabilities': dict({
+      'state_class': <SensorStateClass.MEASUREMENT: 'measurement'>,
+    }),
+    'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
+    'device_class': None,
+    'device_id': <ANY>,
+    'disabled_by': None,
+    'domain': 'sensor',
+    'entity_category': None,
+    'entity_id': 'sensor.home_temperature',
+    'has_entity_name': True,
+    'hidden_by': None,
+    'icon': None,
+    'id': <ANY>,
+    'labels': set({
+    }),
+    'name': None,
+    'object_id_base': 'Temperature',
+    'options': dict({
+      'sensor': dict({
+        'suggested_display_precision': 1,
+      }),
+    }),
+    'original_device_class': <SensorDeviceClass.TEMPERATURE: 'temperature'>,
+    'original_icon': None,
+    'original_name': 'Temperature',
+    'platform': 'accuweather',
+    'previous_unique_id': None,
+    'suggested_object_id': None,
+    'supported_features': 0,
+    'translation_key': 'temperature',
+    'unique_id': '0123456-temperature',
+    'unit_of_measurement': <UnitOfTemperature.CELSIUS: '°C'>,
+  })
+# ---
+# name: test_sensor[sensor.home_temperature-state]
+  StateSnapshot({
+    'attributes': ReadOnlyDict({
+      'attribution': 'Data provided by AccuWeather',
+      'device_class': 'temperature',
+      'friendly_name': 'Home Temperature',
+      'state_class': <SensorStateClass.MEASUREMENT: 'measurement'>,
+      'unit_of_measurement': <UnitOfTemperature.CELSIUS: '°C'>,
+    }),
+    'context': <ANY>,
+    'entity_id': 'sensor.home_temperature',
+    'last_changed': <ANY>,
+    'last_reported': <ANY>,
+    'last_updated': <ANY>,
+    'state': '22.6',
+  })
+# ---
 # name: test_sensor[sensor.home_thunderstorm_probability_day_0-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': None,
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -4165,6 +4768,7 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Thunderstorm probability day 0',
     'options': dict({
     }),
     'original_device_class': None,
@@ -4172,6 +4776,7 @@
     'original_name': 'Thunderstorm probability day 0',
     'platform': 'accuweather',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'thunderstorm_probability_day',
     'unique_id': '0123456-thunderstormprobabilityday-0',
@@ -4195,11 +4800,13 @@
 # ---
 # name: test_sensor[sensor.home_thunderstorm_probability_day_1-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': None,
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -4213,6 +4820,7 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Thunderstorm probability day 1',
     'options': dict({
     }),
     'original_device_class': None,
@@ -4220,6 +4828,7 @@
     'original_name': 'Thunderstorm probability day 1',
     'platform': 'accuweather',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'thunderstorm_probability_day',
     'unique_id': '0123456-thunderstormprobabilityday-1',
@@ -4243,11 +4852,13 @@
 # ---
 # name: test_sensor[sensor.home_thunderstorm_probability_day_2-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': None,
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -4261,6 +4872,7 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Thunderstorm probability day 2',
     'options': dict({
     }),
     'original_device_class': None,
@@ -4268,6 +4880,7 @@
     'original_name': 'Thunderstorm probability day 2',
     'platform': 'accuweather',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'thunderstorm_probability_day',
     'unique_id': '0123456-thunderstormprobabilityday-2',
@@ -4291,11 +4904,13 @@
 # ---
 # name: test_sensor[sensor.home_thunderstorm_probability_day_3-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': None,
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -4309,6 +4924,7 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Thunderstorm probability day 3',
     'options': dict({
     }),
     'original_device_class': None,
@@ -4316,6 +4932,7 @@
     'original_name': 'Thunderstorm probability day 3',
     'platform': 'accuweather',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'thunderstorm_probability_day',
     'unique_id': '0123456-thunderstormprobabilityday-3',
@@ -4339,11 +4956,13 @@
 # ---
 # name: test_sensor[sensor.home_thunderstorm_probability_day_4-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': None,
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -4357,6 +4976,7 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Thunderstorm probability day 4',
     'options': dict({
     }),
     'original_device_class': None,
@@ -4364,6 +4984,7 @@
     'original_name': 'Thunderstorm probability day 4',
     'platform': 'accuweather',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'thunderstorm_probability_day',
     'unique_id': '0123456-thunderstormprobabilityday-4',
@@ -4387,11 +5008,13 @@
 # ---
 # name: test_sensor[sensor.home_thunderstorm_probability_night_0-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': None,
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -4405,6 +5028,7 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Thunderstorm probability night 0',
     'options': dict({
     }),
     'original_device_class': None,
@@ -4412,6 +5036,7 @@
     'original_name': 'Thunderstorm probability night 0',
     'platform': 'accuweather',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'thunderstorm_probability_night',
     'unique_id': '0123456-thunderstormprobabilitynight-0',
@@ -4435,11 +5060,13 @@
 # ---
 # name: test_sensor[sensor.home_thunderstorm_probability_night_1-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': None,
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -4453,6 +5080,7 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Thunderstorm probability night 1',
     'options': dict({
     }),
     'original_device_class': None,
@@ -4460,6 +5088,7 @@
     'original_name': 'Thunderstorm probability night 1',
     'platform': 'accuweather',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'thunderstorm_probability_night',
     'unique_id': '0123456-thunderstormprobabilitynight-1',
@@ -4483,11 +5112,13 @@
 # ---
 # name: test_sensor[sensor.home_thunderstorm_probability_night_2-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': None,
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -4501,6 +5132,7 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Thunderstorm probability night 2',
     'options': dict({
     }),
     'original_device_class': None,
@@ -4508,6 +5140,7 @@
     'original_name': 'Thunderstorm probability night 2',
     'platform': 'accuweather',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'thunderstorm_probability_night',
     'unique_id': '0123456-thunderstormprobabilitynight-2',
@@ -4531,11 +5164,13 @@
 # ---
 # name: test_sensor[sensor.home_thunderstorm_probability_night_3-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': None,
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -4549,6 +5184,7 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Thunderstorm probability night 3',
     'options': dict({
     }),
     'original_device_class': None,
@@ -4556,6 +5192,7 @@
     'original_name': 'Thunderstorm probability night 3',
     'platform': 'accuweather',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'thunderstorm_probability_night',
     'unique_id': '0123456-thunderstormprobabilitynight-3',
@@ -4579,11 +5216,13 @@
 # ---
 # name: test_sensor[sensor.home_thunderstorm_probability_night_4-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': None,
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -4597,6 +5236,7 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Thunderstorm probability night 4',
     'options': dict({
     }),
     'original_device_class': None,
@@ -4604,6 +5244,7 @@
     'original_name': 'Thunderstorm probability night 4',
     'platform': 'accuweather',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'thunderstorm_probability_night',
     'unique_id': '0123456-thunderstormprobabilitynight-4',
@@ -4627,11 +5268,13 @@
 # ---
 # name: test_sensor[sensor.home_tree_pollen_day_0-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': None,
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -4645,6 +5288,7 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Tree pollen day 0',
     'options': dict({
     }),
     'original_device_class': None,
@@ -4652,6 +5296,7 @@
     'original_name': 'Tree pollen day 0',
     'platform': 'accuweather',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'tree_pollen',
     'unique_id': '0123456-tree-0',
@@ -4676,11 +5321,13 @@
 # ---
 # name: test_sensor[sensor.home_tree_pollen_day_1-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': None,
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -4694,6 +5341,7 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Tree pollen day 1',
     'options': dict({
     }),
     'original_device_class': None,
@@ -4701,6 +5349,7 @@
     'original_name': 'Tree pollen day 1',
     'platform': 'accuweather',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'tree_pollen',
     'unique_id': '0123456-tree-1',
@@ -4725,11 +5374,13 @@
 # ---
 # name: test_sensor[sensor.home_tree_pollen_day_2-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': None,
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -4743,6 +5394,7 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Tree pollen day 2',
     'options': dict({
     }),
     'original_device_class': None,
@@ -4750,6 +5402,7 @@
     'original_name': 'Tree pollen day 2',
     'platform': 'accuweather',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'tree_pollen',
     'unique_id': '0123456-tree-2',
@@ -4774,11 +5427,13 @@
 # ---
 # name: test_sensor[sensor.home_tree_pollen_day_3-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': None,
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -4792,6 +5447,7 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Tree pollen day 3',
     'options': dict({
     }),
     'original_device_class': None,
@@ -4799,6 +5455,7 @@
     'original_name': 'Tree pollen day 3',
     'platform': 'accuweather',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'tree_pollen',
     'unique_id': '0123456-tree-3',
@@ -4823,11 +5480,13 @@
 # ---
 # name: test_sensor[sensor.home_tree_pollen_day_4-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': None,
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -4841,6 +5500,7 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Tree pollen day 4',
     'options': dict({
     }),
     'original_device_class': None,
@@ -4848,6 +5508,7 @@
     'original_name': 'Tree pollen day 4',
     'platform': 'accuweather',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'tree_pollen',
     'unique_id': '0123456-tree-4',
@@ -4872,13 +5533,15 @@
 # ---
 # name: test_sensor[sensor.home_uv_index-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': dict({
       'state_class': <SensorStateClass.MEASUREMENT: 'measurement'>,
     }),
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -4892,6 +5555,7 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'UV index',
     'options': dict({
     }),
     'original_device_class': None,
@@ -4899,6 +5563,7 @@
     'original_name': 'UV index',
     'platform': 'accuweather',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'uv_index',
     'unique_id': '0123456-uvindex',
@@ -4924,11 +5589,13 @@
 # ---
 # name: test_sensor[sensor.home_uv_index_day_0-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': None,
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -4942,6 +5609,7 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'UV index day 0',
     'options': dict({
     }),
     'original_device_class': None,
@@ -4949,6 +5617,7 @@
     'original_name': 'UV index day 0',
     'platform': 'accuweather',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'uv_index_forecast',
     'unique_id': '0123456-uvindex-0',
@@ -4973,11 +5642,13 @@
 # ---
 # name: test_sensor[sensor.home_uv_index_day_1-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': None,
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -4991,6 +5662,7 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'UV index day 1',
     'options': dict({
     }),
     'original_device_class': None,
@@ -4998,6 +5670,7 @@
     'original_name': 'UV index day 1',
     'platform': 'accuweather',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'uv_index_forecast',
     'unique_id': '0123456-uvindex-1',
@@ -5022,11 +5695,13 @@
 # ---
 # name: test_sensor[sensor.home_uv_index_day_2-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': None,
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -5040,6 +5715,7 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'UV index day 2',
     'options': dict({
     }),
     'original_device_class': None,
@@ -5047,6 +5723,7 @@
     'original_name': 'UV index day 2',
     'platform': 'accuweather',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'uv_index_forecast',
     'unique_id': '0123456-uvindex-2',
@@ -5071,11 +5748,13 @@
 # ---
 # name: test_sensor[sensor.home_uv_index_day_3-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': None,
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -5089,6 +5768,7 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'UV index day 3',
     'options': dict({
     }),
     'original_device_class': None,
@@ -5096,6 +5776,7 @@
     'original_name': 'UV index day 3',
     'platform': 'accuweather',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'uv_index_forecast',
     'unique_id': '0123456-uvindex-3',
@@ -5120,11 +5801,13 @@
 # ---
 # name: test_sensor[sensor.home_uv_index_day_4-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': None,
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -5138,6 +5821,7 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'UV index day 4',
     'options': dict({
     }),
     'original_device_class': None,
@@ -5145,6 +5829,7 @@
     'original_name': 'UV index day 4',
     'platform': 'accuweather',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'uv_index_forecast',
     'unique_id': '0123456-uvindex-4',
@@ -5169,13 +5854,15 @@
 # ---
 # name: test_sensor[sensor.home_wet_bulb_temperature-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': dict({
       'state_class': <SensorStateClass.MEASUREMENT: 'measurement'>,
     }),
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -5189,13 +5876,18 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Wet bulb temperature',
     'options': dict({
+      'sensor': dict({
+        'suggested_display_precision': 1,
+      }),
     }),
     'original_device_class': <SensorDeviceClass.TEMPERATURE: 'temperature'>,
     'original_icon': None,
     'original_name': 'Wet bulb temperature',
     'platform': 'accuweather',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'wet_bulb_temperature',
     'unique_id': '0123456-wetbulbtemperature',
@@ -5221,13 +5913,15 @@
 # ---
 # name: test_sensor[sensor.home_wind_chill_temperature-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': dict({
       'state_class': <SensorStateClass.MEASUREMENT: 'measurement'>,
     }),
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -5241,13 +5935,18 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Wind chill temperature',
     'options': dict({
+      'sensor': dict({
+        'suggested_display_precision': 1,
+      }),
     }),
     'original_device_class': <SensorDeviceClass.TEMPERATURE: 'temperature'>,
     'original_icon': None,
     'original_name': 'Wind chill temperature',
     'platform': 'accuweather',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'wind_chill_temperature',
     'unique_id': '0123456-windchilltemperature',
@@ -5273,13 +5972,15 @@
 # ---
 # name: test_sensor[sensor.home_wind_gust_speed-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': dict({
       'state_class': <SensorStateClass.MEASUREMENT: 'measurement'>,
     }),
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -5293,13 +5994,18 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Wind gust speed',
     'options': dict({
+      'sensor': dict({
+        'suggested_display_precision': 2,
+      }),
     }),
     'original_device_class': <SensorDeviceClass.WIND_SPEED: 'wind_speed'>,
     'original_icon': None,
     'original_name': 'Wind gust speed',
     'platform': 'accuweather',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'wind_gust_speed',
     'unique_id': '0123456-windgust',
@@ -5325,11 +6031,13 @@
 # ---
 # name: test_sensor[sensor.home_wind_gust_speed_day_0-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': None,
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -5343,13 +6051,18 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Wind gust speed day 0',
     'options': dict({
+      'sensor': dict({
+        'suggested_display_precision': 2,
+      }),
     }),
     'original_device_class': <SensorDeviceClass.WIND_SPEED: 'wind_speed'>,
     'original_icon': None,
     'original_name': 'Wind gust speed day 0',
     'platform': 'accuweather',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'wind_gust_speed_day',
     'unique_id': '0123456-windgustday-0',
@@ -5375,11 +6088,13 @@
 # ---
 # name: test_sensor[sensor.home_wind_gust_speed_day_1-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': None,
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -5393,13 +6108,18 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Wind gust speed day 1',
     'options': dict({
+      'sensor': dict({
+        'suggested_display_precision': 2,
+      }),
     }),
     'original_device_class': <SensorDeviceClass.WIND_SPEED: 'wind_speed'>,
     'original_icon': None,
     'original_name': 'Wind gust speed day 1',
     'platform': 'accuweather',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'wind_gust_speed_day',
     'unique_id': '0123456-windgustday-1',
@@ -5425,11 +6145,13 @@
 # ---
 # name: test_sensor[sensor.home_wind_gust_speed_day_2-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': None,
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -5443,13 +6165,18 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Wind gust speed day 2',
     'options': dict({
+      'sensor': dict({
+        'suggested_display_precision': 2,
+      }),
     }),
     'original_device_class': <SensorDeviceClass.WIND_SPEED: 'wind_speed'>,
     'original_icon': None,
     'original_name': 'Wind gust speed day 2',
     'platform': 'accuweather',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'wind_gust_speed_day',
     'unique_id': '0123456-windgustday-2',
@@ -5475,11 +6202,13 @@
 # ---
 # name: test_sensor[sensor.home_wind_gust_speed_day_3-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': None,
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -5493,13 +6222,18 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Wind gust speed day 3',
     'options': dict({
+      'sensor': dict({
+        'suggested_display_precision': 2,
+      }),
     }),
     'original_device_class': <SensorDeviceClass.WIND_SPEED: 'wind_speed'>,
     'original_icon': None,
     'original_name': 'Wind gust speed day 3',
     'platform': 'accuweather',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'wind_gust_speed_day',
     'unique_id': '0123456-windgustday-3',
@@ -5525,11 +6259,13 @@
 # ---
 # name: test_sensor[sensor.home_wind_gust_speed_day_4-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': None,
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -5543,13 +6279,18 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Wind gust speed day 4',
     'options': dict({
+      'sensor': dict({
+        'suggested_display_precision': 2,
+      }),
     }),
     'original_device_class': <SensorDeviceClass.WIND_SPEED: 'wind_speed'>,
     'original_icon': None,
     'original_name': 'Wind gust speed day 4',
     'platform': 'accuweather',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'wind_gust_speed_day',
     'unique_id': '0123456-windgustday-4',
@@ -5575,11 +6316,13 @@
 # ---
 # name: test_sensor[sensor.home_wind_gust_speed_night_0-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': None,
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -5593,13 +6336,18 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Wind gust speed night 0',
     'options': dict({
+      'sensor': dict({
+        'suggested_display_precision': 2,
+      }),
     }),
     'original_device_class': <SensorDeviceClass.WIND_SPEED: 'wind_speed'>,
     'original_icon': None,
     'original_name': 'Wind gust speed night 0',
     'platform': 'accuweather',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'wind_gust_speed_night',
     'unique_id': '0123456-windgustnight-0',
@@ -5625,11 +6373,13 @@
 # ---
 # name: test_sensor[sensor.home_wind_gust_speed_night_1-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': None,
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -5643,13 +6393,18 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Wind gust speed night 1',
     'options': dict({
+      'sensor': dict({
+        'suggested_display_precision': 2,
+      }),
     }),
     'original_device_class': <SensorDeviceClass.WIND_SPEED: 'wind_speed'>,
     'original_icon': None,
     'original_name': 'Wind gust speed night 1',
     'platform': 'accuweather',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'wind_gust_speed_night',
     'unique_id': '0123456-windgustnight-1',
@@ -5675,11 +6430,13 @@
 # ---
 # name: test_sensor[sensor.home_wind_gust_speed_night_2-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': None,
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -5693,13 +6450,18 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Wind gust speed night 2',
     'options': dict({
+      'sensor': dict({
+        'suggested_display_precision': 2,
+      }),
     }),
     'original_device_class': <SensorDeviceClass.WIND_SPEED: 'wind_speed'>,
     'original_icon': None,
     'original_name': 'Wind gust speed night 2',
     'platform': 'accuweather',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'wind_gust_speed_night',
     'unique_id': '0123456-windgustnight-2',
@@ -5725,11 +6487,13 @@
 # ---
 # name: test_sensor[sensor.home_wind_gust_speed_night_3-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': None,
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -5743,13 +6507,18 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Wind gust speed night 3',
     'options': dict({
+      'sensor': dict({
+        'suggested_display_precision': 2,
+      }),
     }),
     'original_device_class': <SensorDeviceClass.WIND_SPEED: 'wind_speed'>,
     'original_icon': None,
     'original_name': 'Wind gust speed night 3',
     'platform': 'accuweather',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'wind_gust_speed_night',
     'unique_id': '0123456-windgustnight-3',
@@ -5775,11 +6544,13 @@
 # ---
 # name: test_sensor[sensor.home_wind_gust_speed_night_4-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': None,
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -5793,13 +6564,18 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Wind gust speed night 4',
     'options': dict({
+      'sensor': dict({
+        'suggested_display_precision': 2,
+      }),
     }),
     'original_device_class': <SensorDeviceClass.WIND_SPEED: 'wind_speed'>,
     'original_icon': None,
     'original_name': 'Wind gust speed night 4',
     'platform': 'accuweather',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'wind_gust_speed_night',
     'unique_id': '0123456-windgustnight-4',
@@ -5825,13 +6601,15 @@
 # ---
 # name: test_sensor[sensor.home_wind_speed-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': dict({
       'state_class': <SensorStateClass.MEASUREMENT: 'measurement'>,
     }),
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -5845,13 +6623,18 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Wind speed',
     'options': dict({
+      'sensor': dict({
+        'suggested_display_precision': 2,
+      }),
     }),
     'original_device_class': <SensorDeviceClass.WIND_SPEED: 'wind_speed'>,
     'original_icon': None,
     'original_name': 'Wind speed',
     'platform': 'accuweather',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'wind_speed',
     'unique_id': '0123456-wind',
@@ -5877,11 +6660,13 @@
 # ---
 # name: test_sensor[sensor.home_wind_speed_day_0-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': None,
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -5895,13 +6680,18 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Wind speed day 0',
     'options': dict({
+      'sensor': dict({
+        'suggested_display_precision': 2,
+      }),
     }),
     'original_device_class': <SensorDeviceClass.WIND_SPEED: 'wind_speed'>,
     'original_icon': None,
     'original_name': 'Wind speed day 0',
     'platform': 'accuweather',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'wind_speed_day',
     'unique_id': '0123456-windday-0',
@@ -5927,11 +6717,13 @@
 # ---
 # name: test_sensor[sensor.home_wind_speed_day_1-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': None,
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -5945,13 +6737,18 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Wind speed day 1',
     'options': dict({
+      'sensor': dict({
+        'suggested_display_precision': 2,
+      }),
     }),
     'original_device_class': <SensorDeviceClass.WIND_SPEED: 'wind_speed'>,
     'original_icon': None,
     'original_name': 'Wind speed day 1',
     'platform': 'accuweather',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'wind_speed_day',
     'unique_id': '0123456-windday-1',
@@ -5977,11 +6774,13 @@
 # ---
 # name: test_sensor[sensor.home_wind_speed_day_2-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': None,
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -5995,13 +6794,18 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Wind speed day 2',
     'options': dict({
+      'sensor': dict({
+        'suggested_display_precision': 2,
+      }),
     }),
     'original_device_class': <SensorDeviceClass.WIND_SPEED: 'wind_speed'>,
     'original_icon': None,
     'original_name': 'Wind speed day 2',
     'platform': 'accuweather',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'wind_speed_day',
     'unique_id': '0123456-windday-2',
@@ -6027,11 +6831,13 @@
 # ---
 # name: test_sensor[sensor.home_wind_speed_day_3-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': None,
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -6045,13 +6851,18 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Wind speed day 3',
     'options': dict({
+      'sensor': dict({
+        'suggested_display_precision': 2,
+      }),
     }),
     'original_device_class': <SensorDeviceClass.WIND_SPEED: 'wind_speed'>,
     'original_icon': None,
     'original_name': 'Wind speed day 3',
     'platform': 'accuweather',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'wind_speed_day',
     'unique_id': '0123456-windday-3',
@@ -6077,11 +6888,13 @@
 # ---
 # name: test_sensor[sensor.home_wind_speed_day_4-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': None,
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -6095,13 +6908,18 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Wind speed day 4',
     'options': dict({
+      'sensor': dict({
+        'suggested_display_precision': 2,
+      }),
     }),
     'original_device_class': <SensorDeviceClass.WIND_SPEED: 'wind_speed'>,
     'original_icon': None,
     'original_name': 'Wind speed day 4',
     'platform': 'accuweather',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'wind_speed_day',
     'unique_id': '0123456-windday-4',
@@ -6127,11 +6945,13 @@
 # ---
 # name: test_sensor[sensor.home_wind_speed_night_0-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': None,
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -6145,13 +6965,18 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Wind speed night 0',
     'options': dict({
+      'sensor': dict({
+        'suggested_display_precision': 2,
+      }),
     }),
     'original_device_class': <SensorDeviceClass.WIND_SPEED: 'wind_speed'>,
     'original_icon': None,
     'original_name': 'Wind speed night 0',
     'platform': 'accuweather',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'wind_speed_night',
     'unique_id': '0123456-windnight-0',
@@ -6177,11 +7002,13 @@
 # ---
 # name: test_sensor[sensor.home_wind_speed_night_1-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': None,
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -6195,13 +7022,18 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Wind speed night 1',
     'options': dict({
+      'sensor': dict({
+        'suggested_display_precision': 2,
+      }),
     }),
     'original_device_class': <SensorDeviceClass.WIND_SPEED: 'wind_speed'>,
     'original_icon': None,
     'original_name': 'Wind speed night 1',
     'platform': 'accuweather',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'wind_speed_night',
     'unique_id': '0123456-windnight-1',
@@ -6227,11 +7059,13 @@
 # ---
 # name: test_sensor[sensor.home_wind_speed_night_2-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': None,
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -6245,13 +7079,18 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Wind speed night 2',
     'options': dict({
+      'sensor': dict({
+        'suggested_display_precision': 2,
+      }),
     }),
     'original_device_class': <SensorDeviceClass.WIND_SPEED: 'wind_speed'>,
     'original_icon': None,
     'original_name': 'Wind speed night 2',
     'platform': 'accuweather',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'wind_speed_night',
     'unique_id': '0123456-windnight-2',
@@ -6277,11 +7116,13 @@
 # ---
 # name: test_sensor[sensor.home_wind_speed_night_3-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': None,
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -6295,13 +7136,18 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Wind speed night 3',
     'options': dict({
+      'sensor': dict({
+        'suggested_display_precision': 2,
+      }),
     }),
     'original_device_class': <SensorDeviceClass.WIND_SPEED: 'wind_speed'>,
     'original_icon': None,
     'original_name': 'Wind speed night 3',
     'platform': 'accuweather',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'wind_speed_night',
     'unique_id': '0123456-windnight-3',
@@ -6327,11 +7173,13 @@
 # ---
 # name: test_sensor[sensor.home_wind_speed_night_4-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': None,
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -6345,13 +7193,18 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Wind speed night 4',
     'options': dict({
+      'sensor': dict({
+        'suggested_display_precision': 2,
+      }),
     }),
     'original_device_class': <SensorDeviceClass.WIND_SPEED: 'wind_speed'>,
     'original_icon': None,
     'original_name': 'Wind speed night 4',
     'platform': 'accuweather',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'wind_speed_night',
     'unique_id': '0123456-windnight-4',

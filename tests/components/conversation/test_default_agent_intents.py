@@ -3,7 +3,6 @@
 from datetime import datetime
 from unittest.mock import patch
 
-from freezegun import freeze_time
 import pytest
 
 from homeassistant.components import (
@@ -36,6 +35,7 @@ from homeassistant.helpers import (
     intent,
 )
 from homeassistant.setup import async_setup_component
+from homeassistant.util import dt as dt_util
 
 from tests.common import async_mock_service
 
@@ -88,8 +88,8 @@ async def test_cover_set_position(
     await hass.async_block_till_done()
 
     response = result.response
-    assert response.response_type == intent.IntentResponseType.ACTION_DONE
-    assert response.speech["plain"]["speech"] == "Opened"
+    assert response.response_type is intent.IntentResponseType.ACTION_DONE
+    assert response.speech["plain"]["speech"] == "Opening"
     assert len(calls) == 1
     call = calls[0]
     assert call.data == {"entity_id": entity_id}
@@ -102,8 +102,8 @@ async def test_cover_set_position(
     await hass.async_block_till_done()
 
     response = result.response
-    assert response.response_type == intent.IntentResponseType.ACTION_DONE
-    assert response.speech["plain"]["speech"] == "Closed"
+    assert response.response_type is intent.IntentResponseType.ACTION_DONE
+    assert response.speech["plain"]["speech"] == "Closing"
     assert len(calls) == 1
     call = calls[0]
     assert call.data == {"entity_id": entity_id}
@@ -116,7 +116,7 @@ async def test_cover_set_position(
     await hass.async_block_till_done()
 
     response = result.response
-    assert response.response_type == intent.IntentResponseType.ACTION_DONE
+    assert response.response_type is intent.IntentResponseType.ACTION_DONE
     assert response.speech["plain"]["speech"] == "Position set"
     assert len(calls) == 1
     call = calls[0]
@@ -144,8 +144,8 @@ async def test_cover_device_class(
     await hass.async_block_till_done()
 
     response = result.response
-    assert response.response_type == intent.IntentResponseType.ACTION_DONE
-    assert response.speech["plain"]["speech"] == "Opened the garage"
+    assert response.response_type is intent.IntentResponseType.ACTION_DONE
+    assert response.speech["plain"]["speech"] == "Opening the garage"
     assert len(calls) == 1
     call = calls[0]
     assert call.data == {"entity_id": entity_id}
@@ -168,8 +168,8 @@ async def test_valve_intents(
     await hass.async_block_till_done()
 
     response = result.response
-    assert response.response_type == intent.IntentResponseType.ACTION_DONE
-    assert response.speech["plain"]["speech"] == "Opened"
+    assert response.response_type is intent.IntentResponseType.ACTION_DONE
+    assert response.speech["plain"]["speech"] == "Opening"
     assert len(calls) == 1
     call = calls[0]
     assert call.data == {"entity_id": entity_id}
@@ -182,8 +182,8 @@ async def test_valve_intents(
     await hass.async_block_till_done()
 
     response = result.response
-    assert response.response_type == intent.IntentResponseType.ACTION_DONE
-    assert response.speech["plain"]["speech"] == "Closed"
+    assert response.response_type is intent.IntentResponseType.ACTION_DONE
+    assert response.speech["plain"]["speech"] == "Closing"
     assert len(calls) == 1
     call = calls[0]
     assert call.data == {"entity_id": entity_id}
@@ -196,7 +196,7 @@ async def test_valve_intents(
     await hass.async_block_till_done()
 
     response = result.response
-    assert response.response_type == intent.IntentResponseType.ACTION_DONE
+    assert response.response_type is intent.IntentResponseType.ACTION_DONE
     assert response.speech["plain"]["speech"] == "Position set"
     assert len(calls) == 1
     call = calls[0]
@@ -211,7 +211,14 @@ async def test_vacuum_intents(
     await vaccum_intent.async_setup_intents(hass)
 
     entity_id = f"{vacuum.DOMAIN}.rover"
-    hass.states.async_set(entity_id, STATE_CLOSED)
+    hass.states.async_set(
+        entity_id,
+        STATE_CLOSED,
+        {
+            ATTR_SUPPORTED_FEATURES: vacuum.VacuumEntityFeature.START
+            | vacuum.VacuumEntityFeature.RETURN_HOME
+        },
+    )
     async_expose_entity(hass, conversation.DOMAIN, entity_id, True)
 
     # start
@@ -222,7 +229,7 @@ async def test_vacuum_intents(
     await hass.async_block_till_done()
 
     response = result.response
-    assert response.response_type == intent.IntentResponseType.ACTION_DONE
+    assert response.response_type is intent.IntentResponseType.ACTION_DONE
     assert response.speech["plain"]["speech"] == "Started"
     assert len(calls) == 1
     call = calls[0]
@@ -236,7 +243,7 @@ async def test_vacuum_intents(
     await hass.async_block_till_done()
 
     response = result.response
-    assert response.response_type == intent.IntentResponseType.ACTION_DONE
+    assert response.response_type is intent.IntentResponseType.ACTION_DONE
     assert response.speech["plain"]["speech"] == "Returning"
     assert len(calls) == 1
     call = calls[0]
@@ -268,7 +275,7 @@ async def test_media_player_intents(
     await hass.async_block_till_done()
 
     response = result.response
-    assert response.response_type == intent.IntentResponseType.ACTION_DONE
+    assert response.response_type is intent.IntentResponseType.ACTION_DONE
     assert response.speech["plain"]["speech"] == "Paused"
     assert len(calls) == 1
     call = calls[0]
@@ -287,7 +294,7 @@ async def test_media_player_intents(
     await hass.async_block_till_done()
 
     response = result.response
-    assert response.response_type == intent.IntentResponseType.ACTION_DONE
+    assert response.response_type is intent.IntentResponseType.ACTION_DONE
     assert response.speech["plain"]["speech"] == "Resumed"
     assert len(calls) == 1
     call = calls[0]
@@ -306,7 +313,7 @@ async def test_media_player_intents(
     await hass.async_block_till_done()
 
     response = result.response
-    assert response.response_type == intent.IntentResponseType.ACTION_DONE
+    assert response.response_type is intent.IntentResponseType.ACTION_DONE
     assert response.speech["plain"]["speech"] == "Playing next"
     assert len(calls) == 1
     call = calls[0]
@@ -322,7 +329,7 @@ async def test_media_player_intents(
     await hass.async_block_till_done()
 
     response = result.response
-    assert response.response_type == intent.IntentResponseType.ACTION_DONE
+    assert response.response_type is intent.IntentResponseType.ACTION_DONE
     assert response.speech["plain"]["speech"] == "Volume set"
     assert len(calls) == 1
     call = calls[0]
@@ -392,7 +399,7 @@ async def test_turn_floor_lights_on_off(
     )
 
     assert len(on_calls) == 2
-    assert result.response.response_type == intent.IntentResponseType.ACTION_DONE
+    assert result.response.response_type is intent.IntentResponseType.ACTION_DONE
     assert {s.entity_id for s in result.response.matched_states} == {
         kitchen_light.entity_id,
         living_room_light.entity_id,
@@ -404,7 +411,7 @@ async def test_turn_floor_lights_on_off(
     )
 
     assert len(on_calls) == 1
-    assert result.response.response_type == intent.IntentResponseType.ACTION_DONE
+    assert result.response.response_type is intent.IntentResponseType.ACTION_DONE
     assert {s.entity_id for s in result.response.matched_states} == {
         bedroom_light.entity_id
     }
@@ -415,7 +422,7 @@ async def test_turn_floor_lights_on_off(
     )
 
     assert len(off_calls) == 1
-    assert result.response.response_type == intent.IntentResponseType.ACTION_DONE
+    assert result.response.response_type is intent.IntentResponseType.ACTION_DONE
     assert {s.entity_id for s in result.response.matched_states} == {
         bedroom_light.entity_id
     }
@@ -432,7 +439,7 @@ async def test_todo_add_item_fr(
     with (
         patch.object(hass.config, "language", "fr"),
         patch(
-            "homeassistant.components.todo.intent.ListAddItemIntent.async_handle",
+            "homeassistant.components.todo.intent.ListAddItemIntentHandler.async_handle",
             return_value=intent.IntentResponse(hass.config.language),
         ) as mock_handle,
     ):
@@ -445,19 +452,29 @@ async def test_todo_add_item_fr(
         assert intent_obj.slots.get("item", {}).get("value", "").strip() == "farine"
 
 
-@freeze_time(datetime(year=2013, month=9, day=17, hour=1, minute=2))
+@pytest.mark.freeze_time(
+    datetime(
+        year=2013,
+        month=9,
+        day=17,
+        hour=1,
+        minute=2,
+        tzinfo=dt_util.UTC,
+    )
+)
 async def test_date_time(
     hass: HomeAssistant,
     init_components,
 ) -> None:
     """Test the date and time intents."""
+    await hass.config.async_set_time_zone("UTC")
     result = await conversation.async_converse(
         hass, "what is the date", None, Context(), None
     )
     await hass.async_block_till_done()
 
     response = result.response
-    assert response.response_type == intent.IntentResponseType.ACTION_DONE
+    assert response.response_type is intent.IntentResponseType.ACTION_DONE
     assert response.speech["plain"]["speech"] == "September 17th, 2013"
 
     result = await conversation.async_converse(
@@ -466,5 +483,5 @@ async def test_date_time(
     await hass.async_block_till_done()
 
     response = result.response
-    assert response.response_type == intent.IntentResponseType.ACTION_DONE
+    assert response.response_type is intent.IntentResponseType.ACTION_DONE
     assert response.speech["plain"]["speech"] == "1:02 AM"

@@ -1,7 +1,5 @@
 """Support for wake on lan."""
 
-from __future__ import annotations
-
 import logging
 import subprocess as sp
 from typing import Any
@@ -21,8 +19,7 @@ from homeassistant.const import (
     CONF_NAME,
 )
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers import device_registry as dr
-import homeassistant.helpers.config_validation as cv
+from homeassistant.helpers import config_validation as cv, device_registry as dr
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.script import Script
 from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
@@ -113,7 +110,7 @@ class WolSwitch(SwitchEntity):
         if self._broadcast_port is not None:
             service_kwargs["port"] = self._broadcast_port
 
-        _LOGGER.info(
+        _LOGGER.debug(
             "Send magic packet to mac %s (broadcast: %s, port: %s)",
             self._mac_address,
             self._broadcast_address,
@@ -126,6 +123,16 @@ class WolSwitch(SwitchEntity):
             self._state = True
             self.schedule_update_ha_state()
 
+    async def async_will_remove_from_hass(self) -> None:
+        """Clean up script when removing from Home Assistant."""
+        if self._off_script is None:
+            return
+        if self.registry_entry and self.registry_entry.entity_id != self.entity_id:
+            # Entity ID change, do not unload the script as it will be reused.
+            await self._off_script.async_stop()
+            return
+        await self._off_script.async_unload()
+
     def turn_off(self, **kwargs: Any) -> None:
         """Turn the device off if an off action is present."""
         if self._off_script is not None:
@@ -136,7 +143,7 @@ class WolSwitch(SwitchEntity):
             self.schedule_update_ha_state()
 
     def update(self) -> None:
-        """Check if device is on and update the state. Only called if assumed state is false."""
+        """Check if device is on and update the state."""
         ping_cmd = [
             "ping",
             "-c",

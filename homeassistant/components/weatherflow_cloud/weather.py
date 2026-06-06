@@ -1,7 +1,5 @@
 """Support for WeatherFlow Forecast weather service."""
 
-from __future__ import annotations
-
 from weatherflow4py.models.rest.unified import WeatherFlowDataREST
 
 from homeassistant.components.weather import (
@@ -9,7 +7,6 @@ from homeassistant.components.weather import (
     SingleCoordinatorWeatherEntity,
     WeatherEntityFeature,
 )
-from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
     UnitOfPrecipitationDepth,
     UnitOfPressure,
@@ -17,34 +14,35 @@ from homeassistant.const import (
     UnitOfTemperature,
 )
 from homeassistant.core import HomeAssistant, callback
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
-from .const import DOMAIN, STATE_MAP
-from .coordinator import WeatherFlowCloudDataUpdateCoordinator
+from .const import STATE_MAP
+from .coordinator import (
+    WeatherFlowCloudConfigEntry,
+    WeatherFlowCloudUpdateCoordinatorREST,
+)
 from .entity import WeatherFlowCloudEntity
 
 
 async def async_setup_entry(
     hass: HomeAssistant,
-    config_entry: ConfigEntry,
-    async_add_entities: AddEntitiesCallback,
+    config_entry: WeatherFlowCloudConfigEntry,
+    async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Add a weather entity from a config_entry."""
-    coordinator: WeatherFlowCloudDataUpdateCoordinator = hass.data[DOMAIN][
-        config_entry.entry_id
-    ]
+    coordinators = config_entry.runtime_data
 
     async_add_entities(
         [
-            WeatherFlowWeather(coordinator, station_id=station_id)
-            for station_id, data in coordinator.data.items()
+            WeatherFlowWeatherREST(coordinators.rest, station_id=station_id)
+            for station_id, data in coordinators.rest.data.items()
         ]
     )
 
 
-class WeatherFlowWeather(
+class WeatherFlowWeatherREST(
     WeatherFlowCloudEntity,
-    SingleCoordinatorWeatherEntity[WeatherFlowCloudDataUpdateCoordinator],
+    SingleCoordinatorWeatherEntity[WeatherFlowCloudUpdateCoordinatorREST],
 ):
     """Implementation of a WeatherFlow weather condition."""
 
@@ -59,7 +57,7 @@ class WeatherFlowWeather(
 
     def __init__(
         self,
-        coordinator: WeatherFlowCloudDataUpdateCoordinator,
+        coordinator: WeatherFlowCloudUpdateCoordinatorREST,
         station_id: int,
     ) -> None:
         """Initialise the platform with a data instance and station."""

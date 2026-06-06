@@ -1,7 +1,5 @@
 """Philips TV binary sensors."""
 
-from __future__ import annotations
-
 from dataclasses import dataclass
 
 from haphilipsjs import PhilipsTV
@@ -11,10 +9,9 @@ from homeassistant.components.binary_sensor import (
     BinarySensorEntityDescription,
 )
 from homeassistant.core import HomeAssistant, callback
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
-from . import PhilipsTVConfigEntry
-from .coordinator import PhilipsTVDataUpdateCoordinator
+from .coordinator import PhilipsTVConfigEntry, PhilipsTVDataUpdateCoordinator
 from .entity import PhilipsJsEntity
 
 
@@ -42,7 +39,7 @@ DESCRIPTIONS = (
 async def async_setup_entry(
     hass: HomeAssistant,
     config_entry: PhilipsTVConfigEntry,
-    async_add_entities: AddEntitiesCallback,
+    async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up the configuration entry."""
     coordinator = config_entry.runtime_data
@@ -65,7 +62,11 @@ def _check_for_recording_entry(api: PhilipsTV, entry: str, value: str) -> bool:
 
 
 class PhilipsTVBinarySensorEntityRecordingType(PhilipsJsEntity, BinarySensorEntity):
-    """A Philips TV binary sensor class, which allows multiple entities given by a BinarySensorEntityDescription."""
+    """A Philips TV binary sensor class.
+
+    Allows multiple entities given by a
+    BinarySensorEntityDescription.
+    """
 
     entity_description: PhilipsTVBinarySensorEntityDescription
 
@@ -88,7 +89,11 @@ class PhilipsTVBinarySensorEntityRecordingType(PhilipsJsEntity, BinarySensorEnti
 
     @callback
     def _handle_coordinator_update(self) -> None:
-        """Handle updated data from the coordinator and set is_on true if one specified value is available within given entry of list."""
+        """Handle updated data from the coordinator.
+
+        Set is_on true if one specified value is available within
+        given entry of list.
+        """
         self._attr_is_on = _check_for_recording_entry(
             self.coordinator.api,
             "RecordingType",

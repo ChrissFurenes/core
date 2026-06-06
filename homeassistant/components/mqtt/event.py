@@ -1,7 +1,5 @@
 """Support for MQTT events."""
 
-from __future__ import annotations
-
 from collections.abc import Callable
 import logging
 from typing import Any
@@ -17,26 +15,28 @@ from homeassistant.components.event import (
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_DEVICE_CLASS, CONF_NAME, CONF_VALUE_TEMPLATE
 from homeassistant.core import HomeAssistant, callback
-import homeassistant.helpers.config_validation as cv
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers import config_validation as cv
+from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
+from homeassistant.helpers.service_info.mqtt import ReceivePayloadType
 from homeassistant.helpers.typing import ConfigType, VolSchemaType
 from homeassistant.util.json import JSON_DECODE_EXCEPTIONS, json_loads_object
 
 from . import subscription
 from .config import MQTT_RO_SCHEMA
 from .const import CONF_STATE_TOPIC, PAYLOAD_EMPTY_JSON, PAYLOAD_NONE
-from .mixins import MqttEntity, async_setup_entity_entry_helper
+from .entity import MqttEntity, async_setup_entity_entry_helper
 from .models import (
     DATA_MQTT,
     MqttValueTemplate,
     MqttValueTemplateException,
     PayloadSentinel,
     ReceiveMessage,
-    ReceivePayloadType,
 )
 from .schemas import MQTT_ENTITY_COMMON_SCHEMA
 
 _LOGGER = logging.getLogger(__name__)
+
+PARALLEL_UPDATES = 0
 
 CONF_EVENT_TYPES = "event_types"
 
@@ -71,7 +71,7 @@ DISCOVERY_SCHEMA = vol.All(
 async def async_setup_entry(
     hass: HomeAssistant,
     config_entry: ConfigEntry,
-    async_add_entities: AddEntitiesCallback,
+    async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up MQTT event through YAML and through MQTT discovery."""
     async_setup_entity_entry_helper(
@@ -111,7 +111,8 @@ class MqttEvent(MqttEntity, EventEntity):
         """Handle new MQTT messages."""
         if msg.retain:
             _LOGGER.debug(
-                "Ignoring event trigger from replayed retained payload '%s' on topic %s",
+                "Ignoring event trigger from replayed retained"
+                " payload '%s' on topic %s",
                 msg.payload,
                 msg.topic,
             )
@@ -149,7 +150,7 @@ class MqttEvent(MqttEntity, EventEntity):
             )
         except KeyError:
             _LOGGER.warning(
-                ("`event_type` missing in JSON event payload, " " '%s' on topic %s"),
+                "`event_type` missing in JSON event payload, '%s' on topic %s",
                 payload,
                 msg.topic,
             )

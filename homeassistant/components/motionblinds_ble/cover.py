@@ -1,13 +1,10 @@
 """Cover entities for the Motionblinds Bluetooth integration."""
 
-from __future__ import annotations
-
 from dataclasses import dataclass
 import logging
 from typing import Any
 
 from motionblindsble.const import MotionBlindType, MotionRunningType
-from motionblindsble.device import MotionDevice
 
 from homeassistant.components.cover import (
     ATTR_POSITION,
@@ -17,11 +14,11 @@ from homeassistant.components.cover import (
     CoverEntityDescription,
     CoverEntityFeature,
 )
-from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant, callback
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
-from .const import CONF_BLIND_TYPE, CONF_MAC_CODE, DOMAIN, ICON_VERTICAL_BLIND
+from . import MotionConfigEntry
+from .const import CONF_BLIND_TYPE, CONF_MAC_CODE, ICON_VERTICAL_BLIND
 from .entity import MotionblindsBLEEntity
 
 _LOGGER = logging.getLogger(__name__)
@@ -61,14 +58,16 @@ BLIND_TYPE_TO_ENTITY_DESCRIPTION: dict[str, MotionblindsBLECoverEntityDescriptio
 
 
 async def async_setup_entry(
-    hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback
+    hass: HomeAssistant,
+    entry: MotionConfigEntry,
+    async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up cover entity based on a config entry."""
 
     cover_class: type[MotionblindsBLECoverEntity] = BLIND_TYPE_TO_CLASS[
         entry.data[CONF_BLIND_TYPE].upper()
     ]
-    device: MotionDevice = hass.data[DOMAIN][entry.entry_id]
+    device = entry.runtime_data
     entity_description: MotionblindsBLECoverEntityDescription = (
         BLIND_TYPE_TO_ENTITY_DESCRIPTION[entry.data[CONF_BLIND_TYPE].upper()]
     )

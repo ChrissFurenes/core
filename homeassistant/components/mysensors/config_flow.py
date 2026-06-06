@@ -1,7 +1,5 @@
 """Config flow for MySensors."""
 
-from __future__ import annotations
-
 import os
 from typing import Any
 
@@ -20,8 +18,7 @@ from homeassistant.components.mqtt import (
 from homeassistant.config_entries import ConfigEntry, ConfigFlow, ConfigFlowResult
 from homeassistant.const import CONF_DEVICE
 from homeassistant.core import callback
-from homeassistant.helpers import selector
-import homeassistant.helpers.config_validation as cv
+from homeassistant.helpers import config_validation as cv, selector
 from homeassistant.helpers.typing import VolDictType
 
 from .const import (
@@ -99,7 +96,8 @@ def _is_same_device(
 ) -> bool:
     """Check if another ConfigDevice is actually the same as user_input.
 
-    This function only compares addresses and tcp ports, so it is possible to fool it with tricks like port forwarding.
+    This function only compares addresses and tcp ports, so it is possible
+    to fool it with tricks like port forwarding.
     """
     if entry.data[CONF_DEVICE] != user_input[CONF_DEVICE]:
         return False

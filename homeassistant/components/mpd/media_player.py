@@ -1,7 +1,5 @@
 """Support to interact with a Music Player Daemon."""
 
-from __future__ import annotations
-
 import asyncio
 from contextlib import asynccontextmanager, suppress
 from datetime import timedelta
@@ -26,17 +24,13 @@ from homeassistant.components.media_player import (
     RepeatMode,
     async_process_play_media_url,
 )
-from homeassistant.config_entries import SOURCE_IMPORT, ConfigEntry
+from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_HOST, CONF_NAME, CONF_PASSWORD, CONF_PORT
-from homeassistant.core import DOMAIN as HOMEASSISTANT_DOMAIN, HomeAssistant
-from homeassistant.data_entry_flow import FlowResultType
-import homeassistant.helpers.config_validation as cv
+from homeassistant.core import HomeAssistant
+from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.device_registry import DeviceEntryType, DeviceInfo
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
-from homeassistant.helpers.issue_registry import IssueSeverity, async_create_issue
-from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
-from homeassistant.util import Throttle
-import homeassistant.util.dt as dt_util
+from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
+from homeassistant.util import Throttle, dt as dt_util
 
 from .const import DOMAIN, LOGGER
 
@@ -71,56 +65,10 @@ PLATFORM_SCHEMA = MEDIA_PLAYER_PLATFORM_SCHEMA.extend(
 )
 
 
-async def async_setup_platform(
-    hass: HomeAssistant,
-    config: ConfigType,
-    async_add_entities: AddEntitiesCallback,
-    discovery_info: DiscoveryInfoType | None = None,
-) -> None:
-    """Set up the MPD platform."""
-
-    result = await hass.config_entries.flow.async_init(
-        DOMAIN,
-        context={"source": SOURCE_IMPORT},
-        data=config,
-    )
-    if (
-        result["type"] is FlowResultType.CREATE_ENTRY
-        or result["reason"] == "already_configured"
-    ):
-        async_create_issue(
-            hass,
-            HOMEASSISTANT_DOMAIN,
-            f"deprecated_yaml_{DOMAIN}",
-            breaks_in_ha_version="2025.1.0",
-            is_fixable=False,
-            issue_domain=DOMAIN,
-            severity=IssueSeverity.WARNING,
-            translation_key="deprecated_yaml",
-            translation_placeholders={
-                "domain": DOMAIN,
-                "integration_title": "Music Player Daemon",
-            },
-        )
-        return
-    async_create_issue(
-        hass,
-        DOMAIN,
-        f"deprecated_yaml_import_issue_{result['reason']}",
-        breaks_in_ha_version="2025.1.0",
-        is_fixable=False,
-        issue_domain=DOMAIN,
-        severity=IssueSeverity.WARNING,
-        translation_key=f"deprecated_yaml_import_issue_{result['reason']}",
-        translation_placeholders={
-            "domain": DOMAIN,
-            "integration_title": "Music Player Daemon",
-        },
-    )
-
-
 async def async_setup_entry(
-    hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback
+    hass: HomeAssistant,
+    entry: ConfigEntry,
+    async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up media player from config_entry."""
 
@@ -143,6 +91,7 @@ class MpdDevice(MediaPlayerEntity):
     _attr_media_content_type = MediaType.MUSIC
     _attr_has_entity_name = True
     _attr_name = None
+    _attr_volume_step = 0.05
 
     def __init__(
         self, server: str, port: int, password: str | None, unique_id: str
@@ -343,8 +292,9 @@ class MpdDevice(MediaPlayerEntity):
                 bytes(response["binary"])
             ).hexdigest()[:16]
         else:
-            # If there is no image, this hash has to be None, else the media player component
-            # assumes there is an image and returns an error trying to load it and the
+            # If there is no image, this hash has to be None,
+            # else the media player component assumes there is an
+            # image and returns an error trying to load it and the
             # frontend media control card breaks.
             self._media_image_hash = None
 
@@ -373,7 +323,8 @@ class MpdDevice(MediaPlayerEntity):
                         error,
                     )
 
-        # read artwork contained in the media directory (cover.{jpg,png,tiff,bmp}) if none is embedded
+        # read artwork contained in the media directory
+        # (cover.{jpg,png,tiff,bmp}) if none is embedded
         if can_albumart and not response:
             try:
                 with suppress(mpd.ConnectionError):
@@ -442,24 +393,6 @@ class MpdDevice(MediaPlayerEntity):
         async with self.connection():
             if "volume" in self._status:
                 await self._client.setvol(int(volume * 100))
-
-    async def async_volume_up(self) -> None:
-        """Service to send the MPD the command for volume up."""
-        async with self.connection():
-            if "volume" in self._status:
-                current_volume = int(self._status["volume"])
-
-                if current_volume <= 100:
-                    self._client.setvol(current_volume + 5)
-
-    async def async_volume_down(self) -> None:
-        """Service to send the MPD the command for volume down."""
-        async with self.connection():
-            if "volume" in self._status:
-                current_volume = int(self._status["volume"])
-
-                if current_volume >= 0:
-                    await self._client.setvol(current_volume - 5)
 
     async def async_media_play(self) -> None:
         """Service to send the MPD the command for play/pause."""

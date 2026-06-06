@@ -1,7 +1,5 @@
 """Config flow for loqed integration."""
 
-from __future__ import annotations
-
 import logging
 import re
 from typing import Any
@@ -11,12 +9,12 @@ from loqedAPI import cloud_loqed, loqed
 import voluptuous as vol
 
 from homeassistant.components import webhook
-from homeassistant.components.zeroconf import ZeroconfServiceInfo
 from homeassistant.config_entries import ConfigFlow, ConfigFlowResult
 from homeassistant.const import CONF_API_TOKEN, CONF_NAME, CONF_WEBHOOK_ID
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
+from homeassistant.helpers.service_info.zeroconf import ZeroconfServiceInfo
 
 from .const import DOMAIN
 
@@ -112,6 +110,8 @@ class LoqedConfigFlow(ConfigFlow, domain=DOMAIN):
             if self._host
             else vol.Schema(
                 {
+                    # Name field is no longer allowed in config flow schemas
+                    # pylint: disable-next=home-assistant-config-flow-name-field
                     vol.Required(CONF_NAME): str,
                     vol.Required(CONF_API_TOKEN): str,
                 }

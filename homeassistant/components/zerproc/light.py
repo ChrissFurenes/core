@@ -1,6 +1,5 @@
 """Zerproc light platform."""
-
-from __future__ import annotations
+# pylint: disable=home-assistant-use-runtime-data  # Uses legacy hass.data[DOMAIN] pattern
 
 from datetime import timedelta
 import logging
@@ -18,9 +17,9 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import EVENT_HOMEASSISTANT_STOP
 from homeassistant.core import Event, HomeAssistant
 from homeassistant.helpers.device_registry import DeviceInfo
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 from homeassistant.helpers.event import async_track_time_interval
-import homeassistant.util.color as color_util
+from homeassistant.util import color as color_util
 
 from .const import DATA_ADDRESSES, DATA_DISCOVERY_SUBSCRIPTION, DOMAIN
 
@@ -51,7 +50,7 @@ async def discover_entities(hass: HomeAssistant) -> list[ZerprocLight]:
 async def async_setup_entry(
     hass: HomeAssistant,
     config_entry: ConfigEntry,
-    async_add_entities: AddEntitiesCallback,
+    async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up Zerproc light devices."""
     warned = False
@@ -147,9 +146,9 @@ class ZerprocLight(LightEntity):
             self._attr_available = False
             return
         if not self.available:
-            _LOGGER.info("Reconnected to %s", self._light.address)
+            _LOGGER.warning("Reconnected to %s", self._light.address)
             self._attr_available = True
         self._attr_is_on = state.is_on
         hsv = color_util.color_RGB_to_hsv(*state.color)
         self._attr_hs_color = hsv[:2]
-        self._attr_brightness = int(round((hsv[2] / 100) * 255))
+        self._attr_brightness = round((hsv[2] / 100) * 255)

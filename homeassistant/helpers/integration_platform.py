@@ -1,7 +1,5 @@
 """Helpers to help with integration platforms."""
 
-from __future__ import annotations
-
 import asyncio
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
@@ -17,7 +15,6 @@ from homeassistant.loader import (
     async_get_integrations,
     async_get_loaded_integration,
     async_register_preload_platform,
-    bind_hass,
 )
 from homeassistant.setup import ATTR_COMPONENT, EventComponentLoaded
 from homeassistant.util.hass_dict import HassKey
@@ -153,7 +150,6 @@ def _format_err(name: str, platform_name: str, *args: Any) -> str:
     return f"Exception in {name} when processing platform '{platform_name}': {args}"
 
 
-@bind_hass
 async def async_process_integration_platforms(
     hass: HomeAssistant,
     platform_name: str,
@@ -175,6 +171,9 @@ async def async_process_integration_platforms(
     else:
         integration_platforms = hass.data[DATA_INTEGRATION_PLATFORMS]
 
+    # Tell the loader that it should try to pre-load the integration
+    # for any future components that are loaded so we can reduce the
+    # amount of import executor usage.
     async_register_preload_platform(hass, platform_name)
     top_level_components = hass.config.top_level_components.copy()
     process_job = HassJob(
@@ -187,10 +186,6 @@ async def async_process_integration_platforms(
     integration_platform = IntegrationPlatform(
         platform_name, process_job, top_level_components
     )
-    # Tell the loader that it should try to pre-load the integration
-    # for any future components that are loaded so we can reduce the
-    # amount of import executor usage.
-    async_register_preload_platform(hass, platform_name)
     integration_platforms.append(integration_platform)
     if not top_level_components:
         return

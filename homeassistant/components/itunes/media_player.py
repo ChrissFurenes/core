@@ -1,7 +1,5 @@
 """Support for interfacing to iTunes API."""
 
-from __future__ import annotations
-
 from typing import Any
 
 import requests
@@ -16,7 +14,7 @@ from homeassistant.components.media_player import (
 )
 from homeassistant.const import CONF_HOST, CONF_NAME, CONF_PORT, CONF_SSL
 from homeassistant.core import HomeAssistant
-import homeassistant.helpers.config_validation as cv
+from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
 
@@ -451,7 +449,7 @@ class AirPlayDevice(MediaPlayerEntity):
         return self.device_name
 
     @property
-    def icon(self):
+    def icon(self) -> str:
         """Return the icon to use in the frontend, if any."""
         if self.selected is True:
             return "mdi:volume-high"

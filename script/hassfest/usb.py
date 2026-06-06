@@ -1,7 +1,5 @@
 """Generate usb file."""
 
-from __future__ import annotations
-
 from .model import Config, Integration
 from .serializer import format_python_namespace
 
@@ -35,19 +33,15 @@ def validate(integrations: dict[str, Integration], config: Config) -> None:
     if config.specific_integrations:
         return
 
-    with open(str(usb_path)) as fp:
-        current = fp.read()
-        if current != content:
-            config.add_error(
-                "usb",
-                "File usb.py is not up to date. Run python3 -m script.hassfest",
-                fixable=True,
-            )
-        return
+    if usb_path.read_text() != content:
+        config.add_error(
+            "usb",
+            "File usb.py is not up to date. Run python3 -m script.hassfest",
+            fixable=True,
+        )
 
 
 def generate(integrations: dict[str, Integration], config: Config) -> None:
     """Generate usb file."""
     usb_path = config.root / "homeassistant/generated/usb.py"
-    with open(str(usb_path), "w") as fp:
-        fp.write(f"{config.cache['usb']}")
+    usb_path.write_text(f"{config.cache['usb']}")

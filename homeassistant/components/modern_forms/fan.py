@@ -1,46 +1,41 @@
 """Support for Modern Forms Fan Fans."""
 
-from __future__ import annotations
-
 from typing import Any
 
 from aiomodernforms.const import FAN_POWER_OFF, FAN_POWER_ON
 import voluptuous as vol
 
 from homeassistant.components.fan import FanEntity, FanEntityFeature
-from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import entity_platform
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 from homeassistant.util.percentage import (
     percentage_to_ranged_value,
     ranged_value_to_percentage,
 )
 from homeassistant.util.scaling import int_states_in_range
 
-from . import ModernFormsDeviceEntity, modernforms_exception_handler
+from . import modernforms_exception_handler
 from .const import (
     ATTR_SLEEP_TIME,
     CLEAR_TIMER,
-    DOMAIN,
     OPT_ON,
     OPT_SPEED,
     SERVICE_CLEAR_FAN_SLEEP_TIMER,
     SERVICE_SET_FAN_SLEEP_TIMER,
 )
-from .coordinator import ModernFormsDataUpdateCoordinator
+from .coordinator import ModernFormsConfigEntry, ModernFormsDataUpdateCoordinator
+from .entity import ModernFormsDeviceEntity
 
 
 async def async_setup_entry(
     hass: HomeAssistant,
-    config_entry: ConfigEntry,
-    async_add_entities: AddEntitiesCallback,
+    config_entry: ModernFormsConfigEntry,
+    async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up a Modern Forms platform from config entry."""
 
-    coordinator: ModernFormsDataUpdateCoordinator = hass.data[DOMAIN][
-        config_entry.entry_id
-    ]
+    coordinator = config_entry.runtime_data
 
     platform = entity_platform.async_get_current_platform()
 
@@ -77,7 +72,6 @@ class ModernFormsFanEntity(FanEntity, ModernFormsDeviceEntity):
         | FanEntityFeature.TURN_ON
     )
     _attr_translation_key = "fan"
-    _enable_turn_on_off_backwards_compatibility = False
 
     def __init__(
         self, entry_id: str, coordinator: ModernFormsDataUpdateCoordinator
@@ -114,11 +108,13 @@ class ModernFormsFanEntity(FanEntity, ModernFormsDeviceEntity):
         """Return the state of the fan."""
         return bool(self.coordinator.data.state.fan_on)
 
+    # pylint: disable-next=home-assistant-action-swallowed-exception
     @modernforms_exception_handler
     async def async_set_direction(self, direction: str) -> None:
         """Set the direction of the fan."""
         await self.coordinator.modern_forms.fan(direction=direction)
 
+    # pylint: disable-next=home-assistant-action-swallowed-exception
     @modernforms_exception_handler
     async def async_set_percentage(self, percentage: int) -> None:
         """Set the speed percentage of the fan."""
@@ -127,6 +123,7 @@ class ModernFormsFanEntity(FanEntity, ModernFormsDeviceEntity):
         else:
             await self.async_turn_off()
 
+    # pylint: disable-next=home-assistant-action-swallowed-exception
     @modernforms_exception_handler
     async def async_turn_on(
         self,
@@ -143,11 +140,13 @@ class ModernFormsFanEntity(FanEntity, ModernFormsDeviceEntity):
             )
         await self.coordinator.modern_forms.fan(**data)
 
+    # pylint: disable-next=home-assistant-action-swallowed-exception
     @modernforms_exception_handler
     async def async_turn_off(self, **kwargs: Any) -> None:
         """Turn the fan off."""
         await self.coordinator.modern_forms.fan(on=FAN_POWER_OFF)
 
+    # pylint: disable-next=home-assistant-action-swallowed-exception
     @modernforms_exception_handler
     async def async_set_fan_sleep_timer(
         self,
@@ -156,6 +155,7 @@ class ModernFormsFanEntity(FanEntity, ModernFormsDeviceEntity):
         """Set a Modern Forms light sleep timer."""
         await self.coordinator.modern_forms.fan(sleep=sleep_time * 60)
 
+    # pylint: disable-next=home-assistant-action-swallowed-exception
     @modernforms_exception_handler
     async def async_clear_fan_sleep_timer(
         self,

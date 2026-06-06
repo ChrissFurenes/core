@@ -7,9 +7,12 @@ from typing import Any, cast
 
 from rabbitair import Client, State
 
+from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.debounce import Debouncer
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
+
+type RabbitAirConfigEntry = ConfigEntry[RabbitAirDataUpdateCoordinator]
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -42,12 +45,17 @@ class RabbitAirDebouncer(Debouncer[Coroutine[Any, Any, None]]):
 class RabbitAirDataUpdateCoordinator(DataUpdateCoordinator[State]):
     """Class to manage fetching data from single endpoint."""
 
-    def __init__(self, hass: HomeAssistant, device: Client) -> None:
+    config_entry: RabbitAirConfigEntry
+
+    def __init__(
+        self, hass: HomeAssistant, config_entry: RabbitAirConfigEntry, device: Client
+    ) -> None:
         """Initialize global data updater."""
         self.device = device
         super().__init__(
             hass,
             _LOGGER,
+            config_entry=config_entry,
             name="rabbitair",
             update_interval=timedelta(seconds=10),
             request_refresh_debouncer=RabbitAirDebouncer(hass),

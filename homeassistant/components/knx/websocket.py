@@ -1,8 +1,10 @@
 """KNX Websocket API."""
 
-from __future__ import annotations
-
-from typing import TYPE_CHECKING, Final
+from collections.abc import Awaitable, Callable
+from contextlib import ExitStack
+from functools import wraps
+import inspect
+from typing import TYPE_CHECKING, Any, Final, overload
 
 import knx_frontend as knx_panel
 import voluptuous as vol
@@ -10,15 +12,17 @@ from xknx.telegram import Telegram
 from xknxproject.exceptions import XknxProjectException
 
 from homeassistant.components import panel_custom, websocket_api
+from homeassistant.components.frontend import async_panel_exists
 from homeassistant.components.http import StaticPathConfig
-from homeassistant.const import CONF_ENTITY_ID, CONF_PLATFORM
+from homeassistant.const import CONF_ENTITY_ID, CONF_PLATFORM, Platform
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
 from homeassistant.helpers.typing import UNDEFINED
 from homeassistant.util.ulid import ulid_now
 
-from .const import DOMAIN
+from .const import DOMAIN, KNX_MODULE_KEY, SUPPORTED_PLATFORMS_UI
+from .dpt import get_supported_dpts
 from .storage.config_store import ConfigStoreException
 from .storage.const import CONF_DATA
 from .storage.entity_store_schema import (
@@ -30,21 +34,28 @@ from .storage.entity_store_validation import (
     EntityStoreValidationSuccess,
     validate_entity_data,
 )
-from .telegrams import SIGNAL_KNX_TELEGRAM, TelegramDict
+from .storage.expose_controller import validate_expose_data
+from .storage.serialize import get_serialized_schema
+from .storage.time_server import validate_time_server_data
+from .telegrams import (
+    SIGNAL_KNX_DATA_SECURE_ISSUE_TELEGRAM,
+    SIGNAL_KNX_TELEGRAM,
+    TelegramDict,
+)
 
 if TYPE_CHECKING:
-    from . import KNXModule
-
+    from .knx_module import KNXModule
 
 URL_BASE: Final = "/knx_static"
 
 
 async def register_panel(hass: HomeAssistant) -> None:
     """Register the KNX Panel and Websocket API."""
-    websocket_api.async_register_command(hass, ws_info)
+    websocket_api.async_register_command(hass, ws_get_base_data)
     websocket_api.async_register_command(hass, ws_project_file_process)
     websocket_api.async_register_command(hass, ws_project_file_remove)
     websocket_api.async_register_command(hass, ws_group_monitor_info)
+    websocket_api.async_register_command(hass, ws_group_telegrams)
     websocket_api.async_register_command(hass, ws_subscribe_telegram)
     websocket_api.async_register_command(hass, ws_get_knx_project)
     websocket_api.async_register_command(hass, ws_validate_entity)
@@ -52,10 +63,18 @@ async def register_panel(hass: HomeAssistant) -> None:
     websocket_api.async_register_command(hass, ws_update_entity)
     websocket_api.async_register_command(hass, ws_delete_entity)
     websocket_api.async_register_command(hass, ws_get_entity_config)
-    websocket_api.async_register_command(hass, ws_get_entity_entries)
+    websocket_api.async_register_command(hass, ws_get_entities_by_group)
     websocket_api.async_register_command(hass, ws_create_device)
+    websocket_api.async_register_command(hass, ws_get_schema)
+    websocket_api.async_register_command(hass, ws_get_time_server_config)
+    websocket_api.async_register_command(hass, ws_update_time_server_config)
+    websocket_api.async_register_command(hass, ws_get_expose_groups)
+    websocket_api.async_register_command(hass, ws_get_expose_config)
+    websocket_api.async_register_command(hass, ws_update_expose)
+    websocket_api.async_register_command(hass, ws_delete_expose)
+    websocket_api.async_register_command(hass, ws_validate_expose)
 
-    if DOMAIN not in hass.data.get("frontend_panels", {}):
+    if not async_panel_exists(hass, DOMAIN):
         await hass.http.async_register_static_paths(
             [
                 StaticPathConfig(
@@ -69,29 +88,98 @@ async def register_panel(hass: HomeAssistant) -> None:
             hass=hass,
             frontend_url_path=DOMAIN,
             webcomponent_name=knx_panel.webcomponent_name,
-            sidebar_title=DOMAIN.upper(),
-            sidebar_icon="mdi:bus-electric",
             module_url=f"{URL_BASE}/{knx_panel.entrypoint_js}",
             embed_iframe=True,
             require_admin=True,
         )
 
 
+type KnxWebSocketCommandHandler = Callable[
+    [HomeAssistant, KNXModule, websocket_api.ActiveConnection, dict[str, Any]], None
+]
+type KnxAsyncWebSocketCommandHandler = Callable[
+    [HomeAssistant, KNXModule, websocket_api.ActiveConnection, dict[str, Any]],
+    Awaitable[None],
+]
+
+
+@overload
+def provide_knx(
+    func: KnxAsyncWebSocketCommandHandler,
+) -> websocket_api.const.AsyncWebSocketCommandHandler: ...
+@overload
+def provide_knx(
+    func: KnxWebSocketCommandHandler,
+) -> websocket_api.const.WebSocketCommandHandler: ...
+
+
+def provide_knx(
+    func: KnxAsyncWebSocketCommandHandler | KnxWebSocketCommandHandler,
+) -> (
+    websocket_api.const.AsyncWebSocketCommandHandler
+    | websocket_api.const.WebSocketCommandHandler
+):
+    """Websocket decorator to provide a KNXModule instance."""
+
+    def _send_not_loaded_error(
+        connection: websocket_api.ActiveConnection, msg_id: int
+    ) -> None:
+        connection.send_error(
+            msg_id,
+            websocket_api.const.ERR_HOME_ASSISTANT_ERROR,
+            "KNX integration not loaded.",
+        )
+
+    if inspect.iscoroutinefunction(func):
+
+        @wraps(func)
+        async def with_knx(
+            hass: HomeAssistant,
+            connection: websocket_api.ActiveConnection,
+            msg: dict[str, Any],
+        ) -> None:
+            """Add KNX Module to call function."""
+            try:
+                knx = hass.data[KNX_MODULE_KEY]
+            except KeyError:
+                _send_not_loaded_error(connection, msg["id"])
+                return
+            await func(hass, knx, connection, msg)
+
+    else:
+
+        @wraps(func)
+        def with_knx(
+            hass: HomeAssistant,
+            connection: websocket_api.ActiveConnection,
+            msg: dict[str, Any],
+        ) -> None:
+            """Add KNX Module to call function."""
+            try:
+                knx = hass.data[KNX_MODULE_KEY]
+            except KeyError:
+                _send_not_loaded_error(connection, msg["id"])
+                return
+            func(hass, knx, connection, msg)
+
+    return with_knx
+
+
 @websocket_api.require_admin
 @websocket_api.websocket_command(
     {
-        vol.Required("type"): "knx/info",
+        vol.Required("type"): "knx/get_base_data",
     }
 )
+@provide_knx
 @callback
-def ws_info(
+def ws_get_base_data(
     hass: HomeAssistant,
+    knx: KNXModule,
     connection: websocket_api.ActiveConnection,
     msg: dict,
 ) -> None:
     """Handle get info command."""
-    knx: KNXModule = hass.data[DOMAIN]
-
     _project_info = None
     if project_info := knx.project.info:
         _project_info = {
@@ -100,14 +188,19 @@ def ws_info(
             "tool_version": project_info["tool_version"],
             "xknxproject_version": project_info["xknxproject_version"],
         }
+    connection_info = {
+        "version": knx.xknx.version,
+        "connected": knx.xknx.connection_manager.connected.is_set(),
+        "current_address": str(knx.xknx.current_address),
+    }
 
     connection.send_result(
         msg["id"],
         {
-            "version": knx.xknx.version,
-            "connected": knx.xknx.connection_manager.connected.is_set(),
-            "current_address": str(knx.xknx.current_address),
-            "project": _project_info,
+            "connection_info": connection_info,
+            "dpt_metadata": get_supported_dpts(),
+            "project_info": _project_info,
+            "supported_platforms": sorted(SUPPORTED_PLATFORMS_UI),
         },
     )
 
@@ -119,20 +212,18 @@ def ws_info(
     }
 )
 @websocket_api.async_response
+@provide_knx
 async def ws_get_knx_project(
     hass: HomeAssistant,
+    knx: KNXModule,
     connection: websocket_api.ActiveConnection,
     msg: dict,
 ) -> None:
     """Handle get KNX project."""
-    knx: KNXModule = hass.data[DOMAIN]
     knxproject = await knx.project.get_knxproject()
     connection.send_result(
         msg["id"],
-        {
-            "project_loaded": knx.project.loaded,
-            "knxproject": knxproject,
-        },
+        knxproject,
     )
 
 
@@ -145,13 +236,14 @@ async def ws_get_knx_project(
     }
 )
 @websocket_api.async_response
+@provide_knx
 async def ws_project_file_process(
     hass: HomeAssistant,
+    knx: KNXModule,
     connection: websocket_api.ActiveConnection,
     msg: dict,
 ) -> None:
     """Handle get info command."""
-    knx: KNXModule = hass.data[DOMAIN]
     try:
         await knx.project.process_project_file(
             xknx=knx.xknx,
@@ -175,13 +267,14 @@ async def ws_project_file_process(
     }
 )
 @websocket_api.async_response
+@provide_knx
 async def ws_project_file_remove(
     hass: HomeAssistant,
+    knx: KNXModule,
     connection: websocket_api.ActiveConnection,
     msg: dict,
 ) -> None:
     """Handle get info command."""
-    knx: KNXModule = hass.data[DOMAIN]
     await knx.project.remove_project_file()
     connection.send_result(msg["id"])
 
@@ -192,14 +285,15 @@ async def ws_project_file_remove(
         vol.Required("type"): "knx/group_monitor_info",
     }
 )
+@provide_knx
 @callback
 def ws_group_monitor_info(
     hass: HomeAssistant,
+    knx: KNXModule,
     connection: websocket_api.ActiveConnection,
     msg: dict,
 ) -> None:
     """Handle get info command of group monitor."""
-    knx: KNXModule = hass.data[DOMAIN]
     recent_telegrams = [*knx.telegrams.recent_telegrams]
     connection.send_result(
         msg["id"],
@@ -207,6 +301,27 @@ def ws_group_monitor_info(
             "project_loaded": knx.project.loaded,
             "recent_telegrams": recent_telegrams,
         },
+    )
+
+
+@websocket_api.require_admin
+@websocket_api.websocket_command(
+    {
+        vol.Required("type"): "knx/group_telegrams",
+    }
+)
+@provide_knx
+@callback
+def ws_group_telegrams(
+    hass: HomeAssistant,
+    knx: KNXModule,
+    connection: websocket_api.ActiveConnection,
+    msg: dict,
+) -> None:
+    """Handle get group telegrams command."""
+    connection.send_result(
+        msg["id"],
+        knx.telegrams.last_ga_telegrams,
     )
 
 
@@ -232,11 +347,23 @@ def ws_subscribe_telegram(
             telegram_dict,
         )
 
-    connection.subscriptions[msg["id"]] = async_dispatcher_connect(
-        hass,
-        signal=SIGNAL_KNX_TELEGRAM,
-        target=forward_telegram,
+    stack = ExitStack()
+    stack.callback(
+        async_dispatcher_connect(
+            hass,
+            signal=SIGNAL_KNX_TELEGRAM,
+            target=forward_telegram,
+        )
     )
+    stack.callback(
+        async_dispatcher_connect(
+            hass,
+            signal=SIGNAL_KNX_DATA_SECURE_ISSUE_TELEGRAM,
+            target=forward_telegram,
+        )
+    )
+
+    connection.subscriptions[msg["id"]] = stack.close
     connection.send_result(msg["id"])
 
 
@@ -267,13 +394,37 @@ def ws_validate_entity(
 @websocket_api.require_admin
 @websocket_api.websocket_command(
     {
+        vol.Required("type"): "knx/get_schema",
+        vol.Required(CONF_PLATFORM): vol.Coerce(Platform),
+    }
+)
+@websocket_api.async_response
+async def ws_get_schema(
+    hass: HomeAssistant,
+    connection: websocket_api.ActiveConnection,
+    msg: dict,
+) -> None:
+    """Provide serialized schema for platform."""
+    if schema := get_serialized_schema(msg[CONF_PLATFORM]):
+        connection.send_result(msg["id"], schema)
+        return
+    connection.send_error(
+        msg["id"], websocket_api.const.ERR_HOME_ASSISTANT_ERROR, "Unknown platform"
+    )
+
+
+@websocket_api.require_admin
+@websocket_api.websocket_command(
+    {
         vol.Required("type"): "knx/create_entity",
         **CREATE_ENTITY_BASE_SCHEMA,
     }
 )
 @websocket_api.async_response
+@provide_knx
 async def ws_create_entity(
     hass: HomeAssistant,
+    knx: KNXModule,
     connection: websocket_api.ActiveConnection,
     msg: dict,
 ) -> None:
@@ -283,7 +434,6 @@ async def ws_create_entity(
     except EntityStoreValidationException as exc:
         connection.send_result(msg["id"], exc.validation_error)
         return
-    knx: KNXModule = hass.data[DOMAIN]
     try:
         entity_id = await knx.config_store.create_entity(
             # use validation result so defaults are applied
@@ -308,8 +458,10 @@ async def ws_create_entity(
     }
 )
 @websocket_api.async_response
+@provide_knx
 async def ws_update_entity(
     hass: HomeAssistant,
+    knx: KNXModule,
     connection: websocket_api.ActiveConnection,
     msg: dict,
 ) -> None:
@@ -319,7 +471,6 @@ async def ws_update_entity(
     except EntityStoreValidationException as exc:
         connection.send_result(msg["id"], exc.validation_error)
         return
-    knx: KNXModule = hass.data[DOMAIN]
     try:
         await knx.config_store.update_entity(
             validated_data[CONF_PLATFORM],
@@ -344,13 +495,14 @@ async def ws_update_entity(
     }
 )
 @websocket_api.async_response
+@provide_knx
 async def ws_delete_entity(
     hass: HomeAssistant,
+    knx: KNXModule,
     connection: websocket_api.ActiveConnection,
     msg: dict,
 ) -> None:
     """Delete entity from entity store and remove it."""
-    knx: KNXModule = hass.data[DOMAIN]
     try:
         await knx.config_store.delete_entity(msg[CONF_ENTITY_ID])
     except ConfigStoreException as err:
@@ -364,21 +516,22 @@ async def ws_delete_entity(
 @websocket_api.require_admin
 @websocket_api.websocket_command(
     {
-        vol.Required("type"): "knx/get_entity_entries",
+        vol.Required("type"): "knx/get_entities_by_group",
     }
 )
+@provide_knx
 @callback
-def ws_get_entity_entries(
+def ws_get_entities_by_group(
     hass: HomeAssistant,
+    knx: KNXModule,
     connection: websocket_api.ActiveConnection,
     msg: dict,
 ) -> None:
-    """Get entities configured from entity store."""
-    knx: KNXModule = hass.data[DOMAIN]
-    entity_entries = [
-        entry.extended_dict for entry in knx.config_store.get_entity_entries()
-    ]
-    connection.send_result(msg["id"], entity_entries)
+    """Get entities by group address."""
+    data = {
+        str(ga): identifiers for ga, identifiers in knx.group_address_entities.items()
+    }
+    connection.send_result(msg["id"], data)
 
 
 @websocket_api.require_admin
@@ -388,14 +541,15 @@ def ws_get_entity_entries(
         vol.Required(CONF_ENTITY_ID): str,
     }
 )
+@provide_knx
 @callback
 def ws_get_entity_config(
     hass: HomeAssistant,
+    knx: KNXModule,
     connection: websocket_api.ActiveConnection,
     msg: dict,
 ) -> None:
     """Get entity configuration from entity store."""
-    knx: KNXModule = hass.data[DOMAIN]
     try:
         config_info = knx.config_store.get_entity_config(msg[CONF_ENTITY_ID])
     except ConfigStoreException as err:
@@ -414,14 +568,15 @@ def ws_get_entity_config(
         vol.Optional("area_id"): str,
     }
 )
+@provide_knx
 @callback
 def ws_create_device(
     hass: HomeAssistant,
+    knx: KNXModule,
     connection: websocket_api.ActiveConnection,
     msg: dict,
 ) -> None:
     """Create a new KNX device."""
-    knx: KNXModule = hass.data[DOMAIN]
     identifier = f"knx_vdev_{ulid_now()}"
     device_registry = dr.async_get(hass)
     _device = device_registry.async_get_or_create(
@@ -436,3 +591,191 @@ def ws_create_device(
         configuration_url=f"homeassistant://knx/entities/view?device_id={_device.id}",
     )
     connection.send_result(msg["id"], _device.dict_repr)
+
+
+########
+# Expose
+########
+
+
+@websocket_api.require_admin
+@websocket_api.websocket_command(
+    {
+        vol.Required("type"): "knx/get_expose_groups",
+    }
+)
+@provide_knx
+@callback
+def ws_get_expose_groups(
+    hass: HomeAssistant,
+    knx: KNXModule,
+    connection: websocket_api.ActiveConnection,
+    msg: dict,
+) -> None:
+    """Get exposes from config store."""
+    connection.send_result(msg["id"], knx.config_store.get_expose_groups())
+
+
+@websocket_api.require_admin
+@websocket_api.websocket_command(
+    {
+        vol.Required("type"): "knx/get_expose_config",
+        vol.Required("entity_id"): str,
+    }
+)
+@provide_knx
+@callback
+def ws_get_expose_config(
+    hass: HomeAssistant,
+    knx: KNXModule,
+    connection: websocket_api.ActiveConnection,
+    msg: dict,
+) -> None:
+    """Get expose configuration from config store."""
+    connection.send_result(
+        msg["id"], knx.config_store.get_expose_config(msg["entity_id"])
+    )
+
+
+@websocket_api.require_admin
+@websocket_api.websocket_command(
+    {
+        vol.Required("type"): "knx/update_expose",
+        vol.Required("entity_id"): str,
+        vol.Required("data"): dict,  # validation done in handler
+    }
+)
+@websocket_api.async_response
+@provide_knx
+async def ws_update_expose(
+    hass: HomeAssistant,
+    knx: KNXModule,
+    connection: websocket_api.ActiveConnection,
+    msg: dict,
+) -> None:
+    """Update expose configuration in config store."""
+    try:
+        validated_data = validate_expose_data(msg)
+    except EntityStoreValidationException as exc:
+        connection.send_result(msg["id"], exc.validation_error)
+        return
+    try:
+        await knx.config_store.update_expose(
+            validated_data["entity_id"], validated_data["data"]
+        )
+    except ConfigStoreException as err:
+        connection.send_error(
+            msg["id"], websocket_api.const.ERR_HOME_ASSISTANT_ERROR, str(err)
+        )
+        return
+    connection.send_result(
+        msg["id"], EntityStoreValidationSuccess(success=True, entity_id=None)
+    )
+
+
+@websocket_api.require_admin
+@websocket_api.websocket_command(
+    {
+        vol.Required("type"): "knx/delete_expose",
+        vol.Required("entity_id"): str,
+    }
+)
+@websocket_api.async_response
+@provide_knx
+async def ws_delete_expose(
+    hass: HomeAssistant,
+    knx: KNXModule,
+    connection: websocket_api.ActiveConnection,
+    msg: dict,
+) -> None:
+    """Delete expose configuration from config store."""
+    try:
+        await knx.config_store.delete_expose(msg["entity_id"])
+    except ConfigStoreException as err:
+        connection.send_error(
+            msg["id"], websocket_api.const.ERR_HOME_ASSISTANT_ERROR, str(err)
+        )
+        return
+    connection.send_result(msg["id"])
+
+
+@websocket_api.require_admin
+@websocket_api.websocket_command(
+    {
+        vol.Required("type"): "knx/validate_expose",
+        vol.Required("entity_id"): str,
+        vol.Required("data"): dict,  # validation done in handler
+    }
+)
+@callback
+def ws_validate_expose(
+    hass: HomeAssistant,
+    connection: websocket_api.ActiveConnection,
+    msg: dict,
+) -> None:
+    """Validate expose data."""
+    try:
+        validate_expose_data(msg)
+    except EntityStoreValidationException as exc:
+        connection.send_result(msg["id"], exc.validation_error)
+        return
+    connection.send_result(
+        msg["id"], EntityStoreValidationSuccess(success=True, entity_id=None)
+    )
+
+
+#############
+# Time server
+#############
+
+
+@websocket_api.require_admin
+@websocket_api.websocket_command(
+    {
+        vol.Required("type"): "knx/get_time_server_config",
+    }
+)
+@provide_knx
+@callback
+def ws_get_time_server_config(
+    hass: HomeAssistant,
+    knx: KNXModule,
+    connection: websocket_api.ActiveConnection,
+    msg: dict,
+) -> None:
+    """Get time server configuration from entity store."""
+    config_info = knx.config_store.get_time_server_config()
+    connection.send_result(msg["id"], config_info)
+
+
+@websocket_api.require_admin
+@websocket_api.websocket_command(
+    {
+        vol.Required("type"): "knx/update_time_server_config",
+        vol.Required("config"): dict,  # validation done in handler
+    }
+)
+@websocket_api.async_response
+@provide_knx
+async def ws_update_time_server_config(
+    hass: HomeAssistant,
+    knx: KNXModule,
+    connection: websocket_api.ActiveConnection,
+    msg: dict,
+) -> None:
+    """Update entity in entity store and reload it."""
+    try:
+        validated_config = validate_time_server_data(msg["config"])
+    except EntityStoreValidationException as exc:
+        connection.send_result(msg["id"], exc.validation_error)
+        return
+    try:
+        await knx.config_store.update_time_server_config(validated_config)
+    except ConfigStoreException as err:
+        connection.send_error(
+            msg["id"], websocket_api.const.ERR_HOME_ASSISTANT_ERROR, str(err)
+        )
+        return
+    connection.send_result(
+        msg["id"], EntityStoreValidationSuccess(success=True, entity_id=None)
+    )

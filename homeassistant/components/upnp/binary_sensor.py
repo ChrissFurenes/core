@@ -1,7 +1,5 @@
 """Support for UPnP/IGD Binary Sensors."""
 
-from __future__ import annotations
-
 from dataclasses import dataclass
 
 from homeassistant.components.binary_sensor import (
@@ -11,10 +9,10 @@ from homeassistant.components.binary_sensor import (
 )
 from homeassistant.const import EntityCategory
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
-from . import UpnpConfigEntry, UpnpDataUpdateCoordinator
 from .const import LOGGER, WAN_STATUS
+from .coordinator import UpnpConfigEntry, UpnpDataUpdateCoordinator
 from .entity import UpnpEntity, UpnpEntityDescription
 
 
@@ -38,7 +36,7 @@ SENSOR_DESCRIPTIONS: tuple[UpnpBinarySensorEntityDescription, ...] = (
 async def async_setup_entry(
     hass: HomeAssistant,
     config_entry: UpnpConfigEntry,
-    async_add_entities: AddEntitiesCallback,
+    async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up the UPnP/IGD sensors."""
     coordinator = config_entry.runtime_data

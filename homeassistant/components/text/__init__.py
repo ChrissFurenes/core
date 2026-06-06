@@ -1,30 +1,28 @@
 """Component to allow setting text as platforms."""
 
-from __future__ import annotations
-
 from dataclasses import asdict, dataclass
 from datetime import timedelta
 from enum import StrEnum
-from functools import cached_property
 import logging
 import re
 from typing import Any, final
 
+from propcache.api import cached_property
 import voluptuous as vol
 
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import MAX_LENGTH_STATE_STATE
+from homeassistant.const import ATTR_MODE, MAX_LENGTH_STATE_STATE
 from homeassistant.core import HomeAssistant, ServiceCall
 from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.entity import Entity, EntityDescription
 from homeassistant.helpers.entity_component import EntityComponent
 from homeassistant.helpers.restore_state import ExtraStoredData, RestoreEntity
 from homeassistant.helpers.typing import ConfigType
+from homeassistant.util.hass_dict import HassKey
 
 from .const import (
     ATTR_MAX,
     ATTR_MIN,
-    ATTR_MODE,
     ATTR_PATTERN,
     ATTR_VALUE,
     DOMAIN,
@@ -33,6 +31,7 @@ from .const import (
 
 _LOGGER = logging.getLogger(__name__)
 
+DATA_COMPONENT: HassKey[EntityComponent[TextEntity]] = HassKey(DOMAIN)
 ENTITY_ID_FORMAT = DOMAIN + ".{}"
 PLATFORM_SCHEMA = cv.PLATFORM_SCHEMA
 PLATFORM_SCHEMA_BASE = cv.PLATFORM_SCHEMA_BASE
@@ -46,7 +45,7 @@ __all__ = ["DOMAIN", "TextEntity", "TextEntityDescription", "TextMode"]
 
 async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     """Set up Text entities."""
-    component = hass.data[DOMAIN] = EntityComponent[TextEntity](
+    component = hass.data[DATA_COMPONENT] = EntityComponent[TextEntity](
         _LOGGER, DOMAIN, hass, SCAN_INTERVAL
     )
     await component.async_setup(config)
@@ -70,25 +69,25 @@ async def _async_set_value(entity: TextEntity, service_call: ServiceCall) -> Non
         )
     if len(value) > entity.max:
         raise ValueError(
-            f"Value {value} for {entity.entity_id} is too long (maximum length {entity.max})"
+            f"Value {value} for {entity.entity_id}"
+            f" is too long (maximum length {entity.max})"
         )
     if entity.pattern_cmp and not entity.pattern_cmp.match(value):
         raise ValueError(
-            f"Value {value} for {entity.entity_id} doesn't match pattern {entity.pattern}"
+            f"Value {value} for {entity.entity_id}"
+            f" doesn't match pattern {entity.pattern}"
         )
     await entity.async_set_value(value)
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up a config entry."""
-    component: EntityComponent[TextEntity] = hass.data[DOMAIN]
-    return await component.async_setup_entry(entry)
+    return await hass.data[DATA_COMPONENT].async_setup_entry(entry)
 
 
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Unload a config entry."""
-    component: EntityComponent[TextEntity] = hass.data[DOMAIN]
-    return await component.async_unload_entry(entry)
+    return await hass.data[DATA_COMPONENT].async_unload_entry(entry)
 
 
 class TextMode(StrEnum):

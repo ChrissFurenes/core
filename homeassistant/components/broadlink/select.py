@@ -1,13 +1,11 @@
 """Support for Broadlink selects."""
 
-from __future__ import annotations
-
 from typing import Any
 
 from homeassistant.components.select import SelectEntity
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
 from . import BroadlinkDevice
 from .const import DOMAIN
@@ -28,9 +26,11 @@ DAY_NAME_TO_ID = {v: k for k, v in DAY_ID_TO_NAME.items()}
 async def async_setup_entry(
     hass: HomeAssistant,
     config_entry: ConfigEntry,
-    async_add_entities: AddEntitiesCallback,
+    async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up the Broadlink select."""
+    # Uses legacy hass.data[DOMAIN] pattern
+    # pylint: disable-next=home-assistant-use-runtime-data
     device = hass.data[DOMAIN].devices[config_entry.entry_id]
     async_add_entities([BroadlinkDayOfWeek(device)])
 

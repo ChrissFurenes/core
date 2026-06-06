@@ -1,7 +1,5 @@
 """Constants for IPMA component."""
 
-from __future__ import annotations
-
 from datetime import timedelta
 
 from homeassistant.components.weather import (
@@ -26,9 +24,6 @@ from homeassistant.components.weather import (
 DOMAIN = "ipma"
 
 HOME_LOCATION_NAME = "Home"
-
-DATA_API = "api"
-DATA_LOCATION = "location"
 
 ENTITY_ID_SENSOR_FORMAT_HOME = f"{WEATHER_DOMAIN}.ipma_{HOME_LOCATION_NAME}"
 

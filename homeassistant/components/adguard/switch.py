@@ -1,7 +1,5 @@
 """Support for AdGuard Home switches."""
 
-from __future__ import annotations
-
 from collections.abc import Callable, Coroutine
 from dataclasses import dataclass
 from datetime import timedelta
@@ -11,10 +9,11 @@ from adguardhome import AdGuardHome, AdGuardHomeError
 
 from homeassistant.components.switch import SwitchEntity, SwitchEntityDescription
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.exceptions import HomeAssistantError
+from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
 from . import AdGuardConfigEntry, AdGuardData
-from .const import DOMAIN, LOGGER
+from .const import DOMAIN
 from .entity import AdGuardHomeEntity
 
 SCAN_INTERVAL = timedelta(seconds=10)
@@ -79,7 +78,7 @@ SWITCHES: tuple[AdGuardHomeSwitchEntityDescription, ...] = (
 async def async_setup_entry(
     hass: HomeAssistant,
     entry: AdGuardConfigEntry,
-    async_add_entities: AddEntitiesCallback,
+    async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up AdGuard Home switch based on a config entry."""
     data = entry.runtime_data
@@ -118,17 +117,23 @@ class AdGuardHomeSwitch(AdGuardHomeEntity, SwitchEntity):
         """Turn off the switch."""
         try:
             await self.entity_description.turn_off_fn(self.adguard)()
-        except AdGuardHomeError:
-            LOGGER.error("An error occurred while turning off AdGuard Home switch")
+        except AdGuardHomeError as err:
             self._attr_available = False
+            raise HomeAssistantError(
+                translation_domain=DOMAIN,
+                translation_key="error_while_turn_off",
+            ) from err
 
     async def async_turn_on(self, **kwargs: Any) -> None:
         """Turn on the switch."""
         try:
             await self.entity_description.turn_on_fn(self.adguard)()
-        except AdGuardHomeError:
-            LOGGER.error("An error occurred while turning on AdGuard Home switch")
+        except AdGuardHomeError as err:
             self._attr_available = False
+            raise HomeAssistantError(
+                translation_domain=DOMAIN,
+                translation_key="error_while_turn_on",
+            ) from err
 
     async def _adguard_update(self) -> None:
         """Update AdGuard Home entity."""

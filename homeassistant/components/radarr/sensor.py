@@ -1,7 +1,5 @@
 """Support for Radarr."""
 
-from __future__ import annotations
-
 from collections.abc import Callable
 import dataclasses
 from datetime import UTC, datetime
@@ -17,10 +15,10 @@ from homeassistant.components.sensor import (
 )
 from homeassistant.const import EntityCategory, UnitOfInformation
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
-from . import RadarrConfigEntry, RadarrEntity
-from .coordinator import RadarrDataUpdateCoordinator, T
+from .coordinator import RadarrConfigEntry, RadarrDataUpdateCoordinator, T
+from .entity import RadarrEntity
 
 
 def get_space(data: list[Diskspace], name: str) -> str:
@@ -47,7 +45,7 @@ def get_modified_description(
 
 
 @dataclasses.dataclass(frozen=True)
-class RadarrSensorEntityDescriptionMixIn(Generic[T]):
+class RadarrSensorEntityDescriptionMixIn(Generic[T]):  # noqa: UP046
     """Mixin for required keys."""
 
     value_fn: Callable[[T, str], str | int | datetime]
@@ -55,7 +53,9 @@ class RadarrSensorEntityDescriptionMixIn(Generic[T]):
 
 @dataclasses.dataclass(frozen=True)
 class RadarrSensorEntityDescription(
-    SensorEntityDescription, RadarrSensorEntityDescriptionMixIn[T], Generic[T]
+    SensorEntityDescription,
+    RadarrSensorEntityDescriptionMixIn[T],
+    Generic[T],  # noqa: UP046
 ):
     """Class to describe a Radarr sensor."""
 
@@ -81,14 +81,12 @@ SENSOR_TYPES: dict[str, RadarrSensorEntityDescription[Any]] = {
     "movie": RadarrSensorEntityDescription[int](
         key="movies",
         translation_key="movies",
-        native_unit_of_measurement="Movies",
         entity_registry_enabled_default=False,
         value_fn=lambda data, _: data,
     ),
     "queue": RadarrSensorEntityDescription[int](
         key="queue",
         translation_key="queue",
-        native_unit_of_measurement="Movies",
         entity_registry_enabled_default=False,
         state_class=SensorStateClass.TOTAL,
         value_fn=lambda data, _: data,
@@ -116,7 +114,7 @@ PARALLEL_UPDATES = 1
 async def async_setup_entry(
     hass: HomeAssistant,
     entry: RadarrConfigEntry,
-    async_add_entities: AddEntitiesCallback,
+    async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up Radarr sensors based on a config entry."""
     entities: list[RadarrSensor[Any]] = []

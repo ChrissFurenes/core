@@ -1,7 +1,5 @@
 """Support for DROP sensors."""
 
-from __future__ import annotations
-
 from collections.abc import Callable
 from dataclasses import dataclass
 import logging
@@ -12,10 +10,10 @@ from homeassistant.components.sensor import (
     SensorEntityDescription,
     SensorStateClass,
 )
-from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
     CONCENTRATION_PARTS_PER_MILLION,
     PERCENTAGE,
+    TEMPERATURE,
     EntityCategory,
     UnitOfPressure,
     UnitOfTemperature,
@@ -23,7 +21,7 @@ from homeassistant.const import (
     UnitOfVolumeFlowRate,
 )
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
 from .const import (
     CONF_DEVICE_TYPE,
@@ -35,9 +33,8 @@ from .const import (
     DEV_PUMP_CONTROLLER,
     DEV_RO_FILTER,
     DEV_SOFTENER,
-    DOMAIN,
 )
-from .coordinator import DROPDeviceDataUpdateCoordinator
+from .coordinator import DROPConfigEntry, DROPDeviceDataUpdateCoordinator
 from .entity import DROPEntity
 
 _LOGGER = logging.getLogger(__name__)
@@ -53,7 +50,6 @@ CURRENT_SYSTEM_PRESSURE = "current_system_pressure"
 HIGH_SYSTEM_PRESSURE = "high_system_pressure"
 LOW_SYSTEM_PRESSURE = "low_system_pressure"
 BATTERY = "battery"
-TEMPERATURE = "temperature"
 INLET_TDS = "inlet_tds"
 OUTLET_TDS = "outlet_tds"
 CARTRIDGE_1_LIFE = "cart1"
@@ -94,7 +90,7 @@ SENSORS: list[DROPSensorEntityDescription] = [
         native_unit_of_measurement=UnitOfVolume.GALLONS,
         suggested_display_precision=1,
         value_fn=lambda device: device.drop_api.water_used_today(),
-        state_class=SensorStateClass.TOTAL,
+        state_class=SensorStateClass.TOTAL_INCREASING,
     ),
     DROPSensorEntityDescription(
         key=AVERAGE_WATER_USED,
@@ -243,8 +239,8 @@ DEVICE_SENSORS: dict[str, list[str]] = {
 
 async def async_setup_entry(
     hass: HomeAssistant,
-    config_entry: ConfigEntry,
-    async_add_entities: AddEntitiesCallback,
+    config_entry: DROPConfigEntry,
+    async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up the DROP sensors from config entry."""
     _LOGGER.debug(
@@ -253,9 +249,10 @@ async def async_setup_entry(
         config_entry.entry_id,
     )
 
+    coordinator = config_entry.runtime_data
     if config_entry.data[CONF_DEVICE_TYPE] in DEVICE_SENSORS:
         async_add_entities(
-            DROPSensor(hass.data[DOMAIN][config_entry.entry_id], sensor)
+            DROPSensor(coordinator, sensor)
             for sensor in SENSORS
             if sensor.key in DEVICE_SENSORS[config_entry.data[CONF_DEVICE_TYPE]]
         )

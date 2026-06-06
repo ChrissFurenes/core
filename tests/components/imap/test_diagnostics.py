@@ -41,7 +41,7 @@ async def test_entry_diagnostics(
     # Make sure we have had one update (when polling)
     async_fire_time_changed(hass, dt_util.utcnow() + timedelta(seconds=5))
     await hass.async_block_till_done()
-    state = hass.states.get("sensor.imap_email_email_com")
+    state = hass.states.get("sensor.imap_email_email_com_messages")
     # we should have received one message
     assert state is not None
     assert state.state == "1"
@@ -72,6 +72,8 @@ async def test_entry_diagnostics(
         ],
         "search": "UnSeen UnDeleted",
         "custom_event_data_template": "{{ 4 * 4 }}",
+        "ssl_cipher_list": "python_default",
+        "verify_ssl": True,
     }
     expected_event_data = {
         "date": "2023-03-24T13:52:00+01:00",

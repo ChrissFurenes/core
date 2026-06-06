@@ -1,7 +1,5 @@
 """Helpers that help with state related things."""
 
-from __future__ import annotations
-
 import asyncio
 from collections import defaultdict
 from collections.abc import Iterable
@@ -9,25 +7,23 @@ import logging
 from types import ModuleType
 from typing import Any
 
+from homeassistant.components.lock import LockState
 from homeassistant.components.sun import STATE_ABOVE_HORIZON, STATE_BELOW_HORIZON
 from homeassistant.const import (
     STATE_CLOSED,
     STATE_HOME,
-    STATE_LOCKED,
     STATE_NOT_HOME,
     STATE_OFF,
     STATE_ON,
     STATE_OPEN,
     STATE_UNKNOWN,
-    STATE_UNLOCKED,
 )
 from homeassistant.core import Context, HomeAssistant, State
-from homeassistant.loader import IntegrationNotFound, async_get_integration, bind_hass
+from homeassistant.loader import IntegrationNotFound, async_get_integration
 
 _LOGGER = logging.getLogger(__name__)
 
 
-@bind_hass
 async def async_reproduce_state(
     hass: HomeAssistant,
     states: State | Iterable[State],
@@ -79,7 +75,7 @@ def state_as_number(state: State) -> float:
     """
     if state.state in (
         STATE_ON,
-        STATE_LOCKED,
+        LockState.LOCKED,
         STATE_ABOVE_HORIZON,
         STATE_OPEN,
         STATE_HOME,
@@ -87,7 +83,7 @@ def state_as_number(state: State) -> float:
         return 1
     if state.state in (
         STATE_OFF,
-        STATE_UNLOCKED,
+        LockState.UNLOCKED,
         STATE_UNKNOWN,
         STATE_BELOW_HORIZON,
         STATE_CLOSED,

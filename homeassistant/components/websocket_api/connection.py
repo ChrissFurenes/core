@@ -1,7 +1,5 @@
 """Connection session."""
 
-from __future__ import annotations
-
 from collections.abc import Callable, Hashable
 from contextvars import ContextVar
 from typing import TYPE_CHECKING, Any, Literal
@@ -13,9 +11,16 @@ from homeassistant.auth.models import RefreshToken, User
 from homeassistant.core import Context, HomeAssistant, callback
 from homeassistant.exceptions import HomeAssistantError, Unauthorized
 from homeassistant.helpers.http import current_request
+from homeassistant.helpers.redact import async_redact_data
 from homeassistant.util.json import JsonValueType
 
 from . import const, messages
+from .messages import (
+    error_message,
+    event_message,
+    message_to_json_bytes,
+    result_message,
+)
 from .util import describe_request
 
 if TYPE_CHECKING:
@@ -26,6 +31,15 @@ current_connection = ContextVar["ActiveConnection | None"](
     "current_connection", default=None
 )
 
+REDACT_KEYS = {
+    "access_token",
+    "password",
+    "api_password",
+    "refresh_token",
+    "token",
+    "auth_token",
+}
+
 type MessageHandler = Callable[[HomeAssistant, ActiveConnection, dict[str, Any]], None]
 type BinaryHandler = Callable[[HomeAssistant, ActiveConnection, bytes], None]
 
@@ -34,17 +48,18 @@ class ActiveConnection:
     """Handle an active websocket client connection."""
 
     __slots__ = (
-        "logger",
-        "hass",
-        "send_message",
-        "user",
-        "refresh_token_id",
-        "subscriptions",
-        "last_id",
-        "can_coalesce",
-        "supported_features",
-        "handlers",
         "binary_handlers",
+        "can_coalesce",
+        "handlers",
+        "hass",
+        "last_id",
+        "logger",
+        "refresh_token_id",
+        "remote",
+        "send_message",
+        "subscriptions",
+        "supported_features",
+        "user",
     )
 
     def __init__(
@@ -53,14 +68,16 @@ class ActiveConnection:
         hass: HomeAssistant,
         send_message: Callable[[bytes | str | dict[str, Any]], None],
         user: User,
-        refresh_token: RefreshToken,
+        refresh_token: RefreshToken | None,
+        remote: str | None,
     ) -> None:
         """Initialize an active connection."""
         self.logger = logger
         self.hass = hass
         self.send_message = send_message
         self.user = user
-        self.refresh_token_id = refresh_token.id
+        self.refresh_token_id = refresh_token.id if refresh_token else None
+        self.remote = remote
         self.subscriptions: dict[Hashable, Callable[[], Any]] = {}
         self.last_id = 0
         self.can_coalesce = False
@@ -126,12 +143,12 @@ class ActiveConnection:
     @callback
     def send_result(self, msg_id: int, result: Any | None = None) -> None:
         """Send a result message."""
-        self.send_message(messages.result_message(msg_id, result))
+        self.send_message(message_to_json_bytes(result_message(msg_id, result)))
 
     @callback
     def send_event(self, msg_id: int, event: Any | None = None) -> None:
         """Send a event message."""
-        self.send_message(messages.event_message(msg_id, event))
+        self.send_message(message_to_json_bytes(event_message(msg_id, event)))
 
     @callback
     def send_error(
@@ -145,13 +162,15 @@ class ActiveConnection:
     ) -> None:
         """Send an error message."""
         self.send_message(
-            messages.error_message(
-                msg_id,
-                code,
-                message,
-                translation_key=translation_key,
-                translation_domain=translation_domain,
-                translation_placeholders=translation_placeholders,
+            message_to_json_bytes(
+                error_message(
+                    msg_id,
+                    code,
+                    message,
+                    translation_key=translation_key,
+                    translation_domain=translation_domain,
+                    translation_placeholders=translation_placeholders,
+                )
             )
         )
 
@@ -181,15 +200,16 @@ class ActiveConnection:
         if (
             # Not using isinstance as we don't care about children
             # as these are always coming from JSON
-            type(msg) is not dict  # noqa: E721
+            type(msg) is not dict
             or (
                 not (cur_id := msg.get("id"))
-                or type(cur_id) is not int  # noqa: E721
+                or type(cur_id) is not int
                 or cur_id < 0
                 or not (type_ := msg.get("type"))
-                or type(type_) is not str  # noqa: E721
+                or type(type_) is not str
             )
         ):
+            msg = async_redact_data(msg, REDACT_KEYS)
             self.logger.error("Received invalid command: %s", msg)
             id_ = msg.get("id") if isinstance(msg, dict) else 0
             self.send_message(
@@ -253,6 +273,7 @@ class ActiveConnection:
         self, msg: bytes | str | dict[str, Any] | Callable[[], str]
     ) -> None:
         """Send a message when the connection is closed."""
+        msg = async_redact_data(msg, REDACT_KEYS)
         self.logger.debug("Tried to send message %s on closed connection", msg)
 
     @callback
@@ -265,6 +286,8 @@ class ActiveConnection:
         translation_domain: str | None = None
         translation_key: str | None = None
         translation_placeholders: dict[str, Any] | None = None
+
+        msg = async_redact_data(msg, REDACT_KEYS)
 
         if isinstance(err, Unauthorized):
             code = const.ERR_UNAUTHORIZED

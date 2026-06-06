@@ -1,8 +1,6 @@
-"""Support for Blinkstick lights."""
+"""Support for BlinkStick lights."""
 
 # mypy: ignore-errors
-from __future__ import annotations
-
 from typing import Any
 
 # from blinkstick import blinkstick
@@ -17,10 +15,10 @@ from homeassistant.components.light import (
 )
 from homeassistant.const import CONF_NAME
 from homeassistant.core import HomeAssistant
-import homeassistant.helpers.config_validation as cv
+from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
-import homeassistant.util.color as color_util
+from homeassistant.util import color as color_util
 
 CONF_SERIAL = "serial"
 
@@ -40,7 +38,7 @@ def setup_platform(
     add_entities: AddEntitiesCallback,
     discovery_info: DiscoveryInfoType | None = None,
 ) -> None:
-    """Set up Blinkstick device specified by serial number."""
+    """Set up BlinkStick device specified by serial number."""
 
     name = config[CONF_NAME]
     serial = config[CONF_SERIAL]

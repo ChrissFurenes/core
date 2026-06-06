@@ -1,7 +1,5 @@
 """Diagnostics support for CO2Signal."""
 
-from __future__ import annotations
-
 from dataclasses import asdict
 from typing import Any
 
@@ -9,7 +7,7 @@ from homeassistant.components.diagnostics import async_redact_data
 from homeassistant.const import CONF_API_KEY
 from homeassistant.core import HomeAssistant
 
-from . import CO2SignalConfigEntry
+from .coordinator import CO2SignalConfigEntry
 
 TO_REDACT = {CONF_API_KEY}
 

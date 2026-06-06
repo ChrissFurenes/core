@@ -1,6 +1,6 @@
 """Support for Venstar WiFi Thermostats."""
 
-from __future__ import annotations
+from typing import Any
 
 import voluptuous as vol
 
@@ -18,7 +18,7 @@ from homeassistant.components.climate import (
     HVACAction,
     HVACMode,
 )
-from homeassistant.config_entries import SOURCE_IMPORT, ConfigEntry
+from homeassistant.config_entries import SOURCE_IMPORT
 from homeassistant.const import (
     ATTR_TEMPERATURE,
     CONF_HOST,
@@ -32,11 +32,13 @@ from homeassistant.const import (
     UnitOfTemperature,
 )
 from homeassistant.core import HomeAssistant
-import homeassistant.helpers.config_validation as cv
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers import config_validation as cv
+from homeassistant.helpers.entity_platform import (
+    AddConfigEntryEntitiesCallback,
+    AddEntitiesCallback,
+)
 from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
 
-from . import VenstarEntity
 from .const import (
     _LOGGER,
     ATTR_FAN_STATE,
@@ -46,7 +48,8 @@ from .const import (
     DOMAIN,
     HOLD_MODE_TEMPERATURE,
 )
-from .coordinator import VenstarDataUpdateCoordinator
+from .coordinator import VenstarConfigEntry, VenstarDataUpdateCoordinator
+from .entity import VenstarEntity
 
 PLATFORM_SCHEMA = CLIMATE_PLATFORM_SCHEMA.extend(
     {
@@ -65,11 +68,11 @@ PLATFORM_SCHEMA = CLIMATE_PLATFORM_SCHEMA.extend(
 
 async def async_setup_entry(
     hass: HomeAssistant,
-    config_entry: ConfigEntry,
-    async_add_entities: AddEntitiesCallback,
+    config_entry: VenstarConfigEntry,
+    async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up the Venstar thermostat."""
-    venstar_data_coordinator = hass.data[DOMAIN][config_entry.entry_id]
+    venstar_data_coordinator = config_entry.runtime_data
     async_add_entities(
         [
             VenstarThermostat(
@@ -96,11 +99,11 @@ async def async_setup_platform(
         "Loading venstar via platform config is deprecated; The configuration"
         " has been migrated to a config entry and can be safely removed"
     )
-    # No config entry exists and configuration.yaml config exists, trigger the import flow.
-    if not hass.config_entries.async_entries(DOMAIN):
-        await hass.config_entries.flow.async_init(
-            DOMAIN, context={"source": SOURCE_IMPORT}, data=config
-        )
+    # Trigger the import flow for this YAML entry; duplicates by host are
+    # aborted in the import step so each configured device is imported.
+    await hass.config_entries.flow.async_init(
+        DOMAIN, context={"source": SOURCE_IMPORT}, data=config
+    )
 
 
 class VenstarThermostat(VenstarEntity, ClimateEntity):
@@ -108,14 +111,16 @@ class VenstarThermostat(VenstarEntity, ClimateEntity):
 
     _attr_fan_modes = [FAN_ON, FAN_AUTO]
     _attr_hvac_modes = [HVACMode.HEAT, HVACMode.COOL, HVACMode.OFF, HVACMode.AUTO]
+    _attr_preset_modes = [PRESET_NONE, PRESET_AWAY, HOLD_MODE_TEMPERATURE]
     _attr_precision = PRECISION_HALVES
     _attr_name = None
-    _enable_turn_on_off_backwards_compatibility = False
+    _attr_min_humidity = 0  # Hardcoded to 0 in API.
+    _attr_max_humidity = 60  # Hardcoded to 60 in API.
 
     def __init__(
         self,
         venstar_data_coordinator: VenstarDataUpdateCoordinator,
-        config: ConfigEntry,
+        config: VenstarConfigEntry,
     ) -> None:
         """Initialize the thermostat."""
         super().__init__(venstar_data_coordinator, config)
@@ -153,12 +158,12 @@ class VenstarThermostat(VenstarEntity, ClimateEntity):
         return UnitOfTemperature.CELSIUS
 
     @property
-    def current_temperature(self):
+    def current_temperature(self) -> float | None:
         """Return the current temperature."""
         return self._client.get_indoor_temp()
 
     @property
-    def current_humidity(self):
+    def current_humidity(self) -> float | None:
         """Return the current humidity."""
         return self._client.get_indoor_humidity()
 
@@ -185,14 +190,14 @@ class VenstarThermostat(VenstarEntity, ClimateEntity):
         return HVACAction.OFF
 
     @property
-    def fan_mode(self):
+    def fan_mode(self) -> str:
         """Return the current fan mode."""
         if self._client.fan == self._client.FAN_ON:
             return FAN_ON
         return FAN_AUTO
 
     @property
-    def extra_state_attributes(self):
+    def extra_state_attributes(self) -> dict[str, Any]:
         """Return the optional state attributes."""
         return {
             ATTR_FAN_STATE: self._client.fanstate,
@@ -200,7 +205,7 @@ class VenstarThermostat(VenstarEntity, ClimateEntity):
         }
 
     @property
-    def target_temperature(self):
+    def target_temperature(self) -> float | None:
         """Return the target temperature we try to reach."""
         if self._client.mode == self._client.MODE_HEAT:
             return self._client.heattemp
@@ -209,47 +214,32 @@ class VenstarThermostat(VenstarEntity, ClimateEntity):
         return None
 
     @property
-    def target_temperature_low(self):
+    def target_temperature_low(self) -> float | None:
         """Return the lower bound temp if auto mode is on."""
         if self._client.mode == self._client.MODE_AUTO:
             return self._client.heattemp
         return None
 
     @property
-    def target_temperature_high(self):
+    def target_temperature_high(self) -> float | None:
         """Return the upper bound temp if auto mode is on."""
         if self._client.mode == self._client.MODE_AUTO:
             return self._client.cooltemp
         return None
 
     @property
-    def target_humidity(self):
+    def target_humidity(self) -> float | None:
         """Return the humidity we try to reach."""
         return self._client.hum_setpoint
 
     @property
-    def min_humidity(self):
-        """Return the minimum humidity. Hardcoded to 0 in API."""
-        return 0
-
-    @property
-    def max_humidity(self):
-        """Return the maximum humidity. Hardcoded to 60 in API."""
-        return 60
-
-    @property
-    def preset_mode(self):
+    def preset_mode(self) -> str:
         """Return current preset."""
         if self._client.away:
             return PRESET_AWAY
         if self._client.schedule == 0:
             return HOLD_MODE_TEMPERATURE
         return PRESET_NONE
-
-    @property
-    def preset_modes(self):
-        """Return valid preset modes."""
-        return [PRESET_NONE, PRESET_AWAY, HOLD_MODE_TEMPERATURE]
 
     def _set_operation_mode(self, operation_mode: HVACMode):
         """Change the operation mode (internal)."""
@@ -266,32 +256,28 @@ class VenstarThermostat(VenstarEntity, ClimateEntity):
             _LOGGER.error("Failed to change the operation mode")
         return success
 
-    def set_temperature(self, **kwargs):
+    def set_temperature(self, **kwargs: Any) -> None:
         """Set a new target temperature."""
         set_temp = True
-        operation_mode = kwargs.get(ATTR_HVAC_MODE)
-        temp_low = kwargs.get(ATTR_TARGET_TEMP_LOW)
-        temp_high = kwargs.get(ATTR_TARGET_TEMP_HIGH)
-        temperature = kwargs.get(ATTR_TEMPERATURE)
+        operation_mode: HVACMode | None = kwargs.get(ATTR_HVAC_MODE)
+        temp_low: float | None = kwargs.get(ATTR_TARGET_TEMP_LOW)
+        temp_high: float | None = kwargs.get(ATTR_TARGET_TEMP_HIGH)
+        temperature: float | None = kwargs.get(ATTR_TEMPERATURE)
 
-        if operation_mode and self._mode_map.get(operation_mode) != self._client.mode:
+        client_mode = self._client.mode
+        if (
+            operation_mode
+            and (new_mode := self._mode_map.get(operation_mode)) != client_mode
+        ):
             set_temp = self._set_operation_mode(operation_mode)
+            client_mode = new_mode
 
         if set_temp:
-            if (
-                self._mode_map.get(operation_mode, self._client.mode)
-                == self._client.MODE_HEAT
-            ):
+            if client_mode == self._client.MODE_HEAT:
                 success = self._client.set_setpoints(temperature, self._client.cooltemp)
-            elif (
-                self._mode_map.get(operation_mode, self._client.mode)
-                == self._client.MODE_COOL
-            ):
+            elif client_mode == self._client.MODE_COOL:
                 success = self._client.set_setpoints(self._client.heattemp, temperature)
-            elif (
-                self._mode_map.get(operation_mode, self._client.mode)
-                == self._client.MODE_AUTO
-            ):
+            elif client_mode == self._client.MODE_AUTO:
                 success = self._client.set_setpoints(temp_low, temp_high)
             else:
                 success = False

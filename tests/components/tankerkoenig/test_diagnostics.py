@@ -1,9 +1,7 @@
 """Tests for the Tankerkoening integration."""
 
-from __future__ import annotations
-
 import pytest
-from syrupy import SnapshotAssertion
+from syrupy.assertion import SnapshotAssertion
 from syrupy.filters import props
 
 from homeassistant.core import HomeAssistant

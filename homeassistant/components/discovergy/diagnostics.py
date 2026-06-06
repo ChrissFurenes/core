@@ -1,14 +1,12 @@
 """Diagnostics support for discovergy."""
 
-from __future__ import annotations
-
 from dataclasses import asdict
 from typing import Any
 
 from homeassistant.components.diagnostics import async_redact_data
 from homeassistant.core import HomeAssistant
 
-from . import DiscovergyConfigEntry
+from .coordinator import DiscovergyConfigEntry
 
 TO_REDACT_METER = {
     "serial_number",

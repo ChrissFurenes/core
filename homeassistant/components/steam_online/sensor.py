@@ -1,18 +1,15 @@
 """Sensor for Steam account status."""
 
-from __future__ import annotations
-
 from datetime import datetime
 from time import localtime, mktime
 from typing import cast
 
 from homeassistant.components.sensor import SensorEntity, SensorEntityDescription
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 from homeassistant.helpers.typing import StateType
 from homeassistant.util.dt import utc_from_timestamp
 
-from . import SteamConfigEntry
 from .const import (
     CONF_ACCOUNTS,
     STEAM_API_URL,
@@ -21,7 +18,7 @@ from .const import (
     STEAM_MAIN_IMAGE_FILE,
     STEAM_STATUSES,
 )
-from .coordinator import SteamDataUpdateCoordinator
+from .coordinator import SteamConfigEntry, SteamDataUpdateCoordinator
 from .entity import SteamEntity
 
 PARALLEL_UPDATES = 1
@@ -30,7 +27,7 @@ PARALLEL_UPDATES = 1
 async def async_setup_entry(
     hass: HomeAssistant,
     entry: SteamConfigEntry,
-    async_add_entities: AddEntitiesCallback,
+    async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up the Steam platform."""
     async_add_entities(

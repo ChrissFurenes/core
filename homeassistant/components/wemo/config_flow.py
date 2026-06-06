@@ -1,7 +1,5 @@
 """Config flow for Wemo."""
 
-from __future__ import annotations
-
 from dataclasses import fields
 from typing import Any, get_type_hints
 
@@ -32,15 +30,11 @@ class WemoFlow(DiscoveryFlowHandler, domain=DOMAIN):
     @callback
     def async_get_options_flow(config_entry: ConfigEntry) -> OptionsFlow:
         """Get the options flow for this handler."""
-        return WemoOptionsFlow(config_entry)
+        return WemoOptionsFlow()
 
 
 class WemoOptionsFlow(OptionsFlow):
     """Options flow for the WeMo component."""
-
-    def __init__(self, config_entry: ConfigEntry) -> None:
-        """Initialize options flow."""
-        self.config_entry = config_entry
 
     async def async_step_init(
         self, user_input: dict[str, Any] | None = None
@@ -68,11 +62,12 @@ def _schema_for_options(options: Options) -> vol.Schema:
     All values are optional. The default value is set to the current value and
     the type hint is set to the value of the field type annotation.
     """
+    type_hints = get_type_hints(type(options))
     return vol.Schema(
         {
-            vol.Optional(
-                field.name, default=getattr(options, field.name)
-            ): get_type_hints(options)[field.name]
+            vol.Optional(field.name, default=getattr(options, field.name)): type_hints[
+                field.name
+            ]
             for field in fields(options)
         }
     )

@@ -1,12 +1,10 @@
 """Support for Harmony Hub select activities."""
 
-from __future__ import annotations
-
 import logging
 
 from homeassistant.components.select import SelectEntity
 from homeassistant.core import HassJob, HomeAssistant, callback
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
 from .const import ACTIVITY_POWER_OFF, DOMAIN
 from .data import HarmonyConfigEntry, HarmonyData
@@ -21,7 +19,7 @@ TRANSLATABLE_POWER_OFF = "power_off"
 async def async_setup_entry(
     hass: HomeAssistant,
     entry: HarmonyConfigEntry,
-    async_add_entities: AddEntitiesCallback,
+    async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up harmony activities select."""
     async_add_entities([HarmonyActivitySelect(entry.runtime_data)])

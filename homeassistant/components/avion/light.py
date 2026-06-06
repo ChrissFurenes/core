@@ -1,7 +1,5 @@
 """Support for Avion dimmers."""
 
-from __future__ import annotations
-
 import importlib
 import time
 from typing import Any
@@ -23,7 +21,7 @@ from homeassistant.const import (
     CONF_USERNAME,
 )
 from homeassistant.core import HomeAssistant
-import homeassistant.helpers.config_validation as cv
+from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
 

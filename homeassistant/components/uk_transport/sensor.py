@@ -1,7 +1,5 @@
 """Support for UK public transport data provided by transportapi.com."""
 
-from __future__ import annotations
-
 from datetime import datetime, timedelta
 from http import HTTPStatus
 import logging
@@ -17,11 +15,10 @@ from homeassistant.components.sensor import (
 )
 from homeassistant.const import CONF_MODE, UnitOfTime
 from homeassistant.core import HomeAssistant
-import homeassistant.helpers.config_validation as cv
+from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
-from homeassistant.util import Throttle
-import homeassistant.util.dt as dt_util
+from homeassistant.util import Throttle, dt as dt_util
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -33,6 +30,7 @@ ATTR_NEXT_BUSES = "next_buses"
 ATTR_STATION_CODE = "station_code"
 ATTR_CALLING_AT = "calling_at"
 ATTR_NEXT_TRAINS = "next_trains"
+ATTR_LAST_UPDATED = "last_updated"
 
 CONF_API_APP_KEY = "app_key"
 CONF_API_APP_ID = "app_id"
@@ -200,7 +198,9 @@ class UkTransportLiveBusTimeSensor(UkTransportSensor):
     def extra_state_attributes(self) -> dict[str, Any] | None:
         """Return other details about the sensor state."""
         if self._data is not None:
-            attrs = {ATTR_NEXT_BUSES: self._next_buses}
+            attrs = {
+                ATTR_NEXT_BUSES: self._next_buses,
+            }
             for key in (
                 ATTR_ATCOCODE,
                 ATTR_LOCALITY,
@@ -273,6 +273,7 @@ class UkTransportLiveTrainTimeSensor(UkTransportSensor):
             attrs = {
                 ATTR_STATION_CODE: self._station_code,
                 ATTR_CALLING_AT: self._calling_at,
+                ATTR_LAST_UPDATED: self._data[ATTR_REQUEST_TIME],
             }
             if self._next_trains:
                 attrs[ATTR_NEXT_TRAINS] = self._next_trains

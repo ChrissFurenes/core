@@ -4,21 +4,17 @@ import logging
 
 from israelrailapi import TrainSchedule
 
-from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryNotReady
 
 from .const import CONF_DESTINATION, CONF_START, DOMAIN
-from .coordinator import IsraelRailDataUpdateCoordinator
+from .coordinator import IsraelRailConfigEntry, IsraelRailDataUpdateCoordinator
 
 _LOGGER = logging.getLogger(__name__)
 
 
 PLATFORMS: list[Platform] = [Platform.SENSOR]
-
-
-type IsraelRailConfigEntry = ConfigEntry[IsraelRailDataUpdateCoordinator]
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: IsraelRailConfigEntry) -> bool:
@@ -33,6 +29,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: IsraelRailConfigEntry) -
     try:
         await hass.async_add_executor_job(train_schedule.query, start, destination)
     except Exception as e:
+        # pylint: disable-next=home-assistant-exception-translation-key-missing
         raise ConfigEntryNotReady(
             translation_domain=DOMAIN,
             translation_key="request_timeout",
@@ -43,7 +40,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: IsraelRailConfigEntry) -
         ) from e
 
     israel_rail_coordinator = IsraelRailDataUpdateCoordinator(
-        hass, train_schedule, start, destination
+        hass, entry, train_schedule, start, destination
     )
     await israel_rail_coordinator.async_config_entry_first_refresh()
     entry.runtime_data = israel_rail_coordinator

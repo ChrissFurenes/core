@@ -1,7 +1,5 @@
 """Provide tests for mysensors cover platform."""
 
-from __future__ import annotations
-
 from collections.abc import Callable
 from unittest.mock import MagicMock, call
 
@@ -15,10 +13,7 @@ from homeassistant.components.cover import (
     SERVICE_OPEN_COVER,
     SERVICE_SET_COVER_POSITION,
     SERVICE_STOP_COVER,
-    STATE_CLOSED,
-    STATE_CLOSING,
-    STATE_OPEN,
-    STATE_OPENING,
+    CoverState,
 )
 from homeassistant.const import ATTR_BATTERY_LEVEL, ATTR_ENTITY_ID
 from homeassistant.core import HomeAssistant
@@ -36,7 +31,7 @@ async def test_cover_node_percentage(
     state = hass.states.get(entity_id)
 
     assert state
-    assert state.state == STATE_CLOSED
+    assert state.state == CoverState.CLOSED
     assert state.attributes[ATTR_CURRENT_POSITION] == 0
     assert state.attributes[ATTR_BATTERY_LEVEL] == 0
 
@@ -57,7 +52,7 @@ async def test_cover_node_percentage(
     state = hass.states.get(entity_id)
 
     assert state
-    assert state.state == STATE_OPENING
+    assert state.state == CoverState.OPENING
     assert state.attributes[ATTR_CURRENT_POSITION] == 50
 
     transport_write.reset_mock()
@@ -79,7 +74,7 @@ async def test_cover_node_percentage(
     state = hass.states.get(entity_id)
 
     assert state
-    assert state.state == STATE_OPEN
+    assert state.state == CoverState.OPEN
     assert state.attributes[ATTR_CURRENT_POSITION] == 50
 
     transport_write.reset_mock()
@@ -102,7 +97,7 @@ async def test_cover_node_percentage(
     state = hass.states.get(entity_id)
 
     assert state
-    assert state.state == STATE_OPENING
+    assert state.state == CoverState.OPENING
     assert state.attributes[ATTR_CURRENT_POSITION] == 75
 
     receive_message("1;1;1;0;29;0\n")
@@ -112,7 +107,7 @@ async def test_cover_node_percentage(
     state = hass.states.get(entity_id)
 
     assert state
-    assert state.state == STATE_OPEN
+    assert state.state == CoverState.OPEN
     assert state.attributes[ATTR_CURRENT_POSITION] == 100
 
     transport_write.reset_mock()
@@ -134,7 +129,7 @@ async def test_cover_node_percentage(
     state = hass.states.get(entity_id)
 
     assert state
-    assert state.state == STATE_CLOSING
+    assert state.state == CoverState.CLOSING
     assert state.attributes[ATTR_CURRENT_POSITION] == 50
 
     receive_message("1;1;1;0;30;0\n")
@@ -144,7 +139,7 @@ async def test_cover_node_percentage(
     state = hass.states.get(entity_id)
 
     assert state
-    assert state.state == STATE_CLOSED
+    assert state.state == CoverState.CLOSED
     assert state.attributes[ATTR_CURRENT_POSITION] == 0
 
     transport_write.reset_mock()
@@ -165,7 +160,7 @@ async def test_cover_node_percentage(
     state = hass.states.get(entity_id)
 
     assert state
-    assert state.state == STATE_OPEN
+    assert state.state == CoverState.OPEN
     assert state.attributes[ATTR_CURRENT_POSITION] == 25
 
 
@@ -181,7 +176,7 @@ async def test_cover_node_binary(
     state = hass.states.get(entity_id)
 
     assert state
-    assert state.state == STATE_CLOSED
+    assert state.state == CoverState.CLOSED
 
     await hass.services.async_call(
         COVER_DOMAIN,
@@ -200,7 +195,7 @@ async def test_cover_node_binary(
     state = hass.states.get(entity_id)
 
     assert state
-    assert state.state == STATE_OPENING
+    assert state.state == CoverState.OPENING
 
     transport_write.reset_mock()
 
@@ -220,7 +215,7 @@ async def test_cover_node_binary(
     state = hass.states.get(entity_id)
 
     assert state
-    assert state.state == STATE_OPEN
+    assert state.state == CoverState.OPEN
 
     transport_write.reset_mock()
 
@@ -241,7 +236,7 @@ async def test_cover_node_binary(
     state = hass.states.get(entity_id)
 
     assert state
-    assert state.state == STATE_OPENING
+    assert state.state == CoverState.OPENING
 
     receive_message("1;1;1;0;29;0\n")
     receive_message("1;1;1;0;2;1\n")
@@ -250,7 +245,7 @@ async def test_cover_node_binary(
     state = hass.states.get(entity_id)
 
     assert state
-    assert state.state == STATE_OPEN
+    assert state.state == CoverState.OPEN
 
     transport_write.reset_mock()
 
@@ -270,7 +265,7 @@ async def test_cover_node_binary(
     state = hass.states.get(entity_id)
 
     assert state
-    assert state.state == STATE_CLOSING
+    assert state.state == CoverState.CLOSING
 
     receive_message("1;1;1;0;30;0\n")
     receive_message("1;1;1;0;2;0\n")
@@ -279,4 +274,4 @@ async def test_cover_node_binary(
     state = hass.states.get(entity_id)
 
     assert state
-    assert state.state == STATE_CLOSED
+    assert state.state == CoverState.CLOSED

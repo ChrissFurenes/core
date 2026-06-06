@@ -1,7 +1,5 @@
 """Coordinator for the Islamic prayer times integration."""
 
-from __future__ import annotations
-
 from datetime import date, datetime, timedelta
 import logging
 from typing import Any, cast
@@ -13,7 +11,7 @@ from homeassistant.const import CONF_LATITUDE, CONF_LONGITUDE
 from homeassistant.core import CALLBACK_TYPE, HomeAssistant, callback
 from homeassistant.helpers.event import async_track_point_in_time
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
-import homeassistant.util.dt as dt_util
+from homeassistant.util import dt as dt_util
 
 from .const import (
     CONF_CALC_METHOD,
@@ -29,27 +27,32 @@ from .const import (
 
 _LOGGER = logging.getLogger(__name__)
 
+type IslamicPrayerTimesConfigEntry = ConfigEntry[IslamicPrayerDataUpdateCoordinator]
+
 
 class IslamicPrayerDataUpdateCoordinator(DataUpdateCoordinator[dict[str, datetime]]):
     """Islamic Prayer Client Object."""
 
-    config_entry: ConfigEntry
+    config_entry: IslamicPrayerTimesConfigEntry
 
-    def __init__(self, hass: HomeAssistant) -> None:
+    def __init__(
+        self, hass: HomeAssistant, config_entry: IslamicPrayerTimesConfigEntry
+    ) -> None:
         """Initialize the Islamic Prayer client."""
         super().__init__(
             hass,
             _LOGGER,
+            config_entry=config_entry,
             name=DOMAIN,
         )
-        self.latitude = self.config_entry.data[CONF_LATITUDE]
-        self.longitude = self.config_entry.data[CONF_LONGITUDE]
+        self.latitude = config_entry.data[CONF_LATITUDE]
+        self.longitude = config_entry.data[CONF_LONGITUDE]
         self.event_unsub: CALLBACK_TYPE | None = None
 
     @property
     def calc_method(self) -> str:
         """Return the calculation method."""
-        return self.config_entry.options.get(CONF_CALC_METHOD, DEFAULT_CALC_METHOD)
+        return self.config_entry.options.get(CONF_CALC_METHOD, DEFAULT_CALC_METHOD)  # type: ignore[no-any-return]
 
     @property
     def lat_adj_method(self) -> str:
@@ -63,12 +66,12 @@ class IslamicPrayerDataUpdateCoordinator(DataUpdateCoordinator[dict[str, datetim
     @property
     def midnight_mode(self) -> str:
         """Return the midnight mode."""
-        return self.config_entry.options.get(CONF_MIDNIGHT_MODE, DEFAULT_MIDNIGHT_MODE)
+        return self.config_entry.options.get(CONF_MIDNIGHT_MODE, DEFAULT_MIDNIGHT_MODE)  # type: ignore[no-any-return]
 
     @property
     def school(self) -> str:
         """Return the school."""
-        return self.config_entry.options.get(CONF_SCHOOL, DEFAULT_SCHOOL)
+        return self.config_entry.options.get(CONF_SCHOOL, DEFAULT_SCHOOL)  # type: ignore[no-any-return]
 
     def get_new_prayer_times(self, for_date: date) -> dict[str, Any]:
         """Fetch prayer times for the specified date."""
@@ -90,10 +93,13 @@ class IslamicPrayerDataUpdateCoordinator(DataUpdateCoordinator[dict[str, datetim
 
         The least surprising behaviour is to load the next day's prayer times only
         after the current day's prayers are complete. We will take the fiqhi opinion
-        that Isha should be prayed before Islamic midnight (which may be before or after 12:00 midnight),
-        and thus we will switch to the next day's timings at Islamic midnight.
+        that Isha should be prayed before Islamic midnight
+        (which may be before or after 12:00 midnight), and thus
+        we will switch to the next day's timings at Islamic
+        midnight.
 
-        The +1s is to ensure that any automations predicated on the arrival of Islamic midnight will run.
+        The +1s is to ensure that any automations predicated
+        on the arrival of Islamic midnight will run.
 
         """
         _LOGGER.debug("Scheduling next update for Islamic prayer times")
@@ -109,12 +115,18 @@ class IslamicPrayerDataUpdateCoordinator(DataUpdateCoordinator[dict[str, datetim
     async def _async_update_data(self) -> dict[str, datetime]:
         """Update sensors with new prayer times.
 
-        Prayer time calculations "roll over" at 12:00 midnight - but this does not mean that all prayers
-        occur within that Gregorian calendar day. For instance Jasper, Alta. sees Isha occur after 00:00 in the summer.
-        It is similarly possible (albeit less likely) that Fajr occurs before 00:00.
+        Prayer time calculations "roll over" at 12:00 midnight
+        but this does not mean that all prayers occur within
+        that Gregorian calendar day. For instance Jasper, Alta.
+        sees Isha occur after 00:00 in the summer. It is
+        similarly possible (albeit less likely) that Fajr
+        occurs before 00:00.
 
-        As such, to ensure that no prayer times are "unreachable" (e.g. we always see the Isha timestamp pass before loading the next day's times),
-        we calculate 3 days' worth of times (-1, 0, +1 days) and select the appropriate set based on Islamic midnight.
+        As such, to ensure that no prayer times are
+        "unreachable" (e.g. we always see the Isha timestamp
+        pass before loading the next day's times), we calculate
+        3 days' worth of times (-1, 0, +1 days) and select the
+        appropriate set based on Islamic midnight.
 
         The calculation is inexpensive, so there is no need to cache it.
         """

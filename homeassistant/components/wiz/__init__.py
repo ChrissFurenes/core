@@ -1,49 +1,39 @@
 """WiZ Platform integration."""
 
-from __future__ import annotations
-
-from datetime import timedelta
 import logging
 from typing import Any
 
 from pywizlight import PilotParser, wizlight
-from pywizlight.bulb import PIR_SOURCE
 
-from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_HOST, EVENT_HOMEASSISTANT_STOP, Platform
 from homeassistant.core import Event, HomeAssistant, callback
 from homeassistant.exceptions import ConfigEntryNotReady
 from homeassistant.helpers import config_validation as cv
-from homeassistant.helpers.debounce import Debouncer
 from homeassistant.helpers.dispatcher import async_dispatcher_send
 from homeassistant.helpers.event import async_track_time_interval
 from homeassistant.helpers.typing import ConfigType
-from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
 from .const import (
     DISCOVER_SCAN_TIMEOUT,
     DISCOVERY_INTERVAL,
     DOMAIN,
+    OCCUPANCY_SOURCES,
     SIGNAL_WIZ_PIR,
     WIZ_CONNECT_EXCEPTIONS,
-    WIZ_EXCEPTIONS,
 )
+from .coordinator import WizConfigEntry, WizCoordinator, WizData
 from .discovery import async_discover_devices, async_trigger_discovery
-from .models import WizData
-
-type WizConfigEntry = ConfigEntry[WizData]
 
 _LOGGER = logging.getLogger(__name__)
 
 PLATFORMS = [
     Platform.BINARY_SENSOR,
+    Platform.FAN,
     Platform.LIGHT,
     Platform.NUMBER,
     Platform.SENSOR,
     Platform.SWITCH,
 ]
-
-REQUEST_REFRESH_DELAY = 0.35
 
 CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
 
@@ -63,12 +53,12 @@ async def async_setup(hass: HomeAssistant, hass_config: ConfigType) -> bool:
     return True
 
 
-async def _async_update_listener(hass: HomeAssistant, entry: ConfigEntry) -> None:
+async def _async_update_listener(hass: HomeAssistant, entry: WizConfigEntry) -> None:
     """Handle options update."""
     await hass.config_entries.async_reload(entry.entry_id)
 
 
-async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
+async def async_setup_entry(hass: HomeAssistant, entry: WizConfigEntry) -> bool:
     """Set up the wiz integration from a config entry."""
     ip_address = entry.data[CONF_HOST]
     _LOGGER.debug("Get bulb with IP: %s", ip_address)
@@ -89,29 +79,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             "Found bulb {bulb.mac} at {ip_address}, expected {entry.unique_id}"
         )
 
-    async def _async_update() -> float | None:
-        """Update the WiZ device."""
-        try:
-            await bulb.updateState()
-            if bulb.power_monitoring is not False:
-                power: float | None = await bulb.get_power()
-                return power
-        except WIZ_EXCEPTIONS as ex:
-            raise UpdateFailed(f"Failed to update device at {ip_address}: {ex}") from ex
-        return None
-
-    coordinator = DataUpdateCoordinator(
-        hass=hass,
-        logger=_LOGGER,
-        name=entry.title,
-        update_interval=timedelta(seconds=15),
-        update_method=_async_update,
-        # We don't want an immediate refresh since the device
-        # takes a moment to reflect the state change
-        request_refresh_debouncer=Debouncer(
-            hass, _LOGGER, cooldown=REQUEST_REFRESH_DELAY, immediate=False
-        ),
-    )
+    coordinator = WizCoordinator(hass, entry, bulb)
 
     try:
         await coordinator.async_config_entry_first_refresh()
@@ -131,7 +99,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         """Receive a push update."""
         _LOGGER.debug("%s: Got push update: %s", bulb.mac, state.pilotResult)
         coordinator.async_set_updated_data(coordinator.data)
-        if state.get_source() == PIR_SOURCE:
+        if state.get_source() in OCCUPANCY_SOURCES:
             async_dispatcher_send(hass, SIGNAL_WIZ_PIR.format(bulb.mac))
 
     await bulb.start_push(_async_push_update)
@@ -144,7 +112,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     return True
 
 
-async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
+async def async_unload_entry(hass: HomeAssistant, entry: WizConfigEntry) -> bool:
     """Unload a config entry."""
     if unload_ok := await hass.config_entries.async_unload_platforms(entry, PLATFORMS):
         await entry.runtime_data.bulb.async_close()

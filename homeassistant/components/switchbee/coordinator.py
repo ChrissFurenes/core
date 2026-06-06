@@ -1,7 +1,5 @@
 """SwitchBee integration Coordinator."""
 
-from __future__ import annotations
-
 from collections.abc import Mapping
 from datetime import timedelta
 import logging
@@ -10,6 +8,7 @@ from switchbee.api import CentralUnitPolling, CentralUnitWsRPC
 from switchbee.api.central_unit import SwitchBeeError
 from switchbee.device import DeviceType, SwitchBeeBaseDevice
 
+from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.device_registry import format_mac
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
@@ -18,13 +17,18 @@ from .const import DOMAIN, SCAN_INTERVAL_SEC
 
 _LOGGER = logging.getLogger(__name__)
 
+type SwitchBeeConfigEntry = ConfigEntry[SwitchBeeCoordinator]
+
 
 class SwitchBeeCoordinator(DataUpdateCoordinator[Mapping[int, SwitchBeeBaseDevice]]):
     """Class to manage fetching SwitchBee data API."""
 
+    config_entry: SwitchBeeConfigEntry
+
     def __init__(
         self,
         hass: HomeAssistant,
+        config_entry: SwitchBeeConfigEntry,
         swb_api: CentralUnitPolling | CentralUnitWsRPC,
     ) -> None:
         """Initialize."""
@@ -39,6 +43,7 @@ class SwitchBeeCoordinator(DataUpdateCoordinator[Mapping[int, SwitchBeeBaseDevic
         super().__init__(
             hass,
             _LOGGER,
+            config_entry=config_entry,
             name=DOMAIN,
             update_interval=timedelta(seconds=SCAN_INTERVAL_SEC[type(self.api)]),
         )

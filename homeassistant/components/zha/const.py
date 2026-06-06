@@ -13,14 +13,13 @@ ATTR_ENDPOINT_NAMES = "endpoint_names"
 ATTR_IEEE = "ieee"
 ATTR_LAST_SEEN = "last_seen"
 ATTR_LQI = "lqi"
-ATTR_MANUFACTURER = "manufacturer"
 ATTR_MANUFACTURER_CODE = "manufacturer_code"
 ATTR_NEIGHBORS = "neighbors"
 ATTR_NWK = "nwk"
 ATTR_POWER_SOURCE = "power_source"
 ATTR_QUIRK_APPLIED = "quirk_applied"
 ATTR_QUIRK_CLASS = "quirk_class"
-ATTR_QUIRK_ID = "quirk_id"
+ATTR_EXPOSES_FEATURES = "exposes_features"
 ATTR_ROUTES = "routes"
 ATTR_RSSI = "rssi"
 ATTR_SIGNATURE = "signature"
@@ -43,12 +42,12 @@ CONF_CUSTOM_QUIRKS_PATH = "custom_quirks_path"
 CONF_DEFAULT_LIGHT_TRANSITION = "default_light_transition"
 CONF_ENABLE_ENHANCED_LIGHT_TRANSITION = "enhanced_light_transition"
 CONF_ENABLE_LIGHT_TRANSITIONING_FLAG = "light_transitioning_flag"
-CONF_ALWAYS_PREFER_XY_COLOR_MODE = "always_prefer_xy_color_mode"
 CONF_GROUP_MEMBERS_ASSUME_STATE = "group_members_assume_state"
 
 CONF_ENABLE_IDENTIFY_ON_JOIN = "enable_identify_on_join"
 CONF_CONSIDER_UNAVAILABLE_MAINS = "consider_unavailable_mains"
 CONF_CONSIDER_UNAVAILABLE_BATTERY = "consider_unavailable_battery"
+CONF_ENABLE_MAINS_STARTUP_POLLING = "enable_mains_startup_polling"
 
 CONF_ZIGPY = "zigpy_config"
 CONF_DEVICE_CONFIG = "device_config"
@@ -64,6 +63,8 @@ DEVICE_PAIRING_STATUS = "pairing_status"
 
 DOMAIN = "zha"
 
+LEGACY_ZEROCONF_PORT = 6638
+
 GROUP_ID = "group_id"
 
 
@@ -74,3 +75,7 @@ MFG_CLUSTER_ID_START = 0xFC00
 
 ZHA_ALARM_OPTIONS = "zha_alarm_options"
 ZHA_OPTIONS = "zha_options"
+
+# Dispatcher signal carrying device reconfigure progress events (bind result,
+# attribute reporting result, configure complete) to the websocket subscriber.
+SIGNAL_DEVICE_RECONFIGURE_EVENT = "zha_device_reconfigure_event"

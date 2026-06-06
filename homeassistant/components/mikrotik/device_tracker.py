@@ -1,28 +1,24 @@
 """Support for Mikrotik routers as device tracker."""
 
-from __future__ import annotations
-
 from typing import Any
 
 from homeassistant.components.device_tracker import (
-    DOMAIN as DEVICE_TRACKER,
+    DOMAIN as DEVICE_TRACKER_DOMAIN,
     ScannerEntity,
-    SourceType,
 )
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers import entity_registry as er
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
-import homeassistant.util.dt as dt_util
+from homeassistant.util import dt as dt_util
 
-from . import MikrotikConfigEntry
-from .coordinator import Device, MikrotikDataUpdateCoordinator
+from .coordinator import Device, MikrotikConfigEntry, MikrotikDataUpdateCoordinator
 
 
 async def async_setup_entry(
     hass: HomeAssistant,
     config_entry: MikrotikConfigEntry,
-    async_add_entities: AddEntitiesCallback,
+    async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up device tracker for Mikrotik component."""
     coordinator = config_entry.runtime_data
@@ -35,7 +31,7 @@ async def async_setup_entry(
     for entity in registry.entities.get_entries_for_config_entry_id(
         config_entry.entry_id
     ):
-        if entity.domain == DEVICE_TRACKER:
+        if entity.domain == DEVICE_TRACKER_DOMAIN:
             if (
                 entity.unique_id in coordinator.api.devices
                 or entity.unique_id not in coordinator.api.all_devices
@@ -56,7 +52,7 @@ async def async_setup_entry(
 @callback
 def update_items(
     coordinator: MikrotikDataUpdateCoordinator,
-    async_add_entities: AddEntitiesCallback,
+    async_add_entities: AddConfigEntryEntitiesCallback,
     tracked: dict[str, MikrotikDataUpdateCoordinatorTracker],
 ) -> None:
     """Update tracked device state from the hub."""
@@ -93,11 +89,6 @@ class MikrotikDataUpdateCoordinatorTracker(
         ):
             return True
         return False
-
-    @property
-    def source_type(self) -> SourceType:
-        """Return the source type of the client."""
-        return SourceType.ROUTER
 
     @property
     def hostname(self) -> str:

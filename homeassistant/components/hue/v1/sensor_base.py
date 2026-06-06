@@ -1,7 +1,5 @@
 """Support for the Philips Hue sensors as a platform."""
 
-from __future__ import annotations
-
 import asyncio
 from datetime import timedelta
 import logging
@@ -53,6 +51,7 @@ class SensorManager:
             LOGGER,
             name="sensor",
             update_method=self.async_update_data,
+            config_entry=bridge.config_entry,
             update_interval=self.SCAN_INTERVAL,
             request_refresh_debouncer=debounce.Debouncer(
                 bridge.hass, LOGGER, cooldown=REQUEST_REFRESH_DELAY, immediate=True
@@ -165,7 +164,7 @@ class SensorManager:
             self._component_add_entities[platform](value)
 
 
-class GenericHueSensor(GenericHueDevice, entity.Entity):
+class GenericHueSensor(GenericHueDevice, entity.Entity):  # pylint: disable=home-assistant-enforce-class-module
     """Representation of a Hue sensor."""
 
     should_poll = False
@@ -180,7 +179,7 @@ class GenericHueSensor(GenericHueDevice, entity.Entity):
         )
 
     @property
-    def state_class(self):
+    def state_class(self) -> SensorStateClass:
         """Return the state class of this entity, from STATE_CLASSES, if any."""
         return SensorStateClass.MEASUREMENT
 
@@ -205,6 +204,6 @@ class GenericZLLSensor(GenericHueSensor):
     """Representation of a Hue-brand, physical sensor."""
 
     @property
-    def extra_state_attributes(self):
+    def extra_state_attributes(self) -> dict[str, Any]:
         """Return the device state attributes."""
         return {"battery_level": self.sensor.battery}

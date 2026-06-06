@@ -10,15 +10,13 @@ from homeassistant.components.sensor import (
     SensorEntityDescription,
     SensorStateClass,
 )
-from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import UnitOfTemperature
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
-from . import NotionEntity
-from .const import DOMAIN, SENSOR_MOLD, SENSOR_TEMPERATURE
-from .coordinator import NotionDataUpdateCoordinator
-from .model import NotionEntityDescription
+from .const import SENSOR_MOLD, SENSOR_TEMPERATURE
+from .coordinator import NotionConfigEntry
+from .entity import NotionEntity, NotionEntityDescription
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -43,10 +41,12 @@ SENSOR_DESCRIPTIONS = (
 
 
 async def async_setup_entry(
-    hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback
+    hass: HomeAssistant,
+    entry: NotionConfigEntry,
+    async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up Notion sensors based on a config entry."""
-    coordinator: NotionDataUpdateCoordinator = hass.data[DOMAIN][entry.entry_id]
+    coordinator = entry.runtime_data
 
     async_add_entities(
         [

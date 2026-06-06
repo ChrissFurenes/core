@@ -1,7 +1,5 @@
 """Config flow for Raspberry Pi Power Supply Checker."""
 
-from __future__ import annotations
-
 from collections.abc import Awaitable
 from typing import Any
 
@@ -37,8 +35,6 @@ class RPiPowerFlow(DiscoveryFlowHandler[Awaitable[bool]], domain=DOMAIN):
         self, data: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
         """Handle a flow initialized by onboarding."""
-        if self._async_current_entries():
-            return self.async_abort(reason="single_instance_allowed")
         has_devices = await self._discovery_function(self.hass)
 
         if not has_devices:

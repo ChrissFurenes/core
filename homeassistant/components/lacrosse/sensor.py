@@ -1,7 +1,5 @@
 """Support for LaCrosse sensor components."""
 
-from __future__ import annotations
-
 from datetime import datetime, timedelta
 import logging
 from typing import Any
@@ -28,7 +26,7 @@ from homeassistant.const import (
     UnitOfTemperature,
 )
 from homeassistant.core import CALLBACK_TYPE, HomeAssistant, callback
-import homeassistant.helpers.config_validation as cv
+from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.entity import async_generate_entity_id
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.event import async_track_point_in_utc_time
@@ -152,7 +150,7 @@ class LaCrosseSensor(SensorEntity):
         self._attr_name = name
 
         lacrosse.register_callback(
-            int(self._config["id"]), self._callback_lacrosse, None
+            int(self._config[CONF_ID]), self._callback_lacrosse, None
         )
 
     @property

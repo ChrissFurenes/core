@@ -1,11 +1,13 @@
 # serializer version: 1
 # name: test_sensors[alert][binary_sensor.alert_power-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': None,
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -19,6 +21,7 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Power',
     'options': dict({
     }),
     'original_device_class': <BinarySensorDeviceClass.POWER: 'power'>,
@@ -26,6 +29,7 @@
     'original_name': 'Power',
     'platform': 'drop_connect',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': None,
     'unique_id': 'DROP-1_C0FFEE_81_power',
@@ -48,11 +52,13 @@
 # ---
 # name: test_sensors[alert][binary_sensor.alert_sensor-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': None,
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -66,6 +72,7 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Sensor',
     'options': dict({
     }),
     'original_device_class': <BinarySensorDeviceClass.PROBLEM: 'problem'>,
@@ -73,6 +80,7 @@
     'original_name': 'Sensor',
     'platform': 'drop_connect',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'alert_sensor',
     'unique_id': 'DROP-1_C0FFEE_81_alert_sensor',
@@ -95,11 +103,13 @@
 # ---
 # name: test_sensors[hub][binary_sensor.hub_drop_1_c0ffee_leak_detected-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': None,
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -113,6 +123,7 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Leak detected',
     'options': dict({
     }),
     'original_device_class': <BinarySensorDeviceClass.MOISTURE: 'moisture'>,
@@ -120,6 +131,7 @@
     'original_name': 'Leak detected',
     'platform': 'drop_connect',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'leak',
     'unique_id': 'DROP-1_C0FFEE_255_leak',
@@ -142,11 +154,13 @@
 # ---
 # name: test_sensors[hub][binary_sensor.hub_drop_1_c0ffee_notification_unread-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': None,
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -160,6 +174,7 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Notification unread',
     'options': dict({
     }),
     'original_device_class': None,
@@ -167,6 +182,7 @@
     'original_name': 'Notification unread',
     'platform': 'drop_connect',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'pending_notification',
     'unique_id': 'DROP-1_C0FFEE_255_pending_notification',
@@ -188,11 +204,13 @@
 # ---
 # name: test_sensors[leak][binary_sensor.leak_detector_leak_detected-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': None,
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -206,6 +224,7 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Leak detected',
     'options': dict({
     }),
     'original_device_class': <BinarySensorDeviceClass.MOISTURE: 'moisture'>,
@@ -213,6 +232,7 @@
     'original_name': 'Leak detected',
     'platform': 'drop_connect',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'leak',
     'unique_id': 'DROP-1_C0FFEE_20_leak',
@@ -235,11 +255,13 @@
 # ---
 # name: test_sensors[protection_valve][binary_sensor.protection_valve_leak_detected-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': None,
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -253,6 +275,7 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Leak detected',
     'options': dict({
     }),
     'original_device_class': <BinarySensorDeviceClass.MOISTURE: 'moisture'>,
@@ -260,6 +283,7 @@
     'original_name': 'Leak detected',
     'platform': 'drop_connect',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'leak',
     'unique_id': 'DROP-1_C0FFEE_78_leak',
@@ -282,11 +306,13 @@
 # ---
 # name: test_sensors[pump_controller][binary_sensor.pump_controller_leak_detected-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': None,
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -300,6 +326,7 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Leak detected',
     'options': dict({
     }),
     'original_device_class': <BinarySensorDeviceClass.MOISTURE: 'moisture'>,
@@ -307,6 +334,7 @@
     'original_name': 'Leak detected',
     'platform': 'drop_connect',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'leak',
     'unique_id': 'DROP-1_C0FFEE_83_leak',
@@ -329,11 +357,13 @@
 # ---
 # name: test_sensors[pump_controller][binary_sensor.pump_controller_pump_status-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': None,
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -347,6 +377,7 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Pump status',
     'options': dict({
     }),
     'original_device_class': None,
@@ -354,6 +385,7 @@
     'original_name': 'Pump status',
     'platform': 'drop_connect',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'pump',
     'unique_id': 'DROP-1_C0FFEE_83_pump',
@@ -375,11 +407,13 @@
 # ---
 # name: test_sensors[ro_filter][binary_sensor.ro_filter_leak_detected-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': None,
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -393,6 +427,7 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Leak detected',
     'options': dict({
     }),
     'original_device_class': <BinarySensorDeviceClass.MOISTURE: 'moisture'>,
@@ -400,6 +435,7 @@
     'original_name': 'Leak detected',
     'platform': 'drop_connect',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'leak',
     'unique_id': 'DROP-1_C0FFEE_255_leak',
@@ -422,11 +458,13 @@
 # ---
 # name: test_sensors[softener][binary_sensor.softener_reserve_capacity_in_use-entry]
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': None,
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -440,6 +478,7 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'Reserve capacity in use',
     'options': dict({
     }),
     'original_device_class': None,
@@ -447,6 +486,7 @@
     'original_name': 'Reserve capacity in use',
     'platform': 'drop_connect',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': 'reserve_in_use',
     'unique_id': 'DROP-1_C0FFEE_0_reserve_in_use',

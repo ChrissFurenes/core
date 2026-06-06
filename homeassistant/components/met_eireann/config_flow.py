@@ -6,7 +6,7 @@ import voluptuous as vol
 
 from homeassistant.config_entries import ConfigFlow, ConfigFlowResult
 from homeassistant.const import CONF_ELEVATION, CONF_LATITUDE, CONF_LONGITUDE, CONF_NAME
-import homeassistant.helpers.config_validation as cv
+from homeassistant.helpers import config_validation as cv
 
 from .const import DOMAIN, HOME_LOCATION_NAME
 
@@ -31,6 +31,8 @@ class MetEireannFlowHandler(ConfigFlow, domain=DOMAIN):
                 step_id="user",
                 data_schema=vol.Schema(
                     {
+                        # Name field is no longer allowed in config flow schemas
+                        # pylint: disable-next=home-assistant-config-flow-name-field
                         vol.Required(CONF_NAME, default=HOME_LOCATION_NAME): str,
                         vol.Required(
                             CONF_LATITUDE, default=self.hass.config.latitude

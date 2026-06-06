@@ -1,7 +1,5 @@
 """Provide the functionality to group entities."""
 
-from __future__ import annotations
-
 import asyncio
 from collections.abc import Collection
 import logging
@@ -22,14 +20,12 @@ from homeassistant.const import (
 )
 from homeassistant.core import HomeAssistant, ServiceCall
 from homeassistant.helpers import config_validation as cv, entity_registry as er
-from homeassistant.helpers.entity_component import EntityComponent
 from homeassistant.helpers.group import (
     expand_entity_ids as _expand_entity_ids,
     get_entity_ids as _get_entity_ids,
 )
 from homeassistant.helpers.reload import async_reload_integration_platforms
 from homeassistant.helpers.typing import ConfigType
-from homeassistant.loader import bind_hass
 
 #
 # Below we ensure the config_flow is imported so it does not need the import
@@ -49,12 +45,13 @@ from .const import (  # noqa: F401
     ATTR_ORDER,
     ATTR_REMOVE_ENTITIES,
     CONF_HIDE_MEMBERS,
+    DATA_COMPONENT,
     DOMAIN,
     GROUP_ORDER,
     REG_KEY,
 )
 from .entity import Group, async_get_component
-from .registry import GroupIntegrationRegistry, async_setup as async_setup_registry
+from .registry import async_setup as async_setup_registry
 
 CONF_ALL = "all"
 
@@ -72,6 +69,7 @@ PLATFORMS = [
     Platform.NOTIFY,
     Platform.SENSOR,
     Platform.SWITCH,
+    Platform.VALVE,
 ]
 
 _LOGGER = logging.getLogger(__name__)
@@ -102,7 +100,6 @@ CONFIG_SCHEMA = vol.Schema(
 )
 
 
-@bind_hass
 def is_on(hass: HomeAssistant, entity_id: str) -> bool:
     """Test if the group state is in its ON-state."""
     if REG_KEY not in hass.data:
@@ -110,18 +107,16 @@ def is_on(hass: HomeAssistant, entity_id: str) -> bool:
         return False
 
     if (state := hass.states.get(entity_id)) is not None:
-        registry: GroupIntegrationRegistry = hass.data[REG_KEY]
-        return state.state in registry.on_off_mapping
+        return state.state in hass.data[REG_KEY].on_off_mapping
 
     return False
 
 
 # expand_entity_ids and get_entity_ids are for backwards compatibility only
-expand_entity_ids = bind_hass(_expand_entity_ids)
-get_entity_ids = bind_hass(_get_entity_ids)
+expand_entity_ids = _expand_entity_ids
+get_entity_ids = _get_entity_ids
 
 
-@bind_hass
 def groups_with_entity(hass: HomeAssistant, entity_id: str) -> list[str]:
     """Get all groups that contain this entity.
 
@@ -132,7 +127,7 @@ def groups_with_entity(hass: HomeAssistant, entity_id: str) -> list[str]:
 
     return [
         group.entity_id
-        for group in hass.data[DOMAIN].entities
+        for group in hass.data[DATA_COMPONENT].entities
         if entity_id in group.tracking
     ]
 
@@ -142,13 +137,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     await hass.config_entries.async_forward_entry_setups(
         entry, (entry.options["group_type"],)
     )
-    entry.async_on_unload(entry.add_update_listener(config_entry_update_listener))
     return True
-
-
-async def config_entry_update_listener(hass: HomeAssistant, entry: ConfigEntry) -> None:
-    """Update listener, called when the config entry options are changed."""
-    await hass.config_entries.async_reload(entry.entry_id)
 
 
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
@@ -179,10 +168,7 @@ async def async_remove_entry(hass: HomeAssistant, entry: ConfigEntry) -> None:
 
 async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     """Set up all groups found defined in the configuration."""
-    if DOMAIN not in hass.data:
-        hass.data[DOMAIN] = EntityComponent[Group](_LOGGER, DOMAIN, hass)
-
-    component: EntityComponent[Group] = hass.data[DOMAIN]
+    component = async_get_component(hass)
 
     await async_setup_registry(hass)
 
@@ -194,8 +180,7 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
         - Remove group.group entities not created by service calls and set them up again
         - Reload xxx.group platforms
         """
-        if (conf := await component.async_prepare_reload(skip_reset=True)) is None:
-            return
+        conf = await component.async_prepare_reload(skip_reset=True)
 
         # Simplified + modified version of EntityPlatform.async_reset:
         # - group.group never retries setup
@@ -338,7 +323,7 @@ async def _async_process_config(hass: HomeAssistant, config: ConfigType) -> None
         entity_ids: Collection[str] = conf.get(CONF_ENTITIES) or []
         icon: str | None = conf.get(CONF_ICON)
         mode = bool(conf.get(CONF_ALL))
-        order: int = hass.data[GROUP_ORDER]
+        order = hass.data[GROUP_ORDER]
 
         # We keep track of the order when we are creating the tasks
         # in the same way that async_create_group does to make

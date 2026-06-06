@@ -1,7 +1,5 @@
 """Diagnostics support for Nice G.O.."""
 
-from __future__ import annotations
-
 from dataclasses import asdict
 from typing import Any
 
@@ -9,8 +7,8 @@ from homeassistant.components.diagnostics import async_redact_data
 from homeassistant.const import CONF_EMAIL, CONF_PASSWORD
 from homeassistant.core import HomeAssistant
 
-from . import NiceGOConfigEntry
 from .const import CONF_REFRESH_TOKEN
+from .coordinator import NiceGOConfigEntry
 
 TO_REDACT = {CONF_PASSWORD, CONF_EMAIL, CONF_REFRESH_TOKEN, "title", "unique_id"}
 

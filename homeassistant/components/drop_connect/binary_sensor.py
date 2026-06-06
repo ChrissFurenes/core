@@ -1,7 +1,5 @@
 """Support for DROP binary sensors."""
 
-from __future__ import annotations
-
 from collections.abc import Callable
 from dataclasses import dataclass
 import logging
@@ -11,9 +9,8 @@ from homeassistant.components.binary_sensor import (
     BinarySensorEntity,
     BinarySensorEntityDescription,
 )
-from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
 from .const import (
     CONF_DEVICE_TYPE,
@@ -25,9 +22,8 @@ from .const import (
     DEV_RO_FILTER,
     DEV_SALT_SENSOR,
     DEV_SOFTENER,
-    DOMAIN,
 )
-from .coordinator import DROPDeviceDataUpdateCoordinator
+from .coordinator import DROPConfigEntry, DROPDeviceDataUpdateCoordinator
 from .entity import DROPEntity
 
 _LOGGER = logging.getLogger(__name__)
@@ -85,7 +81,6 @@ BINARY_SENSORS: list[DROPBinarySensorEntityDescription] = [
     ),
     DROPBinarySensorEntityDescription(
         key=POWER,
-        translation_key=None,  # Use name provided by binary sensor device class
         device_class=BinarySensorDeviceClass.POWER,
         value_fn=lambda device: device.drop_api.power(),
     ),
@@ -106,8 +101,8 @@ DEVICE_BINARY_SENSORS: dict[str, list[str]] = {
 
 async def async_setup_entry(
     hass: HomeAssistant,
-    config_entry: ConfigEntry,
-    async_add_entities: AddEntitiesCallback,
+    config_entry: DROPConfigEntry,
+    async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up the DROP binary sensors from config entry."""
     _LOGGER.debug(
@@ -116,9 +111,10 @@ async def async_setup_entry(
         config_entry.entry_id,
     )
 
+    coordinator = config_entry.runtime_data
     if config_entry.data[CONF_DEVICE_TYPE] in DEVICE_BINARY_SENSORS:
         async_add_entities(
-            DROPBinarySensor(hass.data[DOMAIN][config_entry.entry_id], sensor)
+            DROPBinarySensor(coordinator, sensor)
             for sensor in BINARY_SENSORS
             if sensor.key in DEVICE_BINARY_SENSORS[config_entry.data[CONF_DEVICE_TYPE]]
         )

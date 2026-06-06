@@ -1,7 +1,5 @@
 """Support for monitoring a Smappee energy sensor."""
 
-from __future__ import annotations
-
 from dataclasses import dataclass, field
 
 from homeassistant.components.sensor import (
@@ -10,12 +8,12 @@ from homeassistant.components.sensor import (
     SensorEntityDescription,
     SensorStateClass,
 )
-from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import UnitOfElectricPotential, UnitOfEnergy, UnitOfPower
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.device_registry import DeviceInfo
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
+from . import SmappeeConfigEntry
 from .const import DOMAIN
 
 
@@ -188,11 +186,11 @@ VOLTAGE_SENSORS: tuple[SmappeeVoltageSensorEntityDescription, ...] = (
 
 async def async_setup_entry(
     hass: HomeAssistant,
-    config_entry: ConfigEntry,
-    async_add_entities: AddEntitiesCallback,
+    config_entry: SmappeeConfigEntry,
+    async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up the Smappee sensor."""
-    smappee_base = hass.data[DOMAIN][config_entry.entry_id]
+    smappee_base = config_entry.runtime_data
 
     entities = []
     for service_location in smappee_base.smappee.service_locations.values():

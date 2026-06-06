@@ -16,7 +16,7 @@ from homeassistant.helpers import (
 )
 from homeassistant.util.dt import utcnow
 
-from tests.common import ANY, MockConfigEntry, async_capture_events, flush_store
+from tests.common import MockConfigEntry, async_capture_events, flush_store
 
 
 async def test_list_labels(label_registry: lr.LabelRegistry) -> None:
@@ -46,7 +46,6 @@ async def test_create_label(
         description="This label is for testing",
         created_at=utcnow(),
         modified_at=utcnow(),
-        normalized_name=ANY,
     )
 
     assert len(label_registry.labels) == 1
@@ -147,7 +146,6 @@ async def test_update_label(
         description=None,
         created_at=created_at,
         modified_at=created_at,
-        normalized_name=ANY,
     )
 
     modified_at = datetime.fromisoformat("2024-02-01T01:00:00+00:00")
@@ -169,7 +167,6 @@ async def test_update_label(
         description="Updated description",
         created_at=created_at,
         modified_at=modified_at,
-        normalized_name=ANY,
     )
     assert len(label_registry.labels) == 1
 
@@ -220,7 +217,7 @@ async def test_update_label_with_same_data(
 async def test_update_label_with_same_name_change_case(
     label_registry: lr.LabelRegistry,
 ) -> None:
-    """Make sure that we can reapply the same name with a different case to the label."""
+    """Make sure we can reapply the same name with a different case."""
     label = label_registry.async_create("mock")
 
     updated_label = label_registry.async_update(label.label_id, name="Mock")

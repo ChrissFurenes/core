@@ -1,38 +1,35 @@
 """Support for Sure PetCare Flaps locks."""
 
-from __future__ import annotations
-
 from typing import Any
 
 from surepy.entities import SurepyEntity
-from surepy.enums import EntityType, LockState
+from surepy.enums import EntityType, LockState as SurepyLockState
 
-from homeassistant.components.lock import LockEntity
-from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import STATE_LOCKED, STATE_UNLOCKED
+from homeassistant.components.lock import LockEntity, LockState
 from homeassistant.core import HomeAssistant, callback
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
-from .const import DOMAIN
-from .coordinator import SurePetcareDataCoordinator
+from .coordinator import SurePetcareConfigEntry, SurePetcareDataCoordinator
 from .entity import SurePetcareEntity
 
 
 async def async_setup_entry(
-    hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback
+    hass: HomeAssistant,
+    entry: SurePetcareConfigEntry,
+    async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up Sure PetCare locks on a config entry."""
 
-    coordinator: SurePetcareDataCoordinator = hass.data[DOMAIN][entry.entry_id]
+    coordinator = entry.runtime_data
 
     async_add_entities(
         SurePetcareLock(surepy_entity.id, coordinator, lock_state)
         for surepy_entity in coordinator.data.values()
         if surepy_entity.type in [EntityType.CAT_FLAP, EntityType.PET_FLAP]
         for lock_state in (
-            LockState.LOCKED_IN,
-            LockState.LOCKED_OUT,
-            LockState.LOCKED_ALL,
+            SurepyLockState.LOCKED_IN,
+            SurepyLockState.LOCKED_OUT,
+            SurepyLockState.LOCKED_ALL,
         )
     )
 
@@ -44,7 +41,7 @@ class SurePetcareLock(SurePetcareEntity, LockEntity):
         self,
         surepetcare_id: int,
         coordinator: SurePetcareDataCoordinator,
-        lock_state: LockState,
+        lock_state: SurepyLockState,
     ) -> None:
         """Initialize a Sure Petcare lock."""
         self._lock_state = lock_state.name.lower()
@@ -66,14 +63,14 @@ class SurePetcareLock(SurePetcareEntity, LockEntity):
         status = surepy_entity.raw_data()["status"]
 
         self._attr_is_locked = (
-            LockState(status["locking"]["mode"]).name.lower() == self._lock_state
+            SurepyLockState(status["locking"]["mode"]).name.lower() == self._lock_state
         )
 
         self._available = bool(status.get("online"))
 
     async def async_lock(self, **kwargs: Any) -> None:
         """Lock the lock."""
-        if self.state != STATE_UNLOCKED:
+        if self.state != LockState.UNLOCKED:
             return
         self._attr_is_locking = True
         self.async_write_ha_state()
@@ -87,7 +84,7 @@ class SurePetcareLock(SurePetcareEntity, LockEntity):
 
     async def async_unlock(self, **kwargs: Any) -> None:
         """Unlock the lock."""
-        if self.state != STATE_LOCKED:
+        if self.state != LockState.LOCKED:
             return
         self._attr_is_unlocking = True
         self.async_write_ha_state()

@@ -19,11 +19,15 @@ MEDIA_PLAYER_ENTITY = "media_player.my_android_tv"
 async def test_media_player_receives_push_updates(
     hass: HomeAssistant, mock_config_entry: MockConfigEntry, mock_api: MagicMock
 ) -> None:
-    """Test the Android TV Remote media player receives push updates and state is updated."""
-    mock_config_entry.options = {
-        "apps": {"com.google.android.youtube.tv": {"app_name": "YouTube"}}
-    }
+    """Test the Android TV Remote media player push updates.
+
+    Receives push updates and state is updated.
+    """
     mock_config_entry.add_to_hass(hass)
+    hass.config_entries.async_update_entry(
+        mock_config_entry,
+        options={"apps": {"com.google.android.youtube.tv": {"app_name": "YouTube"}}},
+    )
     await hass.config_entries.async_setup(mock_config_entry.entry_id)
     assert mock_config_entry.state is ConfigEntryState.LOADED
 
@@ -290,7 +294,7 @@ async def test_media_player_play_media(
     )
     mock_api.send_launch_app_command.assert_called_with("tv.twitch.android.app")
 
-    with pytest.raises(ValueError):
+    with pytest.raises(HomeAssistantError, match="Channel must be numeric: abc"):
         await hass.services.async_call(
             "media_player",
             "play_media",
@@ -302,7 +306,7 @@ async def test_media_player_play_media(
             blocking=True,
         )
 
-    with pytest.raises(ValueError):
+    with pytest.raises(HomeAssistantError, match="Invalid media type: music"):
         await hass.services.async_call(
             "media_player",
             "play_media",
@@ -322,7 +326,7 @@ async def test_browse_media(
     mock_api: MagicMock,
 ) -> None:
     """Test the Android TV Remote media player browse media."""
-    mock_config_entry.options = {
+    new_options = {
         "apps": {
             "com.google.android.youtube.tv": {
                 "app_name": "YouTube",
@@ -332,6 +336,7 @@ async def test_browse_media(
         }
     }
     mock_config_entry.add_to_hass(hass)
+    hass.config_entries.async_update_entry(mock_config_entry, options=new_options)
     await hass.config_entries.async_setup(mock_config_entry.entry_id)
     assert mock_config_entry.state is ConfigEntryState.LOADED
 
@@ -353,6 +358,7 @@ async def test_browse_media(
         "children_media_class": "app",
         "can_play": False,
         "can_expand": True,
+        "can_search": False,
         "thumbnail": None,
         "not_shown": 0,
         "children": [
@@ -364,6 +370,7 @@ async def test_browse_media(
                 "children_media_class": None,
                 "can_play": False,
                 "can_expand": False,
+                "can_search": False,
                 "thumbnail": "https://www.youtube.com/icon.png",
             },
             {
@@ -374,6 +381,7 @@ async def test_browse_media(
                 "children_media_class": None,
                 "can_play": False,
                 "can_expand": False,
+                "can_search": False,
                 "thumbnail": "",
             },
         ],
@@ -389,7 +397,9 @@ async def test_media_player_connection_closed(
     assert mock_config_entry.state is ConfigEntryState.LOADED
 
     mock_api.send_key_command.side_effect = ConnectionClosed()
-    with pytest.raises(HomeAssistantError):
+    with pytest.raises(
+        HomeAssistantError, match="Connection to the Android TV device is closed"
+    ):
         await hass.services.async_call(
             "media_player",
             "media_pause",
@@ -398,7 +408,9 @@ async def test_media_player_connection_closed(
         )
 
     mock_api.send_launch_app_command.side_effect = ConnectionClosed()
-    with pytest.raises(HomeAssistantError):
+    with pytest.raises(
+        HomeAssistantError, match="Connection to the Android TV device is closed"
+    ):
         await hass.services.async_call(
             "media_player",
             "play_media",

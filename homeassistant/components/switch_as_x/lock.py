@@ -1,7 +1,5 @@
 """Lock support for switch entities."""
 
-from __future__ import annotations
-
 from typing import Any
 
 from homeassistant.components.lock import DOMAIN as LOCK_DOMAIN, LockEntity
@@ -16,7 +14,7 @@ from homeassistant.const import (
 )
 from homeassistant.core import Event, EventStateChangedData, HomeAssistant, callback
 from homeassistant.helpers import entity_registry as er
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
 from .const import CONF_INVERT
 from .entity import BaseInvertableEntity
@@ -25,7 +23,7 @@ from .entity import BaseInvertableEntity
 async def async_setup_entry(
     hass: HomeAssistant,
     config_entry: ConfigEntry,
-    async_add_entities: AddEntitiesCallback,
+    async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Initialize Lock Switch config entry."""
     registry = er.async_get(hass)

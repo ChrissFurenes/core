@@ -1,7 +1,5 @@
 """Binary Sensor for MeteoAlarm.eu."""
 
-from __future__ import annotations
-
 from datetime import timedelta
 import logging
 
@@ -13,19 +11,17 @@ from homeassistant.components.binary_sensor import (
     BinarySensorDeviceClass,
     BinarySensorEntity,
 )
-from homeassistant.const import CONF_NAME
+from homeassistant.const import CONF_COUNTRY, CONF_LANGUAGE, CONF_NAME
 from homeassistant.core import HomeAssistant
-import homeassistant.helpers.config_validation as cv
+from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
-import homeassistant.util.dt as dt_util
+from homeassistant.util import dt as dt_util
 
 _LOGGER = logging.getLogger(__name__)
 
 ATTRIBUTION = "Information provided by MeteoAlarm"
 
-CONF_COUNTRY = "country"
-CONF_LANGUAGE = "language"
 CONF_PROVINCE = "province"
 
 DEFAULT_NAME = "meteoalarm"

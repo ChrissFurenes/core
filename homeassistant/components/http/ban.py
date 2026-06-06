@@ -1,7 +1,5 @@
 """Ban logic for HTTP component."""
 
-from __future__ import annotations
-
 from collections import defaultdict
 from collections.abc import Awaitable, Callable, Coroutine
 from contextlib import suppress
@@ -26,10 +24,11 @@ import voluptuous as vol
 from homeassistant.config import load_yaml_config_file
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.exceptions import HomeAssistantError
-import homeassistant.helpers.config_validation as cv
-from homeassistant.util import dt as dt_util, yaml
+from homeassistant.helpers import config_validation as cv
+from homeassistant.helpers.hassio import get_supervisor_ip, is_hassio
+from homeassistant.util import dt as dt_util, yaml as yaml_util
 
-from .const import KEY_HASS
+from .const import KEY_HASS, is_supervisor_unix_socket_request
 from .view import HomeAssistantView
 
 _LOGGER: Final = logging.getLogger(__name__)
@@ -71,6 +70,10 @@ async def ban_middleware(
     request: Request, handler: Callable[[Request], Awaitable[StreamResponse]]
 ) -> StreamResponse:
     """IP Ban middleware."""
+    # Unix socket connections are trusted, skip ban checks
+    if is_supervisor_unix_socket_request(request):
+        return await handler(request)
+
     if (ban_manager := request.app.get(KEY_BAN_MANAGER)) is None:
         _LOGGER.error("IP Ban middleware loaded but banned IPs not loaded")
         return await handler(request)
@@ -135,8 +138,7 @@ async def process_wrong_login(request: Request) -> None:
     _LOGGER.warning(log_msg)
 
     # Circular import with websocket_api
-    # pylint: disable=import-outside-toplevel
-    from homeassistant.components import persistent_notification
+    from homeassistant.components import persistent_notification  # noqa: PLC0415
 
     persistent_notification.async_create(
         hass, notification_msg, "Login attempt failed", NOTIFICATION_ID_LOGIN
@@ -149,12 +151,8 @@ async def process_wrong_login(request: Request) -> None:
     request.app[KEY_FAILED_LOGIN_ATTEMPTS][remote_addr] += 1
 
     # Supervisor IP should never be banned
-    if "hassio" in hass.config.components:
-        # pylint: disable-next=import-outside-toplevel
-        from homeassistant.components import hassio
-
-        if hassio.get_supervisor_ip() == str(remote_addr):
-            return
+    if is_hassio(hass) and str(remote_addr) == get_supervisor_ip():
+        return
 
     if (
         request.app[KEY_FAILED_LOGIN_ATTEMPTS][remote_addr]
@@ -237,6 +235,9 @@ class IpBanManager:
             except vol.Invalid as err:
                 _LOGGER.error("Failed to load IP ban %s: %s", ip_info, err)
                 continue
+            except ValueError:
+                _LOGGER.error("Failed to load IP ban: invalid IP address %s", ip_ban)
+                continue
 
         self.ip_bans_lookup = ip_bans_lookup
 
@@ -247,7 +248,7 @@ class IpBanManager:
                 str(ip_ban.ip_address): {ATTR_BANNED_AT: ip_ban.banned_at.isoformat()}
             }
             # Write in a single write call to avoid interleaved writes
-            out.write("\n" + yaml.dump(ip_))
+            out.write("\n" + yaml_util.dump(ip_))
 
     async def async_add_ban(self, remote_addr: IPv4Address | IPv6Address) -> None:
         """Add a new IP address to the banned list."""

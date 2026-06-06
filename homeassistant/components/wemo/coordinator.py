@@ -1,13 +1,11 @@
 """Home Assistant wrapper for a pyWeMo device."""
 
-from __future__ import annotations
-
 import asyncio
 from dataclasses import dataclass, fields
 from datetime import timedelta
 from functools import partial
 import logging
-from typing import TYPE_CHECKING, Literal
+from typing import Literal
 
 from pywemo import Insight, LongPressMixin, WeMoDevice
 from pywemo.exceptions import ActionException, PyWeMoException
@@ -29,7 +27,7 @@ from homeassistant.helpers.device_registry import CONNECTION_UPNP, DeviceInfo
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
 from .const import DOMAIN, WEMO_SUBSCRIPTION_EVENT
-from .models import async_wemo_data
+from .models import DATA_WEMO
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -50,7 +48,8 @@ class OptionsValidationError(Exception):
         The field_key and error_key strings must be the same as in strings.json.
 
         Args:
-          field_key: Name of the options.step.init.data key that corresponds to this error.
+          field_key: Name of the options.step.init.data key
+            that corresponds to this error.
             field_key must also match one of the field names inside the Options class.
           error_key: Name of the options.error key that corresponds to this error.
           message: Message for the Exception class.
@@ -81,24 +80,28 @@ class Options:
             raise OptionsValidationError(
                 "enable_subscription",
                 "long_press_requires_subscription",
-                "Local push update subscriptions must be enabled to use long-press events",
+                "Local push update subscriptions must be"
+                " enabled to use long-press events",
             )
 
 
 class DeviceCoordinator(DataUpdateCoordinator[None]):
     """Home Assistant wrapper for a pyWeMo device."""
 
+    config_entry: ConfigEntry
     options: Options | None = None
 
-    def __init__(self, hass: HomeAssistant, wemo: WeMoDevice) -> None:
+    def __init__(
+        self, hass: HomeAssistant, config_entry: ConfigEntry, wemo: WeMoDevice
+    ) -> None:
         """Initialize DeviceCoordinator."""
         super().__init__(
             hass,
             _LOGGER,
+            config_entry=config_entry,
             name=wemo.name,
             update_interval=timedelta(seconds=30),
         )
-        self.hass = hass
         self.wemo = wemo
         self.device_id: str | None = None
         self.device_info = _create_device_info(wemo)
@@ -142,15 +145,17 @@ class DeviceCoordinator(DataUpdateCoordinator[None]):
         if self._shutdown_requested:
             return
         await super().async_shutdown()
-        if TYPE_CHECKING:
-            # mypy doesn't known that the device_id is set in async_setup.
-            assert self.device_id is not None
+        if self.device_id is None:
+            # async_refresh failed in async_register_device before async_setup
+            # was called, so this coordinator was never fully registered.
+            return
         del _async_coordinators(self.hass)[self.device_id]
         assert self.options  # Always set by async_register_device.
         if self.options.enable_subscription:
             await self._async_set_enable_subscription(False)
         # Check that the device is available (last_update_success) before disabling long
-        # press. That avoids long shutdown times for devices that are no longer connected.
+        # press. That avoids long shutdown times for devices
+        # that are no longer connected.
         if self.options.enable_long_press and self.last_update_success:
             await self._async_set_enable_long_press(False)
 
@@ -275,6 +280,7 @@ def _device_info(wemo: WeMoDevice) -> DeviceInfo:
         identifiers={(DOMAIN, wemo.serial_number)},
         manufacturer="Belkin",
         model=wemo.model_name,
+        model_id=wemo.model,
         name=wemo.name,
         sw_version=wemo.firmware_version,
     )
@@ -284,7 +290,7 @@ async def async_register_device(
     hass: HomeAssistant, config_entry: ConfigEntry, wemo: WeMoDevice
 ) -> DeviceCoordinator:
     """Register a device with home assistant and enable pywemo event callbacks."""
-    device = DeviceCoordinator(hass, wemo)
+    device = DeviceCoordinator(hass, config_entry, wemo)
     await device.async_refresh()
     if not device.last_update_success and device.last_exception:
         raise device.last_exception
@@ -311,9 +317,9 @@ def async_get_coordinator(hass: HomeAssistant, device_id: str) -> DeviceCoordina
 
 @callback
 def _async_coordinators(hass: HomeAssistant) -> dict[str, DeviceCoordinator]:
-    return async_wemo_data(hass).config_entry_data.device_coordinators
+    return hass.data[DATA_WEMO].config_entry_data.device_coordinators
 
 
 @callback
 def _async_registry(hass: HomeAssistant) -> SubscriptionRegistry:
-    return async_wemo_data(hass).registry
+    return hass.data[DATA_WEMO].registry

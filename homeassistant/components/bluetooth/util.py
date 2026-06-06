@@ -1,6 +1,8 @@
 """The bluetooth integration utilities."""
 
-from __future__ import annotations
+from collections.abc import Mapping
+import logging
+from typing import Any
 
 from bluetooth_adapters import (
     ADAPTER_ADDRESS,
@@ -11,11 +13,39 @@ from bluetooth_adapters import (
     adapter_unique_name,
 )
 from bluetooth_data_tools import monotonic_time_coarse
+from habluetooth import BluetoothScanningMode, get_manager
 
-from homeassistant.core import callback
+from homeassistant.core import HomeAssistant, callback
+from homeassistant.exceptions import HomeAssistantError
 
+from .const import CONF_MODE, CONF_PASSIVE, DEFAULT_MODE
 from .models import BluetoothServiceInfoBleak
 from .storage import BluetoothStorage
+
+_LOGGER = logging.getLogger(__name__)
+
+
+def resolve_scanning_mode(options: Mapping[str, Any]) -> BluetoothScanningMode:
+    """Resolve CONF_MODE, falling back to legacy CONF_PASSIVE or DEFAULT_MODE."""
+    if (mode_value := options.get(CONF_MODE)) is not None:
+        try:
+            return BluetoothScanningMode(mode_value)
+        except TypeError, ValueError:
+            _LOGGER.warning("Unknown bluetooth scanning mode %r", mode_value)
+            return BluetoothScanningMode(DEFAULT_MODE)
+    if (legacy_passive := options.get(CONF_PASSIVE)) is True:
+        return BluetoothScanningMode.PASSIVE
+    if legacy_passive is False:
+        return BluetoothScanningMode.ACTIVE
+    return BluetoothScanningMode(DEFAULT_MODE)
+
+
+class InvalidConfigEntryID(HomeAssistantError):
+    """Invalid config entry id."""
+
+
+class InvalidSource(HomeAssistantError):
+    """Invalid source."""
 
 
 @callback
@@ -29,6 +59,10 @@ def async_load_history_from_system(
     now_monotonic = monotonic_time_coarse()
     connectable_loaded_history: dict[str, BluetoothServiceInfoBleak] = {}
     all_loaded_history: dict[str, BluetoothServiceInfoBleak] = {}
+    adapter_to_source_address = {
+        adapter: details[ADAPTER_ADDRESS]
+        for adapter, details in adapters.adapters.items()
+    }
 
     # Restore local adapters
     for address, history in adapters.history.items():
@@ -40,7 +74,11 @@ def async_load_history_from_system(
                 BluetoothServiceInfoBleak.from_device_and_advertisement_data(
                     history.device,
                     history.advertisement_data,
-                    history.source,
+                    # history.source is really the adapter name
+                    # for historical compatibility since BlueZ
+                    # does not know the MAC address of the adapter
+                    # so we need to convert it to the source address (MAC)
+                    adapter_to_source_address.get(history.source, history.source),
                     now_monotonic,
                     True,
                 )
@@ -85,3 +123,14 @@ def adapter_title(adapter: str, details: AdapterDetails) -> str:
     model = details.get(ADAPTER_PRODUCT, "Unknown")
     manufacturer = details[ADAPTER_MANUFACTURER] or "Unknown"
     return f"{manufacturer} {model} ({unique_name})"
+
+
+def config_entry_id_to_source(hass: HomeAssistant, config_entry_id: str) -> str:
+    """Convert a config entry id to a source."""
+    if not (entry := hass.config_entries.async_get_entry(config_entry_id)):
+        raise InvalidConfigEntryID(f"Config entry {config_entry_id} not found")
+    source = entry.unique_id
+    assert source is not None
+    if not get_manager().async_scanner_by_source(source):
+        raise InvalidSource(f"Source {source} not found")
+    return source

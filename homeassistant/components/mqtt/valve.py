@@ -1,7 +1,5 @@
 """Support for MQTT valve devices."""
 
-from __future__ import annotations
-
 from contextlib import suppress
 import logging
 from typing import Any
@@ -13,6 +11,7 @@ from homeassistant.components.valve import (
     DEVICE_CLASSES_SCHEMA,
     ValveEntity,
     ValveEntityFeature,
+    ValveState,
 )
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
@@ -20,14 +19,10 @@ from homeassistant.const import (
     CONF_NAME,
     CONF_OPTIMISTIC,
     CONF_VALUE_TEMPLATE,
-    STATE_CLOSED,
-    STATE_CLOSING,
-    STATE_OPEN,
-    STATE_OPENING,
 )
 from homeassistant.core import HomeAssistant, callback
-import homeassistant.helpers.config_validation as cv
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers import config_validation as cv
+from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 from homeassistant.helpers.typing import ConfigType, VolSchemaType
 from homeassistant.util.json import JSON_DECODE_EXCEPTIONS, json_loads
 from homeassistant.util.percentage import (
@@ -45,6 +40,7 @@ from .const import (
     CONF_PAYLOAD_STOP,
     CONF_POSITION_CLOSED,
     CONF_POSITION_OPEN,
+    CONF_REPORTS_POSITION,
     CONF_RETAIN,
     CONF_STATE_CLOSED,
     CONF_STATE_CLOSING,
@@ -59,14 +55,14 @@ from .const import (
     DEFAULT_RETAIN,
     PAYLOAD_NONE,
 )
-from .mixins import MqttEntity, async_setup_entity_entry_helper
+from .entity import MqttEntity, async_setup_entity_entry_helper
 from .models import MqttCommandTemplate, MqttValueTemplate, ReceiveMessage
 from .schemas import MQTT_ENTITY_COMMON_SCHEMA
 from .util import valid_publish_topic, valid_subscribe_topic
 
 _LOGGER = logging.getLogger(__name__)
 
-CONF_REPORTS_POSITION = "reports_position"
+PARALLEL_UPDATES = 0
 
 DEFAULT_NAME = "MQTT Valve"
 
@@ -86,8 +82,8 @@ NO_POSITION_KEYS = (
 DEFAULTS = {
     CONF_PAYLOAD_CLOSE: DEFAULT_PAYLOAD_CLOSE,
     CONF_PAYLOAD_OPEN: DEFAULT_PAYLOAD_OPEN,
-    CONF_STATE_OPEN: STATE_OPEN,
-    CONF_STATE_CLOSED: STATE_CLOSED,
+    CONF_STATE_OPEN: ValveState.OPEN,
+    CONF_STATE_CLOSED: ValveState.CLOSED,
 }
 
 RESET_CLOSING_OPENING = "reset_opening_closing"
@@ -113,14 +109,18 @@ _PLATFORM_SCHEMA_BASE = MQTT_BASE_SCHEMA.extend(
         vol.Optional(CONF_PAYLOAD_CLOSE): vol.Any(cv.string, None),
         vol.Optional(CONF_PAYLOAD_OPEN): vol.Any(cv.string, None),
         vol.Optional(CONF_PAYLOAD_STOP): vol.Any(cv.string, None),
-        vol.Optional(CONF_POSITION_CLOSED, default=DEFAULT_POSITION_CLOSED): int,
-        vol.Optional(CONF_POSITION_OPEN, default=DEFAULT_POSITION_OPEN): int,
+        vol.Optional(CONF_POSITION_CLOSED, default=DEFAULT_POSITION_CLOSED): vol.Coerce(
+            int
+        ),
+        vol.Optional(CONF_POSITION_OPEN, default=DEFAULT_POSITION_OPEN): vol.Coerce(
+            int
+        ),
         vol.Optional(CONF_REPORTS_POSITION, default=False): cv.boolean,
         vol.Optional(CONF_RETAIN, default=DEFAULT_RETAIN): cv.boolean,
         vol.Optional(CONF_STATE_CLOSED): cv.string,
-        vol.Optional(CONF_STATE_CLOSING, default=STATE_CLOSING): cv.string,
+        vol.Optional(CONF_STATE_CLOSING, default=ValveState.CLOSING): cv.string,
         vol.Optional(CONF_STATE_OPEN): cv.string,
-        vol.Optional(CONF_STATE_OPENING, default=STATE_OPENING): cv.string,
+        vol.Optional(CONF_STATE_OPENING, default=ValveState.OPENING): cv.string,
         vol.Optional(CONF_STATE_TOPIC): valid_subscribe_topic,
         vol.Optional(CONF_VALUE_TEMPLATE): cv.template,
     }
@@ -137,7 +137,7 @@ DISCOVERY_SCHEMA = vol.All(
 async def async_setup_entry(
     hass: HomeAssistant,
     config_entry: ConfigEntry,
-    async_add_entities: AddEntitiesCallback,
+    async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up MQTT valve through YAML and through MQTT discovery."""
     async_setup_entity_entry_helper(
@@ -216,14 +216,14 @@ class MqttValve(MqttEntity, ValveEntity):
     @callback
     def _update_state(self, state: str | None) -> None:
         """Update the valve state properties."""
-        self._attr_is_opening = state == STATE_OPENING
-        self._attr_is_closing = state == STATE_CLOSING
+        self._attr_is_opening = state == ValveState.OPENING
+        self._attr_is_closing = state == ValveState.CLOSING
         if self.reports_position:
             return
         if state is None:
             self._attr_is_closed = None
         else:
-            self._attr_is_closed = state == STATE_CLOSED
+            self._attr_is_closed = state == ValveState.CLOSED
 
     @callback
     def _process_binary_valve_update(
@@ -232,13 +232,13 @@ class MqttValve(MqttEntity, ValveEntity):
         """Process an update for a valve that does not report the position."""
         state: str | None = None
         if state_payload == self._config[CONF_STATE_OPENING]:
-            state = STATE_OPENING
+            state = ValveState.OPENING
         elif state_payload == self._config[CONF_STATE_CLOSING]:
-            state = STATE_CLOSING
+            state = ValveState.CLOSING
         elif state_payload == self._config[CONF_STATE_OPEN]:
-            state = STATE_OPEN
+            state = ValveState.OPEN
         elif state_payload == self._config[CONF_STATE_CLOSED]:
-            state = STATE_CLOSED
+            state = ValveState.CLOSED
         elif state_payload == PAYLOAD_NONE:
             state = None
         else:
@@ -259,9 +259,9 @@ class MqttValve(MqttEntity, ValveEntity):
         state: str | None = None
         position_set: bool = False
         if state_payload == self._config[CONF_STATE_OPENING]:
-            state = STATE_OPENING
+            state = ValveState.OPENING
         elif state_payload == self._config[CONF_STATE_CLOSING]:
-            state = STATE_CLOSING
+            state = ValveState.CLOSING
         elif state_payload == PAYLOAD_NONE:
             self._attr_current_valve_position = None
             return
@@ -271,7 +271,7 @@ class MqttValve(MqttEntity, ValveEntity):
                     self._range, float(position_payload)
                 )
             except ValueError:
-                _LOGGER.warning(
+                _LOGGER.debug(
                     "Ignoring non numeric payload '%s' received on topic '%s'",
                     position_payload,
                     msg.topic,
@@ -279,9 +279,9 @@ class MqttValve(MqttEntity, ValveEntity):
             else:
                 percentage_payload = min(max(percentage_payload, 0), 100)
                 self._attr_current_valve_position = percentage_payload
-                # Reset closing and opening if the valve is fully opened or fully closed
-                if state is None and percentage_payload in (0, 100):
-                    state = RESET_CLOSING_OPENING
+                # Reset opening/closing when a position update is received
+                # without an explicit opening/closing transitional state.
+                state = state or RESET_CLOSING_OPENING
                 position_set = True
         if state_payload and state is None and not position_set:
             _LOGGER.warning(
@@ -290,8 +290,6 @@ class MqttValve(MqttEntity, ValveEntity):
                 msg.topic,
                 state_payload,
             )
-            return
-        if state is None:
             return
         self._update_state(state)
 
@@ -363,7 +361,7 @@ class MqttValve(MqttEntity, ValveEntity):
         await self.async_publish_with_config(self._config[CONF_COMMAND_TOPIC], payload)
         if self._optimistic:
             # Optimistically assume that valve has changed state.
-            self._update_state(STATE_OPEN)
+            self._update_state(ValveState.OPEN)
             self.async_write_ha_state()
 
     async def async_close_valve(self) -> None:
@@ -377,7 +375,7 @@ class MqttValve(MqttEntity, ValveEntity):
         await self.async_publish_with_config(self._config[CONF_COMMAND_TOPIC], payload)
         if self._optimistic:
             # Optimistically assume that valve has changed state.
-            self._update_state(STATE_CLOSED)
+            self._update_state(ValveState.CLOSED)
             self.async_write_ha_state()
 
     async def async_stop_valve(self) -> None:
@@ -405,9 +403,9 @@ class MqttValve(MqttEntity, ValveEntity):
         )
         if self._optimistic:
             self._update_state(
-                STATE_CLOSED
+                ValveState.CLOSED
                 if percentage_position == self._config[CONF_POSITION_CLOSED]
-                else STATE_OPEN
+                else ValveState.OPEN
             )
             self._attr_current_valve_position = percentage_position
             self.async_write_ha_state()

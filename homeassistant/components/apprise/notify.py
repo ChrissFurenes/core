@@ -1,7 +1,5 @@
 """Apprise platform for notify component."""
 
-from __future__ import annotations
-
 import logging
 from typing import Any
 
@@ -17,7 +15,7 @@ from homeassistant.components.notify import (
 )
 from homeassistant.const import CONF_URL
 from homeassistant.core import HomeAssistant
-import homeassistant.helpers.config_validation as cv
+from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
 
 _LOGGER = logging.getLogger(__name__)

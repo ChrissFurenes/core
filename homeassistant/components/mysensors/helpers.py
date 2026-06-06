@@ -1,7 +1,5 @@
 """Helper functions for mysensors package."""
 
-from __future__ import annotations
-
 from collections import defaultdict
 from collections.abc import Callable
 from enum import IntEnum
@@ -14,7 +12,7 @@ import voluptuous as vol
 
 from homeassistant.const import CONF_NAME, Platform
 from homeassistant.core import HomeAssistant, callback
-import homeassistant.helpers.config_validation as cv
+from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.dispatcher import async_dispatcher_send
 from homeassistant.util.decorator import Registry
 
@@ -27,7 +25,6 @@ from .const import (
     MYSENSORS_DISCOVERED_NODES,
     MYSENSORS_DISCOVERY,
     MYSENSORS_NODE_DISCOVERY,
-    MYSENSORS_ON_UNLOAD,
     TYPE_TO_PLATFORMS,
     DevId,
     GatewayId,
@@ -39,18 +36,6 @@ _LOGGER = logging.getLogger(__name__)
 SCHEMAS: Registry[
     tuple[str, str], Callable[[BaseAsyncGateway, ChildSensor, ValueType], vol.Schema]
 ] = Registry()
-
-
-@callback
-def on_unload(hass: HomeAssistant, gateway_id: GatewayId, fnct: Callable) -> None:
-    """Register a callback to be called when entry is unloaded.
-
-    This function is used by platforms to cleanup after themselves.
-    """
-    key = MYSENSORS_ON_UNLOAD.format(gateway_id)
-    if key not in hass.data[DOMAIN]:
-        hass.data[DOMAIN][key] = []
-    hass.data[DOMAIN][key].append(fnct)
 
 
 @callback
@@ -75,6 +60,8 @@ def discover_mysensors_node(
     hass: HomeAssistant, gateway_id: GatewayId, node_id: int
 ) -> None:
     """Discover a MySensors node."""
+    # Uses legacy hass.data[DOMAIN] pattern
+    # pylint: disable-next=home-assistant-use-runtime-data
     discovered_nodes = hass.data[DOMAIN].setdefault(
         MYSENSORS_DISCOVERED_NODES.format(gateway_id), set()
     )
@@ -83,7 +70,7 @@ def discover_mysensors_node(
         discovered_nodes.add(node_id)
         async_dispatcher_send(
             hass,
-            MYSENSORS_NODE_DISCOVERY,
+            MYSENSORS_NODE_DISCOVERY.format(gateway_id),
             {
                 ATTR_GATEWAY_ID: gateway_id,
                 ATTR_NODE_ID: node_id,
@@ -170,7 +157,10 @@ def invalid_msg(
     """Return a message for an invalid child during schema validation."""
     presentation = gateway.const.Presentation
     set_req = gateway.const.SetReq
-    return f"{presentation(child.type).name} requires value_type {set_req[value_type_name].name}"
+    return (
+        f"{presentation(child.type).name} requires"
+        f" value_type {set_req[value_type_name].name}"
+    )
 
 
 def validate_set_msg(

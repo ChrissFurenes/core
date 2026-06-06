@@ -1,8 +1,5 @@
 """KNX integration services."""
 
-from __future__ import annotations
-
-from functools import partial
 import logging
 from typing import TYPE_CHECKING
 
@@ -16,12 +13,13 @@ from xknx.telegram.apci import GroupValueRead, GroupValueResponse, GroupValueWri
 from homeassistant.const import CONF_TYPE, SERVICE_RELOAD
 from homeassistant.core import HomeAssistant, ServiceCall, callback
 from homeassistant.exceptions import HomeAssistantError, ServiceValidationError
-import homeassistant.helpers.config_validation as cv
+from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.service import async_register_admin_service
 
 from .const import (
     DOMAIN,
     KNX_ADDRESS,
+    KNX_MODULE_KEY,
     SERVICE_KNX_ATTR_PAYLOAD,
     SERVICE_KNX_ATTR_REMOVE,
     SERVICE_KNX_ATTR_RESPONSE,
@@ -35,25 +33,30 @@ from .expose import create_knx_exposure
 from .schema import ExposeSchema, dpt_base_type_validator, ga_validator
 
 if TYPE_CHECKING:
-    from . import KNXModule
+    from .knx_module import KNXModule
 
 _LOGGER = logging.getLogger(__name__)
 
+_DESCRIPTION_PLACEHOLDERS = {
+    "sensor_value_types_url": "https://www.home-assistant.io/integrations/knx/#value-types"
+}
+
 
 @callback
-def register_knx_services(hass: HomeAssistant) -> None:
+def async_setup_services(hass: HomeAssistant) -> None:
     """Register KNX integration services."""
     hass.services.async_register(
         DOMAIN,
         SERVICE_KNX_SEND,
-        partial(service_send_to_knx_bus, hass),
+        service_send_to_knx_bus,
         schema=SERVICE_KNX_SEND_SCHEMA,
+        description_placeholders=_DESCRIPTION_PLACEHOLDERS,
     )
 
     hass.services.async_register(
         DOMAIN,
         SERVICE_KNX_READ,
-        partial(service_read_to_knx_bus, hass),
+        service_read_to_knx_bus,
         schema=SERVICE_KNX_READ_SCHEMA,
     )
 
@@ -61,23 +64,25 @@ def register_knx_services(hass: HomeAssistant) -> None:
         hass,
         DOMAIN,
         SERVICE_KNX_EVENT_REGISTER,
-        partial(service_event_register_modify, hass),
+        service_event_register_modify,
         schema=SERVICE_KNX_EVENT_REGISTER_SCHEMA,
+        description_placeholders=_DESCRIPTION_PLACEHOLDERS,
     )
 
     async_register_admin_service(
         hass,
         DOMAIN,
         SERVICE_KNX_EXPOSURE_REGISTER,
-        partial(service_exposure_register_modify, hass),
+        service_exposure_register_modify,
         schema=SERVICE_KNX_EXPOSURE_REGISTER_SCHEMA,
+        description_placeholders=_DESCRIPTION_PLACEHOLDERS,
     )
 
     async_register_admin_service(
         hass,
         DOMAIN,
         SERVICE_RELOAD,
-        partial(service_reload_integration, hass),
+        service_reload_integration,
     )
 
 
@@ -85,9 +90,11 @@ def register_knx_services(hass: HomeAssistant) -> None:
 def get_knx_module(hass: HomeAssistant) -> KNXModule:
     """Return KNXModule instance."""
     try:
-        return hass.data[DOMAIN]  # type: ignore[no-any-return]
+        return hass.data[KNX_MODULE_KEY]
     except KeyError as err:
-        raise HomeAssistantError("KNX entry not loaded") from err
+        raise HomeAssistantError(
+            translation_domain=DOMAIN, translation_key="integration_not_loaded"
+        ) from err
 
 
 SERVICE_KNX_EVENT_REGISTER_SCHEMA = vol.Schema(
@@ -102,31 +109,38 @@ SERVICE_KNX_EVENT_REGISTER_SCHEMA = vol.Schema(
 )
 
 
-async def service_event_register_modify(hass: HomeAssistant, call: ServiceCall) -> None:
+async def service_event_register_modify(call: ServiceCall) -> None:
     """Service for adding or removing a GroupAddress to the knx_event filter."""
-    knx_module = get_knx_module(hass)
+    knx_module = get_knx_module(call.hass)
 
     attr_address = call.data[KNX_ADDRESS]
-    group_addresses = list(map(parse_device_group_address, attr_address))
+    group_addresses = set(map(parse_device_group_address, attr_address))
 
     if call.data.get(SERVICE_KNX_ATTR_REMOVE):
+        _error_gas = set()
         for group_address in group_addresses:
             try:
                 knx_module.knx_event_callback.group_addresses.remove(group_address)
             except ValueError:
-                _LOGGER.warning(
-                    "Service event_register could not remove event for '%s'",
-                    str(group_address),
-                )
+                _error_gas.add(group_address)
             if group_address in knx_module.group_address_transcoder:
                 del knx_module.group_address_transcoder[group_address]
-        return
+
+        if not _error_gas:
+            return
+        raise HomeAssistantError(
+            translation_domain=DOMAIN,
+            translation_key="service_event_register_ga_not_found",
+            translation_placeholders={
+                "group_addresses": ", ".join(map(str, sorted(_error_gas)))
+            },
+        )
 
     if (dpt := call.data.get(CONF_TYPE)) and (
         transcoder := DPTBase.parse_transcoder(dpt)
     ):
         knx_module.group_address_transcoder.update(
-            {_address: transcoder for _address in group_addresses}
+            dict.fromkeys(group_addresses, transcoder)
         )
     for group_address in group_addresses:
         if group_address in knx_module.knx_event_callback.group_addresses:
@@ -155,11 +169,9 @@ SERVICE_KNX_EXPOSURE_REGISTER_SCHEMA = vol.Any(
 )
 
 
-async def service_exposure_register_modify(
-    hass: HomeAssistant, call: ServiceCall
-) -> None:
+async def service_exposure_register_modify(call: ServiceCall) -> None:
     """Service for adding or removing an exposure to KNX bus."""
-    knx_module = get_knx_module(hass)
+    knx_module = get_knx_module(call.hass)
 
     group_address = call.data[KNX_ADDRESS]
 
@@ -168,7 +180,11 @@ async def service_exposure_register_modify(
             removed_exposure = knx_module.service_exposures.pop(group_address)
         except KeyError as err:
             raise ServiceValidationError(
-                f"Could not find exposure for '{group_address}' to remove."
+                translation_domain=DOMAIN,
+                translation_key="service_exposure_remove_not_found",
+                translation_placeholders={
+                    "group_address": group_address,
+                },
             ) from err
 
         removed_exposure.async_remove()
@@ -182,7 +198,7 @@ async def service_exposure_register_modify(
                 " for '%s' - %s"
             ),
             group_address,
-            replaced_exposure.device.name,
+            replaced_exposure.name,
         )
         replaced_exposure.async_remove()
     exposure = create_knx_exposure(knx_module.hass, knx_module.xknx, call.data)
@@ -190,7 +206,7 @@ async def service_exposure_register_modify(
     _LOGGER.debug(
         "Service exposure_register registered exposure for '%s' - %s",
         group_address,
-        exposure.device.name,
+        exposure.name,
     )
 
 
@@ -222,9 +238,9 @@ SERVICE_KNX_SEND_SCHEMA = vol.Any(
 )
 
 
-async def service_send_to_knx_bus(hass: HomeAssistant, call: ServiceCall) -> None:
+async def service_send_to_knx_bus(call: ServiceCall) -> None:
     """Service for sending an arbitrary KNX message to the KNX bus."""
-    knx_module = get_knx_module(hass)
+    knx_module = get_knx_module(call.hass)
 
     attr_address = call.data[KNX_ADDRESS]
     attr_payload = call.data[SERVICE_KNX_ATTR_PAYLOAD]
@@ -236,13 +252,17 @@ async def service_send_to_knx_bus(hass: HomeAssistant, call: ServiceCall) -> Non
         transcoder = DPTBase.parse_transcoder(attr_type)
         if transcoder is None:
             raise ServiceValidationError(
-                f"Invalid type for knx.send service: {attr_type}"
+                translation_domain=DOMAIN,
+                translation_key="service_send_invalid_type",
+                translation_placeholders={"type": attr_type},
             )
         try:
             payload = transcoder.to_knx(attr_payload)
         except ConversionError as err:
             raise ServiceValidationError(
-                f"Invalid payload for knx.send service: {err}"
+                translation_domain=DOMAIN,
+                translation_key="service_send_invalid_payload",
+                translation_placeholders={"error": str(err)},
             ) from err
     elif isinstance(attr_payload, int):
         payload = DPTBinary(attr_payload)
@@ -270,9 +290,9 @@ SERVICE_KNX_READ_SCHEMA = vol.Schema(
 )
 
 
-async def service_read_to_knx_bus(hass: HomeAssistant, call: ServiceCall) -> None:
+async def service_read_to_knx_bus(call: ServiceCall) -> None:
     """Service for sending a GroupValueRead telegram to the KNX bus."""
-    knx_module = get_knx_module(hass)
+    knx_module = get_knx_module(call.hass)
 
     for address in call.data[KNX_ADDRESS]:
         telegram = Telegram(
@@ -283,8 +303,8 @@ async def service_read_to_knx_bus(hass: HomeAssistant, call: ServiceCall) -> Non
         await knx_module.xknx.telegrams.put(telegram)
 
 
-async def service_reload_integration(hass: HomeAssistant, call: ServiceCall) -> None:
+async def service_reload_integration(call: ServiceCall) -> None:
     """Reload the integration."""
-    knx_module = get_knx_module(hass)
-    await hass.config_entries.async_reload(knx_module.entry.entry_id)
-    hass.bus.async_fire(f"event_{DOMAIN}_reloaded", context=call.context)
+    knx_module = get_knx_module(call.hass)
+    await call.hass.config_entries.async_reload(knx_module.entry.entry_id)
+    call.hass.bus.async_fire(f"event_{DOMAIN}_reloaded", context=call.context)

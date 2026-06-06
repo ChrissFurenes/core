@@ -1,7 +1,5 @@
 """Support for iammeter via local API."""
 
-from __future__ import annotations
-
 from asyncio import timeout
 from collections.abc import Callable
 from dataclasses import dataclass
@@ -32,8 +30,12 @@ from homeassistant.const import (
 )
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import PlatformNotReady
-from homeassistant.helpers import debounce, entity_registry as er, update_coordinator
-import homeassistant.helpers.config_validation as cv
+from homeassistant.helpers import (
+    config_validation as cv,
+    debounce,
+    entity_registry as er,
+    update_coordinator,
+)
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType

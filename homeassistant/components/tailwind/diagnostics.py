@@ -1,12 +1,10 @@
 """Diagnostics platform for Tailwind."""
 
-from __future__ import annotations
-
 from typing import Any
 
 from homeassistant.core import HomeAssistant
 
-from .typing import TailwindConfigEntry
+from .coordinator import TailwindConfigEntry
 
 
 async def async_get_config_entry_diagnostics(

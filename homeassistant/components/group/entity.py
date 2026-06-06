@@ -1,13 +1,17 @@
 """Provide entity classes for group entities."""
 
-from __future__ import annotations
-
 from abc import abstractmethod
 from collections.abc import Callable, Collection, Mapping
 import logging
 from typing import Any
 
-from homeassistant.const import ATTR_ASSUMED_STATE, ATTR_ENTITY_ID, STATE_OFF, STATE_ON
+from homeassistant.const import (
+    ATTR_ASSUMED_STATE,
+    ATTR_ENTITY_ID,
+    ATTR_GROUP_ENTITIES,
+    STATE_OFF,
+    STATE_ON,
+)
 from homeassistant.core import (
     CALLBACK_TYPE,
     Event,
@@ -22,7 +26,7 @@ from homeassistant.helpers.entity import Entity, async_generate_entity_id
 from homeassistant.helpers.entity_component import EntityComponent
 from homeassistant.helpers.event import async_track_state_change_event
 
-from .const import ATTR_AUTO, ATTR_ORDER, DOMAIN, GROUP_ORDER, REG_KEY
+from .const import ATTR_AUTO, ATTR_ORDER, DATA_COMPONENT, DOMAIN, GROUP_ORDER, REG_KEY
 from .registry import GroupIntegrationRegistry, SingleStateType
 
 ENTITY_ID_FORMAT = DOMAIN + ".{}"
@@ -35,7 +39,7 @@ _LOGGER = logging.getLogger(__name__)
 class GroupEntity(Entity):
     """Representation of a Group of entities."""
 
-    _unrecorded_attributes = frozenset({ATTR_ENTITY_ID})
+    _unrecorded_attributes = frozenset({ATTR_ENTITY_ID, ATTR_GROUP_ENTITIES})
 
     _attr_should_poll = False
     _entity_ids: list[str]
@@ -114,6 +118,17 @@ class GroupEntity(Entity):
     @callback
     def async_update_group_state(self) -> None:
         """Abstract method to update the entity."""
+
+    @callback
+    def _update_assumed_state_from_members(self) -> None:
+        """Update assumed_state based on member entities."""
+        self._attr_assumed_state = False
+        for entity_id in self._entity_ids:
+            if (state := self.hass.states.get(entity_id)) is None:
+                continue
+            if state.attributes.get(ATTR_ASSUMED_STATE):
+                self._attr_assumed_state = True
+                return
 
     @callback
     def async_update_supported_features(
@@ -440,10 +455,8 @@ class Group(Entity):
         if not self._on_off:
             return
 
-        if (
-            tr_state is None
-            or self._assumed_state
-            and not tr_state.attributes.get(ATTR_ASSUMED_STATE)
+        if tr_state is None or (
+            self._assumed_state and not tr_state.attributes.get(ATTR_ASSUMED_STATE)
         ):
             self._assumed_state = self.mode(self._assumed.values())
 
@@ -478,8 +491,8 @@ class Group(Entity):
 
 def async_get_component(hass: HomeAssistant) -> EntityComponent[Group]:
     """Get the group entity component."""
-    if (component := hass.data.get(DOMAIN)) is None:
-        component = hass.data[DOMAIN] = EntityComponent[Group](
+    if (component := hass.data.get(DATA_COMPONENT)) is None:
+        component = hass.data[DATA_COMPONENT] = EntityComponent[Group](
             _PACKAGE_LOGGER, DOMAIN, hass
         )
     return component

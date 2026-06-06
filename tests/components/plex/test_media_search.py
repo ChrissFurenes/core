@@ -57,6 +57,35 @@ async def test_media_lookups(
         )
     assert "Media for key 123 not found" in str(excinfo.value)
 
+    # Search with a different specified username
+    with (
+        patch(
+            "plexapi.library.LibrarySection.search",
+            __qualname__="search",
+        ) as search,
+        patch(
+            "plexapi.myplex.MyPlexAccount.user",
+            __qualname__="user",
+        ) as plex_account_user,
+    ):
+        plex_account_user.return_value.get_token.return_value = "token"
+        await hass.services.async_call(
+            MEDIA_PLAYER_DOMAIN,
+            SERVICE_PLAY_MEDIA,
+            {
+                ATTR_ENTITY_ID: media_player_id,
+                ATTR_MEDIA_CONTENT_TYPE: MediaType.EPISODE,
+                ATTR_MEDIA_CONTENT_ID: (
+                    '{"library_name": "TV Shows",'
+                    ' "show_name": "TV Show",'
+                    ' "username": "Kids"}'
+                ),
+            },
+            True,
+        )
+        search.assert_called_with(**{"show.title": "TV Show", "libtype": "show"})
+        plex_account_user.assert_called_with("Kids")
+
     # TV show searches
     with pytest.raises(MediaNotFound) as excinfo:
         await hass.services.async_call(
@@ -65,7 +94,9 @@ async def test_media_lookups(
             {
                 ATTR_ENTITY_ID: media_player_id,
                 ATTR_MEDIA_CONTENT_TYPE: MediaType.EPISODE,
-                ATTR_MEDIA_CONTENT_ID: '{"library_name": "Not a Library", "show_name": "TV Show"}',
+                ATTR_MEDIA_CONTENT_ID: (
+                    '{"library_name": "Not a Library", "show_name": "TV Show"}'
+                ),
             },
             True,
         )
@@ -81,7 +112,9 @@ async def test_media_lookups(
             {
                 ATTR_ENTITY_ID: media_player_id,
                 ATTR_MEDIA_CONTENT_TYPE: MediaType.EPISODE,
-                ATTR_MEDIA_CONTENT_ID: '{"library_name": "TV Shows", "show_name": "TV Show"}',
+                ATTR_MEDIA_CONTENT_ID: (
+                    '{"library_name": "TV Shows", "show_name": "TV Show"}'
+                ),
             },
             True,
         )
@@ -93,7 +126,9 @@ async def test_media_lookups(
             {
                 ATTR_ENTITY_ID: media_player_id,
                 ATTR_MEDIA_CONTENT_TYPE: MediaType.EPISODE,
-                ATTR_MEDIA_CONTENT_ID: '{"library_name": "TV Shows", "episode_name": "An Episode"}',
+                ATTR_MEDIA_CONTENT_ID: (
+                    '{"library_name": "TV Shows", "episode_name": "An Episode"}'
+                ),
             },
             True,
         )
@@ -107,7 +142,11 @@ async def test_media_lookups(
             {
                 ATTR_ENTITY_ID: media_player_id,
                 ATTR_MEDIA_CONTENT_TYPE: MediaType.EPISODE,
-                ATTR_MEDIA_CONTENT_ID: '{"library_name": "TV Shows", "show_name": "TV Show", "season_number": 1}',
+                ATTR_MEDIA_CONTENT_ID: (
+                    '{"library_name": "TV Shows",'
+                    ' "show_name": "TV Show",'
+                    ' "season_number": 1}'
+                ),
             },
             True,
         )
@@ -121,7 +160,12 @@ async def test_media_lookups(
             {
                 ATTR_ENTITY_ID: media_player_id,
                 ATTR_MEDIA_CONTENT_TYPE: MediaType.EPISODE,
-                ATTR_MEDIA_CONTENT_ID: '{"library_name": "TV Shows", "show_name": "TV Show", "season_number": 1, "episode_number": 3}',
+                ATTR_MEDIA_CONTENT_ID: (
+                    '{"library_name": "TV Shows",'
+                    ' "show_name": "TV Show",'
+                    ' "season_number": 1,'
+                    ' "episode_number": 3}'
+                ),
             },
             True,
         )
@@ -140,7 +184,9 @@ async def test_media_lookups(
             {
                 ATTR_ENTITY_ID: media_player_id,
                 ATTR_MEDIA_CONTENT_TYPE: MediaType.MUSIC,
-                ATTR_MEDIA_CONTENT_ID: '{"library_name": "Music", "artist_name": "Artist"}',
+                ATTR_MEDIA_CONTENT_ID: (
+                    '{"library_name": "Music", "artist_name": "Artist"}'
+                ),
             },
             True,
         )
@@ -152,7 +198,9 @@ async def test_media_lookups(
             {
                 ATTR_ENTITY_ID: media_player_id,
                 ATTR_MEDIA_CONTENT_TYPE: MediaType.MUSIC,
-                ATTR_MEDIA_CONTENT_ID: '{"library_name": "Music", "album_name": "Album"}',
+                ATTR_MEDIA_CONTENT_ID: (
+                    '{"library_name": "Music", "album_name": "Album"}'
+                ),
             },
             True,
         )
@@ -164,7 +212,11 @@ async def test_media_lookups(
             {
                 ATTR_ENTITY_ID: media_player_id,
                 ATTR_MEDIA_CONTENT_TYPE: MediaType.MUSIC,
-                ATTR_MEDIA_CONTENT_ID: '{"library_name": "Music", "artist_name": "Artist", "track_name": "Track 3"}',
+                ATTR_MEDIA_CONTENT_ID: (
+                    '{"library_name": "Music",'
+                    ' "artist_name": "Artist",'
+                    ' "track_name": "Track 3"}'
+                ),
             },
             True,
         )
@@ -178,7 +230,11 @@ async def test_media_lookups(
             {
                 ATTR_ENTITY_ID: media_player_id,
                 ATTR_MEDIA_CONTENT_TYPE: MediaType.MUSIC,
-                ATTR_MEDIA_CONTENT_ID: '{"library_name": "Music", "artist_name": "Artist", "album_name": "Album"}',
+                ATTR_MEDIA_CONTENT_ID: (
+                    '{"library_name": "Music",'
+                    ' "artist_name": "Artist",'
+                    ' "album_name": "Album"}'
+                ),
             },
             True,
         )
@@ -192,7 +248,12 @@ async def test_media_lookups(
             {
                 ATTR_ENTITY_ID: media_player_id,
                 ATTR_MEDIA_CONTENT_TYPE: MediaType.MUSIC,
-                ATTR_MEDIA_CONTENT_ID: '{"library_name": "Music", "artist_name": "Artist", "album_name": "Album", "track_number": 3}',
+                ATTR_MEDIA_CONTENT_ID: (
+                    '{"library_name": "Music",'
+                    ' "artist_name": "Artist",'
+                    ' "album_name": "Album",'
+                    ' "track_number": 3}'
+                ),
             },
             True,
         )
@@ -211,7 +272,12 @@ async def test_media_lookups(
             {
                 ATTR_ENTITY_ID: media_player_id,
                 ATTR_MEDIA_CONTENT_TYPE: MediaType.MUSIC,
-                ATTR_MEDIA_CONTENT_ID: '{"library_name": "Music", "artist_name": "Artist", "album_name": "Album", "track_name": "Track 3"}',
+                ATTR_MEDIA_CONTENT_ID: (
+                    '{"library_name": "Music",'
+                    ' "artist_name": "Artist",'
+                    ' "album_name": "Album",'
+                    ' "track_name": "Track 3"}'
+                ),
             },
             True,
         )
@@ -231,7 +297,9 @@ async def test_media_lookups(
             {
                 ATTR_ENTITY_ID: media_player_id,
                 ATTR_MEDIA_CONTENT_TYPE: MediaType.VIDEO,
-                ATTR_MEDIA_CONTENT_ID: '{"library_name": "Movies", "video_name": "Movie 1"}',
+                ATTR_MEDIA_CONTENT_ID: (
+                    '{"library_name": "Movies", "video_name": "Movie 1"}'
+                ),
             },
             True,
         )
@@ -276,7 +344,9 @@ async def test_media_lookups(
             {
                 ATTR_ENTITY_ID: media_player_id,
                 ATTR_MEDIA_CONTENT_TYPE: MediaType.VIDEO,
-                ATTR_MEDIA_CONTENT_ID: '{"library_name": "Movies", "title": "Not a Movie"}',
+                ATTR_MEDIA_CONTENT_ID: (
+                    '{"library_name": "Movies", "title": "Not a Movie"}'
+                ),
             },
             True,
         )

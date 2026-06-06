@@ -1,7 +1,5 @@
 """Support to export sensor values via RSS feed."""
 
-from __future__ import annotations
-
 from html import escape
 
 from aiohttp import web
@@ -9,7 +7,7 @@ import voluptuous as vol
 
 from homeassistant.components.http import HomeAssistantView
 from homeassistant.core import HomeAssistant
-import homeassistant.helpers.config_validation as cv
+from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.template import Template
 from homeassistant.helpers.typing import ConfigType
 
@@ -81,7 +79,8 @@ class RssView(HomeAssistantView):
         response += '<rss version="2.0">\n'
         response += "  <channel>\n"
         if self._title is not None:
-            response += f"    <title>{escape(self._title.async_render(parse_result=False))}</title>\n"
+            rendered = escape(self._title.async_render(parse_result=False))
+            response += f"    <title>{rendered}</title>\n"
         else:
             response += "    <title>Home Assistant</title>\n"
 

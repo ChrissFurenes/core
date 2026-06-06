@@ -1,7 +1,5 @@
 """Support for Tellstick sensors."""
 
-from __future__ import annotations
-
 from collections import namedtuple
 import logging
 
@@ -23,7 +21,7 @@ from homeassistant.const import (
     UnitOfTemperature,
 )
 from homeassistant.core import HomeAssistant
-import homeassistant.helpers.config_validation as cv
+from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
 

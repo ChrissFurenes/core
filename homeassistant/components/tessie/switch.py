@@ -1,7 +1,5 @@
 """Switch platform for Tessie integration."""
 
-from __future__ import annotations
-
 from collections.abc import Callable
 from dataclasses import dataclass
 from itertools import chain
@@ -26,11 +24,13 @@ from homeassistant.components.switch import (
     SwitchEntityDescription,
 )
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
+from homeassistant.helpers.typing import StateType
 
 from . import TessieConfigEntry
+from .const import TessieChargeStates
 from .entity import TessieEnergyEntity, TessieEntity
-from .helpers import handle_command
+from .helpers import charge_state_to_option, handle_command
 from .models import TessieEnergyData, TessieVehicleData
 
 
@@ -40,6 +40,8 @@ class TessieSwitchEntityDescription(SwitchEntityDescription):
 
     on_func: Callable
     off_func: Callable
+    value_func: Callable[[StateType], bool] = bool
+    unique_id: str | None = None
 
 
 DESCRIPTIONS: tuple[TessieSwitchEntityDescription, ...] = (
@@ -63,12 +65,16 @@ DESCRIPTIONS: tuple[TessieSwitchEntityDescription, ...] = (
         on_func=lambda: start_steering_wheel_heater,
         off_func=lambda: stop_steering_wheel_heater,
     ),
-)
-
-CHARGE_DESCRIPTION: TessieSwitchEntityDescription = TessieSwitchEntityDescription(
-    key="charge_state_charge_enable_request",
-    on_func=lambda: start_charging,
-    off_func=lambda: stop_charging,
+    TessieSwitchEntityDescription(
+        key="charge_state_charging_state",
+        unique_id="charge_state_charge_enable_request",
+        on_func=lambda: start_charging,
+        off_func=lambda: stop_charging,
+        value_func=lambda state: (
+            charge_state_to_option(state)
+            in {TessieChargeStates["Starting"], TessieChargeStates["Charging"]}
+        ),
+    ),
 )
 
 PARALLEL_UPDATES = 0
@@ -77,7 +83,7 @@ PARALLEL_UPDATES = 0
 async def async_setup_entry(
     hass: HomeAssistant,
     entry: TessieConfigEntry,
-    async_add_entities: AddEntitiesCallback,
+    async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up the Tessie Switch platform from a config entry."""
 
@@ -88,10 +94,6 @@ async def async_setup_entry(
                 for vehicle in entry.runtime_data.vehicles
                 for description in DESCRIPTIONS
                 if description.key in vehicle.data_coordinator.data
-            ),
-            (
-                TessieChargeSwitchEntity(vehicle, CHARGE_DESCRIPTION)
-                for vehicle in entry.runtime_data.vehicles
             ),
             (
                 TessieChargeFromGridSwitchEntity(energysite)
@@ -120,13 +122,15 @@ class TessieSwitchEntity(TessieEntity, SwitchEntity):
         description: TessieSwitchEntityDescription,
     ) -> None:
         """Initialize the Switch."""
-        super().__init__(vehicle, description.key)
         self.entity_description = description
+        super().__init__(vehicle, description.key)
+        if description.unique_id:
+            self._attr_unique_id = f"{vehicle.vin}-{description.unique_id}"
 
     @property
     def is_on(self) -> bool:
         """Return the state of the Switch."""
-        return self._value
+        return self.entity_description.value_func(self._value)
 
     async def async_turn_on(self, **kwargs: Any) -> None:
         """Turn on the Switch."""
@@ -137,18 +141,6 @@ class TessieSwitchEntity(TessieEntity, SwitchEntity):
         """Turn off the Switch."""
         await self.run(self.entity_description.off_func())
         self.set((self.entity_description.key, False))
-
-
-class TessieChargeSwitchEntity(TessieSwitchEntity):
-    """Entity class for Tessie charge switch."""
-
-    @property
-    def is_on(self) -> bool:
-        """Return the state of the Switch."""
-
-        if (charge := self.get("charge_state_user_charge_enable_request")) is not None:
-            return charge
-        return self._value
 
 
 class TessieChargeFromGridSwitchEntity(TessieEnergyEntity, SwitchEntity):

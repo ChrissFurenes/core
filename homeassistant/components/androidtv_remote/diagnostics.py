@@ -1,14 +1,12 @@
 """Diagnostics support for Android TV Remote."""
 
-from __future__ import annotations
-
 from typing import Any
 
 from homeassistant.components.diagnostics import async_redact_data
 from homeassistant.const import CONF_HOST, CONF_MAC
 from homeassistant.core import HomeAssistant
 
-from . import AndroidTVRemoteConfigEntry
+from .helpers import AndroidTVRemoteConfigEntry
 
 TO_REDACT = {CONF_HOST, CONF_MAC}
 

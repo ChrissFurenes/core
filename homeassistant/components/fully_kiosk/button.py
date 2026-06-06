@@ -1,7 +1,5 @@
 """Fully Kiosk Browser button."""
 
-from __future__ import annotations
-
 from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Any
@@ -13,12 +11,11 @@ from homeassistant.components.button import (
     ButtonEntity,
     ButtonEntityDescription,
 )
-from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import EntityCategory
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
-from .const import DOMAIN
+from . import FullyKioskConfigEntry
 from .coordinator import FullyKioskDataUpdateCoordinator
 from .entity import FullyKioskEntity
 
@@ -28,6 +25,7 @@ class FullyButtonEntityDescription(ButtonEntityDescription):
     """Fully Kiosk Browser button description."""
 
     press_action: Callable[[FullyKiosk], Any]
+    refresh_after_press: bool = True
 
 
 BUTTONS: tuple[FullyButtonEntityDescription, ...] = (
@@ -63,18 +61,29 @@ BUTTONS: tuple[FullyButtonEntityDescription, ...] = (
         entity_category=EntityCategory.CONFIG,
         press_action=lambda fully: fully.loadStartUrl(),
     ),
+    FullyButtonEntityDescription(
+        key="clearCache",
+        translation_key="clear_cache",
+        entity_category=EntityCategory.CONFIG,
+        press_action=lambda fully: fully.clearCache(),
+    ),
+    FullyButtonEntityDescription(
+        key="triggerMotion",
+        translation_key="trigger_motion",
+        entity_category=EntityCategory.CONFIG,
+        press_action=lambda fully: fully.triggerMotion(),
+        refresh_after_press=False,
+    ),
 )
 
 
 async def async_setup_entry(
     hass: HomeAssistant,
-    config_entry: ConfigEntry,
-    async_add_entities: AddEntitiesCallback,
+    config_entry: FullyKioskConfigEntry,
+    async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up the Fully Kiosk Browser button entities."""
-    coordinator: FullyKioskDataUpdateCoordinator = hass.data[DOMAIN][
-        config_entry.entry_id
-    ]
+    coordinator = config_entry.runtime_data
 
     async_add_entities(
         FullyButtonEntity(coordinator, description) for description in BUTTONS
@@ -99,4 +108,5 @@ class FullyButtonEntity(FullyKioskEntity, ButtonEntity):
     async def async_press(self) -> None:
         """Set the value of the entity."""
         await self.entity_description.press_action(self.coordinator.fully)
-        await self.coordinator.async_refresh()
+        if self.entity_description.refresh_after_press:
+            await self.coordinator.async_refresh()

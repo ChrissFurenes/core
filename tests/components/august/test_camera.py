@@ -6,7 +6,7 @@ from unittest.mock import patch
 from yalexs.const import Brand
 from yalexs.doorbell import ContentTokenExpired
 
-from homeassistant.const import STATE_IDLE
+from homeassistant.components.camera import CameraState
 from homeassistant.core import HomeAssistant
 
 from .mocks import _create_august_with_devices, _mock_doorbell_from_fixture
@@ -25,14 +25,12 @@ async def test_create_doorbell(
     ):
         await _create_august_with_devices(hass, [doorbell_one], brand=Brand.AUGUST)
 
-        camera_k98gidt45gul_name_camera = hass.states.get(
-            "camera.k98gidt45gul_name_camera"
+        camera_state = hass.states.get(
+            "camera.k98gidt45gul_name_k98gidt45gul_name_camera"
         )
-        assert camera_k98gidt45gul_name_camera.state == STATE_IDLE
+        assert camera_state.state == CameraState.IDLE
 
-        url = hass.states.get("camera.k98gidt45gul_name_camera").attributes[
-            "entity_picture"
-        ]
+        url = camera_state.attributes["entity_picture"]
 
         client = await hass_client_no_auth()
         resp = await client.get(url)
@@ -57,9 +55,9 @@ async def test_doorbell_refresh_content_token_recover(
             [doorbell_two],
             brand=Brand.YALE_HOME,
         )
-        url = hass.states.get("camera.k98gidt45gul_name_camera").attributes[
-            "entity_picture"
-        ]
+        url = hass.states.get(
+            "camera.k98gidt45gul_name_k98gidt45gul_name_camera"
+        ).attributes["entity_picture"]
 
         client = await hass_client_no_auth()
         resp = await client.get(url)
@@ -84,9 +82,9 @@ async def test_doorbell_refresh_content_token_fail(
             [doorbell_two],
             brand=Brand.YALE_HOME,
         )
-        url = hass.states.get("camera.k98gidt45gul_name_camera").attributes[
-            "entity_picture"
-        ]
+        url = hass.states.get(
+            "camera.k98gidt45gul_name_k98gidt45gul_name_camera"
+        ).attributes["entity_picture"]
 
         client = await hass_client_no_auth()
         resp = await client.get(url)

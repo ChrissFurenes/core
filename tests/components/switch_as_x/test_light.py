@@ -3,7 +3,7 @@
 from homeassistant.components.light import (
     ATTR_BRIGHTNESS,
     ATTR_COLOR_MODE,
-    ATTR_COLOR_TEMP,
+    ATTR_COLOR_TEMP_KELVIN,
     ATTR_EFFECT,
     ATTR_EFFECT_LIST,
     ATTR_HS_COLOR,
@@ -57,7 +57,7 @@ async def test_default_state(hass: HomeAssistant) -> None:
     assert state.attributes["supported_features"] == 0
     assert state.attributes.get(ATTR_BRIGHTNESS) is None
     assert state.attributes.get(ATTR_HS_COLOR) is None
-    assert state.attributes.get(ATTR_COLOR_TEMP) is None
+    assert state.attributes.get(ATTR_COLOR_TEMP_KELVIN) is None
     assert state.attributes.get(ATTR_EFFECT_LIST) is None
     assert state.attributes.get(ATTR_EFFECT) is None
     assert state.attributes.get(ATTR_SUPPORTED_COLOR_MODES) == [ColorMode.ONOFF]
@@ -92,6 +92,7 @@ async def test_light_service_calls(hass: HomeAssistant) -> None:
         {CONF_ENTITY_ID: "light.decorative_lights"},
         blocking=True,
     )
+    await hass.async_block_till_done()
 
     assert hass.states.get("switch.decorative_lights").state == STATE_OFF
     assert hass.states.get("light.decorative_lights").state == STATE_OFF
@@ -102,6 +103,7 @@ async def test_light_service_calls(hass: HomeAssistant) -> None:
         {CONF_ENTITY_ID: "light.decorative_lights"},
         blocking=True,
     )
+    await hass.async_block_till_done()
 
     assert hass.states.get("switch.decorative_lights").state == STATE_ON
     assert hass.states.get("light.decorative_lights").state == STATE_ON
@@ -116,6 +118,7 @@ async def test_light_service_calls(hass: HomeAssistant) -> None:
         {CONF_ENTITY_ID: "light.decorative_lights"},
         blocking=True,
     )
+    await hass.async_block_till_done()
 
     assert hass.states.get("switch.decorative_lights").state == STATE_OFF
     assert hass.states.get("light.decorative_lights").state == STATE_OFF
@@ -149,6 +152,7 @@ async def test_switch_service_calls(hass: HomeAssistant) -> None:
         {CONF_ENTITY_ID: "switch.decorative_lights"},
         blocking=True,
     )
+    await hass.async_block_till_done()
 
     assert hass.states.get("switch.decorative_lights").state == STATE_OFF
     assert hass.states.get("light.decorative_lights").state == STATE_OFF
@@ -159,6 +163,7 @@ async def test_switch_service_calls(hass: HomeAssistant) -> None:
         {CONF_ENTITY_ID: "switch.decorative_lights"},
         blocking=True,
     )
+    await hass.async_block_till_done()
 
     assert hass.states.get("switch.decorative_lights").state == STATE_ON
     assert hass.states.get("light.decorative_lights").state == STATE_ON
@@ -192,6 +197,7 @@ async def test_light_service_calls_inverted(hass: HomeAssistant) -> None:
         {CONF_ENTITY_ID: "light.decorative_lights"},
         blocking=True,
     )
+    await hass.async_block_till_done()
 
     assert hass.states.get("switch.decorative_lights").state == STATE_OFF
     assert hass.states.get("light.decorative_lights").state == STATE_OFF
@@ -202,6 +208,7 @@ async def test_light_service_calls_inverted(hass: HomeAssistant) -> None:
         {CONF_ENTITY_ID: "light.decorative_lights"},
         blocking=True,
     )
+    await hass.async_block_till_done()
 
     assert hass.states.get("switch.decorative_lights").state == STATE_ON
     assert hass.states.get("light.decorative_lights").state == STATE_ON
@@ -216,6 +223,7 @@ async def test_light_service_calls_inverted(hass: HomeAssistant) -> None:
         {CONF_ENTITY_ID: "light.decorative_lights"},
         blocking=True,
     )
+    await hass.async_block_till_done()
 
     assert hass.states.get("switch.decorative_lights").state == STATE_OFF
     assert hass.states.get("light.decorative_lights").state == STATE_OFF
@@ -249,6 +257,7 @@ async def test_switch_service_calls_inverted(hass: HomeAssistant) -> None:
         {CONF_ENTITY_ID: "switch.decorative_lights"},
         blocking=True,
     )
+    await hass.async_block_till_done()
 
     assert hass.states.get("switch.decorative_lights").state == STATE_OFF
     assert hass.states.get("light.decorative_lights").state == STATE_OFF
@@ -259,6 +268,7 @@ async def test_switch_service_calls_inverted(hass: HomeAssistant) -> None:
         {CONF_ENTITY_ID: "switch.decorative_lights"},
         blocking=True,
     )
+    await hass.async_block_till_done()
 
     assert hass.states.get("switch.decorative_lights").state == STATE_ON
     assert hass.states.get("light.decorative_lights").state == STATE_ON

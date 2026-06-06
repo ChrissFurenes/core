@@ -1,12 +1,10 @@
 """Support for command line covers."""
 
-from __future__ import annotations
-
 import asyncio
 from datetime import datetime, timedelta
-from typing import TYPE_CHECKING, Any, cast
+from typing import TYPE_CHECKING, Any
 
-from homeassistant.components.cover import CoverEntity
+from homeassistant.components.cover import DOMAIN as COVER_DOMAIN, CoverEntity
 from homeassistant.const import (
     CONF_COMMAND_CLOSE,
     CONF_COMMAND_OPEN,
@@ -20,12 +18,19 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.event import async_track_time_interval
 from homeassistant.helpers.template import Template
-from homeassistant.helpers.trigger_template_entity import ManualTriggerEntity
+from homeassistant.helpers.trigger_template_entity import (
+    ManualTriggerEntity,
+    ValueTemplate,
+)
 from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
 from homeassistant.util import dt as dt_util, slugify
 
 from .const import CONF_COMMAND_TIMEOUT, LOGGER, TRIGGER_ENTITY_OPTIONS
-from .utils import async_call_shell_with_timeout, async_check_output_or_log
+from .utils import (
+    async_call_shell_with_timeout,
+    async_check_output_or_log,
+    create_platform_yaml_not_supported_issue,
+)
 
 SCAN_INTERVAL = timedelta(seconds=15)
 
@@ -38,10 +43,10 @@ async def async_setup_platform(
 ) -> None:
     """Set up cover controlled by shell commands."""
     if not discovery_info:
+        create_platform_yaml_not_supported_issue(hass, COVER_DOMAIN)
         return
 
     covers = []
-    discovery_info = cast(DiscoveryInfoType, discovery_info)
     entities: dict[str, dict[str, Any]] = {
         slugify(discovery_info[CONF_NAME]): discovery_info
     }
@@ -80,7 +85,7 @@ class CommandCover(ManualTriggerEntity, CoverEntity):
         command_close: str,
         command_stop: str,
         command_state: str | None,
-        value_template: Template | None,
+        value_template: ValueTemplate | None,
         timeout: int,
         scan_interval: timedelta,
     ) -> None:
@@ -152,7 +157,8 @@ class CommandCover(ManualTriggerEntity, CoverEntity):
             self._process_updates = asyncio.Lock()
         if self._process_updates.locked():
             LOGGER.warning(
-                "Updating Command Line Cover %s took longer than the scheduled update interval %s",
+                "Updating Command Line Cover %s took longer than"
+                " the scheduled update interval %s",
                 self.name,
                 self._scan_interval,
             )
@@ -165,14 +171,20 @@ class CommandCover(ManualTriggerEntity, CoverEntity):
         """Update device state."""
         if self._command_state:
             payload = str(await self._async_query_state())
+
+            variables = self._template_variables_with_value(payload)
+            if not self._render_availability_template(variables):
+                self.async_write_ha_state()
+                return
+
             if self._value_template:
-                payload = self._value_template.async_render_with_possible_json_value(
-                    payload, None
+                payload = self._value_template.async_render_as_value_template(
+                    self.entity_id, variables, None
                 )
             self._state = None
             if payload:
                 self._state = int(payload)
-            self._process_manual_data(payload)
+            self._process_manual_data(variables)
             self.async_write_ha_state()
 
     async def async_update(self) -> None:

@@ -1,7 +1,5 @@
 """Sorting helpers for ISY device classifications."""
 
-from __future__ import annotations
-
 from typing import cast
 
 from pyisy.constants import (
@@ -401,8 +399,7 @@ def _categorize_programs(isy_data: IsyData, programs: Programs) -> None:
         for dtype, _, node_id in folder.children:
             if dtype != TAG_FOLDER:
                 continue
-            entity_folder = folder[node_id]
-
+            entity_folder: Programs = folder[node_id]
             actions = None
             status = entity_folder.get_by_name(KEY_STATUS)
             if not status or status.protocol != PROTO_PROGRAM:

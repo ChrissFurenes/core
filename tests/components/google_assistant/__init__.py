@@ -60,9 +60,9 @@ class MockConfig(http.GoogleConfig):
         """Get agent user ID making request."""
         return context.user_id
 
-    def should_expose(self, state):
+    def should_expose(self, entity_id):
         """Expose it all."""
-        return self._should_expose is None or self._should_expose(state)
+        return self._should_expose is None or self._should_expose(entity_id)
 
     @property
     def should_report_state(self):
@@ -256,6 +256,13 @@ DEMO_DEVICES = [
             "action.devices.traits.TransportControl",
             "action.devices.traits.MediaState",
         ],
+        "type": "action.devices.types.SETTOP",
+        "willReportState": False,
+    },
+    {
+        "id": "media_player.search",
+        "name": {"name": "Search"},
+        "traits": ["action.devices.traits.MediaState", "action.devices.traits.OnOff"],
         "type": "action.devices.types.SETTOP",
         "willReportState": False,
     },

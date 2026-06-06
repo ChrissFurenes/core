@@ -1,7 +1,5 @@
 """WiZ integration switch platform."""
 
-from __future__ import annotations
-
 from typing import Any
 
 from pywizlight import PilotBuilder
@@ -9,17 +7,16 @@ from pywizlight.bulblibrary import BulbClass
 
 from homeassistant.components.switch import SwitchEntity
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
-from . import WizConfigEntry
+from .coordinator import WizConfigEntry, WizData
 from .entity import WizToggleEntity
-from .models import WizData
 
 
 async def async_setup_entry(
     hass: HomeAssistant,
     entry: WizConfigEntry,
-    async_add_entities: AddEntitiesCallback,
+    async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up the WiZ switch platform."""
     if entry.runtime_data.bulb.bulbtype.bulb_type == BulbClass.SOCKET:

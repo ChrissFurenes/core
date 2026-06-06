@@ -1,7 +1,5 @@
 """Support for Freebox devices (Freebox v6 and Freebox mini 4K)."""
 
-from __future__ import annotations
-
 import logging
 from typing import Any
 
@@ -9,62 +7,70 @@ from homeassistant.components.sensor import (
     SensorDeviceClass,
     SensorEntity,
     SensorEntityDescription,
+    SensorStateClass,
 )
-from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import PERCENTAGE, UnitOfDataRate, UnitOfTemperature
+from homeassistant.const import (
+    PERCENTAGE,
+    EntityCategory,
+    UnitOfDataRate,
+    UnitOfTemperature,
+)
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
-import homeassistant.util.dt as dt_util
+from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
+from homeassistant.util import dt as dt_util
 
 from .const import DOMAIN
-from .home_base import FreeboxHomeEntity
-from .router import FreeboxRouter
+from .entity import FreeboxHomeEntity
+from .router import FreeboxConfigEntry, FreeboxRouter
 
 _LOGGER = logging.getLogger(__name__)
 
 CONNECTION_SENSORS: tuple[SensorEntityDescription, ...] = (
     SensorEntityDescription(
         key="rate_down",
-        name="Freebox download speed",
+        translation_key="rate_down",
         device_class=SensorDeviceClass.DATA_RATE,
+        state_class=SensorStateClass.MEASUREMENT,
         native_unit_of_measurement=UnitOfDataRate.KILOBYTES_PER_SECOND,
-        icon="mdi:download-network",
     ),
     SensorEntityDescription(
         key="rate_up",
-        name="Freebox upload speed",
+        translation_key="rate_up",
         device_class=SensorDeviceClass.DATA_RATE,
+        state_class=SensorStateClass.MEASUREMENT,
         native_unit_of_measurement=UnitOfDataRate.KILOBYTES_PER_SECOND,
-        icon="mdi:upload-network",
     ),
 )
 
 CALL_SENSORS: tuple[SensorEntityDescription, ...] = (
     SensorEntityDescription(
         key="missed",
-        name="Freebox missed calls",
-        icon="mdi:phone-missed",
+        translation_key="missed",
+        native_unit_of_measurement="calls",
+        state_class=SensorStateClass.MEASUREMENT,
+        entity_category=EntityCategory.DIAGNOSTIC,
     ),
 )
 
 DISK_PARTITION_SENSORS: tuple[SensorEntityDescription, ...] = (
     SensorEntityDescription(
         key="partition_free_space",
-        name="free space",
+        translation_key="partition_free_space",
         native_unit_of_measurement=PERCENTAGE,
-        icon="mdi:harddisk",
+        entity_category=EntityCategory.DIAGNOSTIC,
     ),
 )
 
 
 async def async_setup_entry(
-    hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback
+    hass: HomeAssistant,
+    entry: FreeboxConfigEntry,
+    async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up the sensors."""
-    router: FreeboxRouter = hass.data[DOMAIN][entry.unique_id]
-    entities: list[SensorEntity] = []
+    router = entry.runtime_data
 
     _LOGGER.debug(
         "%s - %s - %s temperature sensors",
@@ -72,17 +78,19 @@ async def async_setup_entry(
         router.mac,
         len(router.sensors_temperature),
     )
-    entities = [
+    entities: list[SensorEntity] = [
         FreeboxSensor(
             router,
             SensorEntityDescription(
-                key=sensor_name,
-                name=f"Freebox {sensor_name}",
+                key=sensor_id,
+                name=sensor_name,
                 native_unit_of_measurement=UnitOfTemperature.CELSIUS,
                 device_class=SensorDeviceClass.TEMPERATURE,
+                state_class=SensorStateClass.MEASUREMENT,
+                entity_category=EntityCategory.DIAGNOSTIC,
             ),
         )
-        for sensor_name in router.sensors_temperature
+        for sensor_id, sensor_name in router.sensors_temperature_names.items()
     ]
 
     entities.extend(
@@ -100,14 +108,16 @@ async def async_setup_entry(
         for description in DISK_PARTITION_SENSORS
     )
 
-    for node in router.home_devices.values():
-        for endpoint in node["show_endpoints"]:
-            if (
-                endpoint["name"] == "battery"
-                and endpoint["ep_type"] == "signal"
-                and endpoint.get("value") is not None
-            ):
-                entities.append(FreeboxBatterySensor(hass, router, node, endpoint))
+    entities.extend(
+        FreeboxBatterySensor(router, node, endpoint)
+        for node in router.home_devices.values()
+        for endpoint in node["show_endpoints"]
+        if (
+            endpoint["name"] == "battery"
+            and endpoint["ep_type"] == "signal"
+            and endpoint.get("value") is not None
+        )
+    )
 
     if entities:
         async_add_entities(entities, True)
@@ -117,6 +127,7 @@ class FreeboxSensor(SensorEntity):
     """Representation of a Freebox sensor."""
 
     _attr_should_poll = False
+    _attr_has_entity_name = True
 
     def __init__(
         self, router: FreeboxRouter, description: SensorEntityDescription
@@ -124,7 +135,7 @@ class FreeboxSensor(SensorEntity):
         """Initialize a Freebox sensor."""
         self.entity_description = description
         self._router = router
-        self._attr_unique_id = f"{router.mac} {description.name}"
+        self._attr_unique_id = f"{router.mac} {description.key}"
         self._attr_device_info = router.device_info
 
     @callback
@@ -200,7 +211,7 @@ class FreeboxDiskSensor(FreeboxSensor):
         super().__init__(router, description)
         self._disk_id = disk["id"]
         self._partition_id = partition["id"]
-        self._attr_name = f"{partition['label']} {description.name}"
+        self._attr_translation_placeholders = {"partition": partition["label"]}
         self._attr_unique_id = (
             f"{router.mac} {description.key} {disk['id']} {partition['id']}"
         )

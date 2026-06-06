@@ -1,7 +1,5 @@
 """Helper classes for Google Assistant integration."""
 
-from __future__ import annotations
-
 from abc import ABC, abstractmethod
 from asyncio import gather
 from collections.abc import Callable, Collection, Mapping
@@ -20,7 +18,6 @@ from homeassistant.components import webhook
 from homeassistant.const import (
     ATTR_DEVICE_CLASS,
     ATTR_SUPPORTED_FEATURES,
-    CLOUD_NEVER_EXPOSED_ENTITIES,
     CONF_NAME,
     STATE_UNAVAILABLE,
 )
@@ -29,6 +26,7 @@ from homeassistant.helpers import (
     area_registry as ar,
     device_registry as dr,
     entity_registry as er,
+    intent,
     start,
 )
 from homeassistant.helpers.event import async_call_later
@@ -113,7 +111,7 @@ class AbstractConfig(ABC):
             """Sync entities to Google."""
             await self.async_sync_entities_all()
 
-        self._on_deinitialize.append(start.async_at_start(self.hass, sync_google))
+        self._on_deinitialize.append(start.async_at_started(self.hass, sync_google))
 
     @callback
     def async_deinitialize(self) -> None:
@@ -173,7 +171,7 @@ class AbstractConfig(ABC):
 
     @abstractmethod
     def get_local_webhook_id(self, agent_user_id):
-        """Return the webhook ID to be used for actions for a given agent user id via the local SDK."""
+        """Return the webhook ID for a given agent user id via the local SDK."""
 
     @abstractmethod
     def get_agent_user_id_from_context(self, context):
@@ -187,7 +185,7 @@ class AbstractConfig(ABC):
         """
 
     @abstractmethod
-    def should_expose(self, state) -> bool:
+    def should_expose(self, entity_id: str) -> bool:
         """Return if entity should be exposed."""
 
     @abstractmethod
@@ -212,8 +210,7 @@ class AbstractConfig(ABC):
     def async_enable_report_state(self) -> None:
         """Enable proactive mode."""
         # Circular dep
-        # pylint: disable-next=import-outside-toplevel
-        from .report_state import async_enable_report_state
+        from .report_state import async_enable_report_state  # noqa: PLC0415
 
         if self._unsub_report_state is None:
             self._unsub_report_state = async_enable_report_state(self.hass, self)
@@ -395,8 +392,7 @@ class AbstractConfig(ABC):
     async def _handle_local_webhook(self, hass, webhook_id, request):
         """Handle an incoming local SDK message."""
         # Circular dep
-        # pylint: disable-next=import-outside-toplevel
-        from . import smart_home
+        from . import smart_home  # noqa: PLC0415
 
         self._local_last_active = utcnow()
 
@@ -428,7 +424,8 @@ class AbstractConfig(ABC):
             )
 
         if (agent_user_id := self.get_agent_user_id_from_webhook(webhook_id)) is None:
-            # No agent user linked to this webhook, means that the user has somehow unregistered
+            # No agent user linked to this webhook, means that
+            # the user has somehow unregistered
             # removing webhook and stopping processing of this request.
             _LOGGER.error(
                 (
@@ -521,7 +518,7 @@ def supported_traits_for_state(state: State) -> list[type[trait._Trait]]:
 class GoogleEntity:
     """Adaptation of Entity expressed in Google's terms."""
 
-    __slots__ = ("hass", "config", "state", "_traits")
+    __slots__ = ("_traits", "config", "entity_id", "hass", "state")
 
     def __init__(
         self, hass: HomeAssistant, config: AbstractConfig, state: State
@@ -530,16 +527,12 @@ class GoogleEntity:
         self.hass = hass
         self.config = config
         self.state = state
+        self.entity_id = state.entity_id
         self._traits: list[trait._Trait] | None = None
 
     def __repr__(self) -> str:
         """Return the representation."""
-        return f"<GoogleEntity {self.state.entity_id}: {self.state.name}>"
-
-    @property
-    def entity_id(self):
-        """Return entity ID."""
-        return self.state.entity_id
+        return f"<GoogleEntity {self.entity_id}: {self.state.name}>"
 
     @callback
     def traits(self) -> list[trait._Trait]:
@@ -556,7 +549,7 @@ class GoogleEntity:
     @callback
     def should_expose(self):
         """If entity should be exposed."""
-        return self.config.should_expose(self.state)
+        return self.config.should_expose(self.entity_id)
 
     @callback
     def should_expose_local(self) -> bool:
@@ -603,7 +596,6 @@ class GoogleEntity:
         state = self.state
         traits = self.traits()
         entity_config = self.config.entity_config.get(state.entity_id, {})
-        name = (entity_config.get(CONF_NAME) or state.name).strip()
 
         # Find entity/device/area registry entries
         entity_entry, device_entry, area_entry = _get_registry_entries(
@@ -613,7 +605,6 @@ class GoogleEntity:
         # Build the device info
         device = {
             "id": state.entity_id,
-            "name": {"name": name},
             "attributes": {},
             "traits": [trait.name for trait in traits],
             "willReportState": self.config.should_report_state,
@@ -621,13 +612,18 @@ class GoogleEntity:
                 state.domain, state.attributes.get(ATTR_DEVICE_CLASS)
             ),
         }
-        # Add aliases
-        if (config_aliases := entity_config.get(CONF_ALIASES, [])) or (
-            entity_entry and entity_entry.aliases
-        ):
-            device["name"]["nicknames"] = [name, *config_aliases]
-            if entity_entry:
-                device["name"]["nicknames"].extend(entity_entry.aliases)
+        # Add name and aliases.
+        # The entity's alias list is ordered: the first slot naturally serves
+        # as the primary name (set to the auto-generated full entity name by
+        # default), while the rest serve as alternative names (nicknames).
+        aliases = intent.async_get_entity_aliases(
+            self.hass, entity_entry, state=state, allow_empty=False
+        )
+        name, *aliases = aliases
+        name = entity_config.get(CONF_NAME) or name
+        device["name"] = {"name": name}
+        if (config_aliases := entity_config.get(CONF_ALIASES, [])) or aliases:
+            device["name"]["nicknames"] = [name, *config_aliases, *aliases]
 
         # Add local SDK info if enabled
         if self.config.is_local_sdk_active and self.should_expose_local():
@@ -659,8 +655,9 @@ class GoogleEntity:
         if "matter" in self.hass.config.components and any(
             x for x in device_entry.identifiers if x[0] == "matter"
         ):
-            # pylint: disable-next=import-outside-toplevel
-            from homeassistant.components.matter import get_matter_device_info
+            from homeassistant.components.matter import (  # noqa: PLC0415
+                get_matter_device_info,
+            )
 
             # Import matter can block the event loop for multiple seconds
             # so we import it here to avoid blocking the event loop during
@@ -736,7 +733,7 @@ class GoogleEntity:
         if not executed:
             raise SmartHomeError(
                 ERR_FUNCTION_NOT_SUPPORTED,
-                f"Unable to execute {command} for {self.state.entity_id}",
+                f"Unable to execute {command} for {self.entity_id}",
             )
 
     @callback
@@ -805,8 +802,6 @@ def async_get_entities(
     is_supported_cache = config.is_supported_cache
     for state in hass.states.async_all():
         entity_id = state.entity_id
-        if entity_id in CLOUD_NEVER_EXPOSED_ENTITIES:
-            continue
         # Check check inlined for performance to avoid
         # function calls for every entity since we enumerate
         # the entire state machine here

@@ -1,22 +1,20 @@
 """Config flow to configure Motionblinds using their WLAN API."""
 
-from __future__ import annotations
-
+import logging
 from typing import Any
 
 from motionblinds import MotionDiscovery, MotionGateway
 import voluptuous as vol
 
-from homeassistant.components import dhcp
 from homeassistant.config_entries import (
-    ConfigEntry,
     ConfigFlow,
     ConfigFlowResult,
-    OptionsFlow,
+    OptionsFlowWithReload,
 )
 from homeassistant.const import CONF_API_KEY, CONF_HOST
 from homeassistant.core import callback
 from homeassistant.helpers.device_registry import format_mac
+from homeassistant.helpers.service_info.dhcp import DhcpServiceInfo
 
 from .const import (
     CONF_INTERFACE,
@@ -26,7 +24,10 @@ from .const import (
     DEFAULT_WAIT_FOR_PUSH,
     DOMAIN,
 )
+from .coordinator import MotionBlindsConfigEntry
 from .gateway import ConnectMotionGateway
+
+_LOGGER = logging.getLogger(__name__)
 
 CONFIG_SCHEMA = vol.Schema(
     {
@@ -35,12 +36,8 @@ CONFIG_SCHEMA = vol.Schema(
 )
 
 
-class OptionsFlowHandler(OptionsFlow):
+class OptionsFlowHandler(OptionsFlowWithReload):
     """Options for the component."""
-
-    def __init__(self, config_entry: ConfigEntry) -> None:
-        """Init object."""
-        self.config_entry = config_entry
 
     async def async_step_init(
         self, user_input: dict[str, Any] | None = None
@@ -80,13 +77,13 @@ class MotionBlindsFlowHandler(ConfigFlow, domain=DOMAIN):
     @staticmethod
     @callback
     def async_get_options_flow(
-        config_entry: ConfigEntry,
+        config_entry: MotionBlindsConfigEntry,
     ) -> OptionsFlowHandler:
         """Get the options flow."""
-        return OptionsFlowHandler(config_entry)
+        return OptionsFlowHandler()
 
     async def async_step_dhcp(
-        self, discovery_info: dhcp.DhcpServiceInfo
+        self, discovery_info: DhcpServiceInfo
     ) -> ConfigFlowResult:
         """Handle discovery via dhcp."""
         mac_address = format_mac(discovery_info.macaddress).replace(":", "")
@@ -97,7 +94,8 @@ class MotionBlindsFlowHandler(ConfigFlow, domain=DOMAIN):
         try:
             # key not needed for GetDeviceList request
             await self.hass.async_add_executor_job(gateway.GetDeviceList)
-        except Exception:  # noqa: BLE001
+        except Exception:
+            _LOGGER.exception("Failed to connect to Motion Gateway")
             return self.async_abort(reason="not_motionblinds")
 
         if not gateway.available:
@@ -160,6 +158,7 @@ class MotionBlindsFlowHandler(ConfigFlow, domain=DOMAIN):
         errors: dict[str, str] = {}
         if user_input is not None:
             key = user_input[CONF_API_KEY]
+            assert self._host
 
             connect_gateway_class = ConnectMotionGateway(self.hass)
             if not await connect_gateway_class.async_connect_gateway(self._host, key):
@@ -201,5 +200,10 @@ class MotionBlindsFlowHandler(ConfigFlow, domain=DOMAIN):
         )
 
         return self.async_show_form(
-            step_id="connect", data_schema=self._config_settings, errors=errors
+            step_id="connect",
+            data_schema=self._config_settings,
+            errors=errors,
+            description_placeholders={
+                "documentation_url": "https://www.home-assistant.io/integrations/motion_blinds/#retrieving-the-api-key",
+            },
         )

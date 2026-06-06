@@ -1,7 +1,5 @@
 """Network helper class for the network integration."""
 
-from __future__ import annotations
-
 import logging
 from typing import Any
 
@@ -9,11 +7,12 @@ from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.singleton import singleton
 from homeassistant.helpers.storage import Store
 from homeassistant.util.async_ import create_eager_task
+from homeassistant.util.hass_dict import HassKey
 
 from .const import (
     ATTR_CONFIGURED_ADAPTERS,
-    DATA_NETWORK,
     DEFAULT_CONFIGURED_ADAPTERS,
+    DOMAIN,
     STORAGE_KEY,
     STORAGE_VERSION,
 )
@@ -22,8 +21,16 @@ from .util import async_load_adapters, enable_adapters, enable_auto_detected_ada
 
 _LOGGER = logging.getLogger(__name__)
 
+DATA_NETWORK: HassKey[Network] = HassKey(DOMAIN)
 
-@singleton(DATA_NETWORK)
+
+@callback
+def async_get_loaded_network(hass: HomeAssistant) -> Network:
+    """Get network singleton."""
+    return hass.data[DATA_NETWORK]
+
+
+@singleton(DOMAIN)
 async def async_get_network(hass: HomeAssistant) -> Network:
     """Get network singleton."""
     network = Network(hass)

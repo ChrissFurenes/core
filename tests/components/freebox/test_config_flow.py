@@ -9,18 +9,18 @@ from freebox_api.exceptions import (
     InvalidTokenError,
 )
 
-from homeassistant.components import zeroconf
 from homeassistant.components.freebox.const import DOMAIN
 from homeassistant.config_entries import SOURCE_USER, SOURCE_ZEROCONF
 from homeassistant.const import CONF_HOST, CONF_PORT
 from homeassistant.core import HomeAssistant
 from homeassistant.data_entry_flow import FlowResultType
+from homeassistant.helpers.service_info.zeroconf import ZeroconfServiceInfo
 
 from .const import MOCK_HOST, MOCK_PORT
 
 from tests.common import MockConfigEntry
 
-MOCK_ZEROCONF_DATA = zeroconf.ZeroconfServiceInfo(
+MOCK_ZEROCONF_DATA = ZeroconfServiceInfo(
     ip_address=ip_address("192.168.0.254"),
     ip_addresses=[ip_address("192.168.0.254")],
     port=80,
@@ -165,3 +165,26 @@ async def test_on_link_failed(hass: HomeAssistant) -> None:
         result = await hass.config_entries.flow.async_configure(result["flow_id"], {})
         assert result["type"] is FlowResultType.FORM
         assert result["errors"] == {"base": "unknown"}
+
+
+async def test_zeroconf_missing_api_domain(
+    hass: HomeAssistant,
+) -> None:
+    """Test zeroconf flow aborts if api_domain is missing from properties."""
+
+    result = await hass.config_entries.flow.async_init(
+        DOMAIN,
+        context={"source": SOURCE_ZEROCONF},
+        data=ZeroconfServiceInfo(
+            ip_address=ip_address("192.168.1.254"),
+            ip_addresses=[ip_address("192.168.1.254")],
+            port=80,
+            hostname="Freebox-Server.local.",
+            type="_fbx-api._tcp.local.",
+            name="Freebox Server._fbx-api._tcp.local.",
+            properties={"api_version": "8.0"},  # api_domain intentionally omitted
+        ),
+    )
+
+    assert result["type"] is FlowResultType.ABORT
+    assert result["reason"] == "missing_api_domain"

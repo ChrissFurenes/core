@@ -1,7 +1,5 @@
 """Schemas used by insteon component."""
 
-from __future__ import annotations
-
 from pyinsteon.constants import HC_LOOKUP
 import voluptuous as vol
 
@@ -16,7 +14,7 @@ from homeassistant.const import (
     CONF_USERNAME,
     ENTITY_MATCH_ALL,
 )
-import homeassistant.helpers.config_validation as cv
+from homeassistant.helpers import config_validation as cv
 
 from .const import (
     CONF_CAT,

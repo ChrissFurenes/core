@@ -1,20 +1,17 @@
 """Represent an air purifier."""
 
-from __future__ import annotations
-
 from collections.abc import Callable
 from typing import Any, cast
 
 from pytradfri.command import Command
 
 from homeassistant.components.fan import FanEntity, FanEntityFeature
-from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
-from .base_class import TradfriBaseEntity
-from .const import CONF_GATEWAY_ID, COORDINATOR, COORDINATOR_LIST, DOMAIN, KEY_API
-from .coordinator import TradfriDeviceDataUpdateCoordinator
+from .const import CONF_GATEWAY_ID
+from .coordinator import TradfriConfigEntry, TradfriDeviceDataUpdateCoordinator
+from .entity import TradfriBaseEntity
 
 ATTR_AUTO = "Auto"
 ATTR_MAX_FAN_STEPS = 49
@@ -32,21 +29,20 @@ def _from_fan_speed(fan_speed: int) -> int:
 
 async def async_setup_entry(
     hass: HomeAssistant,
-    config_entry: ConfigEntry,
-    async_add_entities: AddEntitiesCallback,
+    config_entry: TradfriConfigEntry,
+    async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Load Tradfri switches based on a config entry."""
     gateway_id = config_entry.data[CONF_GATEWAY_ID]
-    coordinator_data = hass.data[DOMAIN][config_entry.entry_id][COORDINATOR]
-    api = coordinator_data[KEY_API]
+    tradfri_data = config_entry.runtime_data
 
     async_add_entities(
         TradfriAirPurifierFan(
             device_coordinator,
-            api,
+            tradfri_data.api,
             gateway_id,
         )
-        for device_coordinator in coordinator_data[COORDINATOR_LIST]
+        for device_coordinator in tradfri_data.coordinator_list
         if device_coordinator.device.has_air_purifier_control
     )
 
@@ -69,7 +65,6 @@ class TradfriAirPurifierFan(TradfriBaseEntity, FanEntity):
     # ... with step size 1
     # 50 = Max
     _attr_speed_count = ATTR_MAX_FAN_STEPS
-    _enable_turn_on_off_backwards_compatibility = False
 
     def __init__(
         self,

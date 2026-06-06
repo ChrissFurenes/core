@@ -1,10 +1,16 @@
 """Constants for the media_source integration."""
 
 import re
+from typing import TYPE_CHECKING
 
 from homeassistant.components.media_player import MediaClass
+from homeassistant.util.hass_dict import HassKey
+
+if TYPE_CHECKING:
+    from .models import MediaSource
 
 DOMAIN = "media_source"
+MEDIA_SOURCE_DATA: HassKey[dict[str, MediaSource]] = HassKey(DOMAIN)
 MEDIA_MIME_TYPES = ("audio", "video", "image")
 MEDIA_CLASS_MAP = {
     "audio": MediaClass.MUSIC,

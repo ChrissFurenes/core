@@ -1,7 +1,5 @@
 """Sensor for monitoring the contents of a folder."""
 
-from __future__ import annotations
-
 from datetime import timedelta
 import glob
 import logging
@@ -16,7 +14,7 @@ from homeassistant.components.sensor import (
 )
 from homeassistant.const import UnitOfInformation
 from homeassistant.core import HomeAssistant
-import homeassistant.helpers.config_validation as cv
+from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
 

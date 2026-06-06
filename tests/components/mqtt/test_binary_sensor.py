@@ -21,9 +21,9 @@ from homeassistant.const import (
 )
 from homeassistant.core import HomeAssistant, State, callback
 from homeassistant.helpers.typing import ConfigType
-import homeassistant.util.dt as dt_util
+from homeassistant.util import dt as dt_util
 
-from .test_common import (
+from .common import (
     help_custom_config,
     help_test_availability_when_connection_lost,
     help_test_availability_without_topic,
@@ -40,6 +40,7 @@ from .test_common import (
     help_test_entity_device_info_update,
     help_test_entity_device_info_with_connection,
     help_test_entity_device_info_with_identifier,
+    help_test_entity_icon_and_entity_picture,
     help_test_entity_id_update_discovery_update,
     help_test_entity_id_update_subscriptions,
     help_test_entity_name,
@@ -210,7 +211,7 @@ async def test_expiration_on_discovery_and_discovery_update_of_binary_sensor(
     caplog: pytest.LogCaptureFixture,
     freezer: FrozenDateTimeFactory,
 ) -> None:
-    """Test that binary_sensor with expire_after set behaves correctly on discovery and discovery update."""
+    """Test binary_sensor with expire_after on discovery and update."""
     await mqtt_mock_entry()
     config = {
         "name": "Test",
@@ -221,7 +222,8 @@ async def test_expiration_on_discovery_and_discovery_update_of_binary_sensor(
 
     config_msg = json.dumps(config)
 
-    # Set time and publish config message to create binary_sensor via discovery with 4 s expiry
+    # Set time and publish config message to create binary_sensor
+    # via discovery with 4 s expiry
     realnow = dt_util.utcnow()
     now = datetime(realnow.year + 1, 1, 1, 1, tzinfo=dt_util.UTC)
     freezer.move_to(now)
@@ -451,13 +453,15 @@ async def test_setting_sensor_value_via_mqtt_message_and_template2(
                     "state_topic": "test-topic",
                     "payload_on": "ON",
                     "payload_off": "OFF",
-                    "value_template": "{%if value|unpack('b')-%}ON{%else%}OFF{%-endif-%}",
+                    "value_template": (
+                        "{%if value|unpack('b')-%}ON{%else%}OFF{%-endif-%}"
+                    ),
                 }
             }
         }
     ],
 )
-async def test_setting_sensor_value_via_mqtt_message_and_template_and_raw_state_encoding(
+async def test_setting_sensor_value_via_mqtt_msg_and_template_and_raw_state_encoding(
     hass: HomeAssistant,
     mqtt_mock_entry: MqttMockHAClientGenerator,
     caplog: pytest.LogCaptureFixture,
@@ -1133,7 +1137,7 @@ async def test_skip_restoring_state_with_over_due_expire_trigger(
 
     freezer.move_to("2022-02-02 12:02:00+01:00")
     domain = binary_sensor.DOMAIN
-    config3 = copy.deepcopy(DEFAULT_CONFIG[mqtt.DOMAIN][domain])
+    config3: ConfigType = copy.deepcopy(DEFAULT_CONFIG[mqtt.DOMAIN][domain])
     config3["name"] = "test3"
     config3["expire_after"] = 10
     config3["state_topic"] = "test-topic3"
@@ -1190,6 +1194,18 @@ async def test_entity_name(
     config = DEFAULT_CONFIG
     await help_test_entity_name(
         hass, mqtt_mock_entry, domain, config, expected_friendly_name, device_class
+    )
+
+
+async def test_entity_icon_and_entity_picture(
+    hass: HomeAssistant,
+    mqtt_mock_entry: MqttMockHAClientGenerator,
+) -> None:
+    """Test the entity icon or picture setup."""
+    domain = binary_sensor.DOMAIN
+    config = DEFAULT_CONFIG
+    await help_test_entity_icon_and_entity_picture(
+        hass, mqtt_mock_entry, domain, config
     )
 
 
@@ -1251,6 +1267,6 @@ async def test_value_template_fails(
     await mqtt_mock_entry()
     async_fire_mqtt_message(hass, "test-topic", '{"some_var": null }')
     assert (
-        "TypeError: unsupported operand type(s) for *: 'NoneType' and 'int' rendering template"
-        in caplog.text
+        "TypeError: unsupported operand type(s) for *:"
+        " 'NoneType' and 'int' rendering template" in caplog.text
     )

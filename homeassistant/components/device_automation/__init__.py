@@ -1,7 +1,5 @@
 """Helpers for device automations."""
 
-from __future__ import annotations
-
 import asyncio
 from collections.abc import Awaitable, Callable, Coroutine, Iterable, Mapping
 from dataclasses import dataclass
@@ -15,7 +13,7 @@ import voluptuous as vol
 import voluptuous_serialize
 
 from homeassistant.components import websocket_api
-from homeassistant.components.websocket_api.connection import ActiveConnection
+from homeassistant.components.websocket_api import ActiveConnection
 from homeassistant.const import (
     ATTR_ENTITY_ID,
     CONF_DEVICE_ID,
@@ -164,7 +162,8 @@ async def async_get_device_automation_platform(
 ) -> DeviceAutomationPlatformType:
     """Load device automation platform for integration.
 
-    Throws InvalidDeviceAutomationConfig if the integration is not found or does not support device automation.
+    Throws InvalidDeviceAutomationConfig if the integration is not found
+    or does not support device automation.
     """
     platform_name = automation_type.value.section
     try:
@@ -311,7 +310,7 @@ async def _async_get_device_automation_capabilities(
 
     try:
         capabilities = await getattr(platform, function_name)(hass, automation)
-    except (EntityNotFound, InvalidDeviceAutomationConfig):
+    except EntityNotFound, InvalidDeviceAutomationConfig:
         return {}
 
     capabilities = capabilities.copy()
@@ -481,8 +480,11 @@ async def websocket_device_automation_get_condition_capabilities(
 @websocket_api.websocket_command(
     {
         vol.Required("type"): "device_automation/trigger/capabilities",
-        vol.Required("trigger"): DEVICE_TRIGGER_BASE_SCHEMA.extend(
-            {}, extra=vol.ALLOW_EXTRA
+        # The frontend responds with `trigger` as key, while the
+        # `DEVICE_TRIGGER_BASE_SCHEMA` expects `platform1` as key.
+        vol.Required("trigger"): vol.All(
+            cv._trigger_pre_validator,  # noqa: SLF001
+            DEVICE_TRIGGER_BASE_SCHEMA.extend({}, extra=vol.ALLOW_EXTRA),
         ),
     }
 )

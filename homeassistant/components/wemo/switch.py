@@ -1,7 +1,5 @@
 """Support for WeMo switches."""
 
-from __future__ import annotations
-
 from datetime import datetime, timedelta
 from typing import Any
 
@@ -11,7 +9,7 @@ from homeassistant.components.switch import SwitchEntity
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import STATE_OFF, STATE_ON, STATE_STANDBY, STATE_UNKNOWN
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
 from . import async_wemo_dispatcher_connect
 from .coordinator import DeviceCoordinator
@@ -36,7 +34,7 @@ MAKER_SWITCH_TOGGLE = "toggle"
 async def async_setup_entry(
     hass: HomeAssistant,
     _config_entry: ConfigEntry,
-    async_add_entities: AddEntitiesCallback,
+    async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up WeMo switches."""
 
@@ -119,12 +117,10 @@ class WemoSwitch(WemoBinaryStateEntity, SwitchEntity):
             return "mdi:coffee"
         return None
 
-    def turn_on(self, **kwargs: Any) -> None:
+    async def async_turn_on(self, **kwargs: Any) -> None:
         """Turn the switch on."""
-        with self._wemo_call_wrapper("turn on"):
-            self.wemo.on()
+        await self._async_wemo_call("turn on", self.wemo.on)
 
-    def turn_off(self, **kwargs: Any) -> None:
+    async def async_turn_off(self, **kwargs: Any) -> None:
         """Turn the switch off."""
-        with self._wemo_call_wrapper("turn off"):
-            self.wemo.off()
+        await self._async_wemo_call("turn off", self.wemo.off)

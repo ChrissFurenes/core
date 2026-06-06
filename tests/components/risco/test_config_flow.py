@@ -10,7 +10,11 @@ from homeassistant.components.risco.config_flow import (
     CannotConnectError,
     UnauthorizedError,
 )
-from homeassistant.components.risco.const import CONF_COMMUNICATION_DELAY, DOMAIN
+from homeassistant.components.risco.const import (
+    CONF_COMMUNICATION_DELAY,
+    CONF_MORE_OPTIONS,
+    DOMAIN,
+)
 from homeassistant.const import CONF_PASSWORD, CONF_USERNAME
 from homeassistant.core import HomeAssistant
 from homeassistant.data_entry_flow import FlowResultType
@@ -154,14 +158,12 @@ async def test_form_cloud_already_exists(hass: HomeAssistant) -> None:
     assert result3["reason"] == "already_configured"
 
 
-async def test_form_reauth(hass: HomeAssistant, cloud_config_entry) -> None:
+async def test_form_reauth(
+    hass: HomeAssistant, cloud_config_entry: MockConfigEntry
+) -> None:
     """Test reauthenticate."""
 
-    result = await hass.config_entries.flow.async_init(
-        DOMAIN,
-        context={"source": config_entries.SOURCE_REAUTH},
-        data=cloud_config_entry.data,
-    )
+    result = await cloud_config_entry.start_reauth_flow(hass)
     assert result["type"] is FlowResultType.FORM
     assert result["errors"] == {}
 
@@ -194,15 +196,11 @@ async def test_form_reauth(hass: HomeAssistant, cloud_config_entry) -> None:
 
 
 async def test_form_reauth_with_new_username(
-    hass: HomeAssistant, cloud_config_entry
+    hass: HomeAssistant, cloud_config_entry: MockConfigEntry
 ) -> None:
     """Test reauthenticate with new username."""
 
-    result = await hass.config_entries.flow.async_init(
-        DOMAIN,
-        context={"source": config_entries.SOURCE_REAUTH},
-        data=cloud_config_entry.data,
-    )
+    result = await cloud_config_entry.start_reauth_flow(hass)
     assert result["type"] is FlowResultType.FORM
     assert result["errors"] == {}
 
@@ -364,7 +362,7 @@ async def test_options_flow(hass: HomeAssistant) -> None:
 
     result = await hass.config_entries.options.async_configure(
         result["flow_id"],
-        user_input=TEST_OPTIONS,
+        user_input={**TEST_OPTIONS, CONF_MORE_OPTIONS: {}},
     )
     assert result["type"] is FlowResultType.FORM
     assert result["step_id"] == "risco_to_ha"
@@ -386,13 +384,15 @@ async def test_options_flow(hass: HomeAssistant) -> None:
     assert result["type"] is FlowResultType.CREATE_ENTRY
     assert entry.options == {
         **TEST_OPTIONS,
+        "scan_interval": 30,
+        "concurrency": 4,
         "risco_states_to_ha": TEST_RISCO_TO_HA,
         "ha_states_to_risco": TEST_HA_TO_RISCO,
     }
 
 
-async def test_advanced_options_flow(hass: HomeAssistant) -> None:
-    """Test options flow."""
+async def test_more_options_flow(hass: HomeAssistant) -> None:
+    """Test options flow with more options."""
     entry = MockConfigEntry(
         domain=DOMAIN,
         unique_id=TEST_CLOUD_DATA["username"],
@@ -401,16 +401,17 @@ async def test_advanced_options_flow(hass: HomeAssistant) -> None:
 
     entry.add_to_hass(hass)
 
-    result = await hass.config_entries.options.async_init(
-        entry.entry_id, context={"show_advanced_options": True}
-    )
+    result = await hass.config_entries.options.async_init(entry.entry_id)
 
     assert result["type"] is FlowResultType.FORM
     assert result["step_id"] == "init"
-    assert "concurrency" in result["data_schema"].schema
-    assert "scan_interval" in result["data_schema"].schema
+
     result = await hass.config_entries.options.async_configure(
-        result["flow_id"], user_input={**TEST_OPTIONS, **TEST_ADVANCED_OPTIONS}
+        result["flow_id"],
+        user_input={
+            **TEST_OPTIONS,
+            CONF_MORE_OPTIONS: TEST_ADVANCED_OPTIONS,
+        },
     )
     assert result["type"] is FlowResultType.FORM
     assert result["step_id"] == "risco_to_ha"
@@ -452,7 +453,7 @@ async def test_ha_to_risco_schema(hass: HomeAssistant) -> None:
 
     result = await hass.config_entries.options.async_configure(
         result["flow_id"],
-        user_input=TEST_OPTIONS,
+        user_input={**TEST_OPTIONS, CONF_MORE_OPTIONS: {}},
     )
     result = await hass.config_entries.options.async_configure(
         result["flow_id"],

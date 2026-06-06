@@ -7,10 +7,13 @@ import logging
 from Tami4EdgeAPI import Tami4EdgeAPI, exceptions
 from Tami4EdgeAPI.water_quality import WaterQuality
 
+from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
 _LOGGER = logging.getLogger(__name__)
+
+type Tami4ConfigEntry = ConfigEntry[Tami4EdgeCoordinator]
 
 
 @dataclass
@@ -36,20 +39,25 @@ class FlattenedWaterQuality:
 class Tami4EdgeCoordinator(DataUpdateCoordinator[FlattenedWaterQuality]):
     """Tami4Edge water quality coordinator."""
 
-    def __init__(self, hass: HomeAssistant, api: Tami4EdgeAPI) -> None:
+    config_entry: Tami4ConfigEntry
+
+    def __init__(
+        self, hass: HomeAssistant, config_entry: Tami4ConfigEntry, api: Tami4EdgeAPI
+    ) -> None:
         """Initialize the water quality coordinator."""
         super().__init__(
             hass,
             _LOGGER,
+            config_entry=config_entry,
             name="Tami4Edge water quality coordinator",
             update_interval=timedelta(minutes=60),
         )
-        self._api = api
+        self.api = api
 
     async def _async_update_data(self) -> FlattenedWaterQuality:
         """Fetch data from the API endpoint."""
         try:
-            device = await self.hass.async_add_executor_job(self._api.get_device)
+            device = await self.hass.async_add_executor_job(self.api.get_device)
 
             return FlattenedWaterQuality(device.water_quality)
         except exceptions.APIRequestFailedException as ex:

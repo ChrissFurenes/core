@@ -1,7 +1,5 @@
 """Support for Apple TV media player."""
 
-from __future__ import annotations
-
 from datetime import datetime
 import logging
 from typing import Any
@@ -26,6 +24,7 @@ from pyatv.interface import (
     PushListener,
     PushUpdater,
 )
+from yarl import URL
 
 from homeassistant.components import media_source
 from homeassistant.components.media_player import (
@@ -39,11 +38,12 @@ from homeassistant.components.media_player import (
 )
 from homeassistant.const import CONF_NAME
 from homeassistant.core import HomeAssistant, callback
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
-import homeassistant.util.dt as dt_util
+from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
+from homeassistant.util import dt as dt_util
 
-from . import AppleTvConfigEntry, AppleTVEntity, AppleTVManager
+from . import AppleTvConfigEntry, AppleTVManager
 from .browse_media import build_app_list
+from .entity import AppleTVEntity
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -99,7 +99,7 @@ SUPPORT_FEATURE_MAPPING = {
 async def async_setup_entry(
     hass: HomeAssistant,
     config_entry: AppleTvConfigEntry,
-    async_add_entities: AddEntitiesCallback,
+    async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Load Apple TV media player based on a config entry."""
     name: str = config_entry.data[CONF_NAME]
@@ -114,11 +114,13 @@ class AppleTvMediaPlayer(
     """Representation of an Apple TV media player."""
 
     _attr_supported_features = SUPPORT_APPLE_TV
+    _attr_name = None
 
     def __init__(self, name: str, identifier: str, manager: AppleTVManager) -> None:
         """Initialize the Apple TV media player."""
         super().__init__(name, identifier, manager)
         self._playing: Playing | None = None
+        self._playing_last_updated: datetime | None = None
         self._app_list: dict[str, str] = {}
 
     @callback
@@ -138,7 +140,7 @@ class AppleTvMediaPlayer(
         all_features = atv.features.all_features()
         for feature_name, support_flag in SUPPORT_FEATURE_MAPPING.items():
             feature_info = all_features.get(feature_name)
-            if feature_info and feature_info.state != FeatureState.Unsupported:
+            if feature_info and feature_info.state is not FeatureState.Unsupported:
                 self._attr_supported_features |= support_flag
 
         # No need to schedule state update here as that will happen when the first
@@ -187,18 +189,18 @@ class AppleTvMediaPlayer(
             return MediaPlayerState.OFF
         if (
             self._is_feature_available(FeatureName.PowerState)
-            and self.atv.power.power_state == PowerState.Off
+            and self.atv.power.power_state is PowerState.Off
         ):
-            return MediaPlayerState.STANDBY
+            return MediaPlayerState.OFF
         if self._playing:
             state = self._playing.device_state
             if state in (DeviceState.Idle, DeviceState.Loading):
                 return MediaPlayerState.IDLE
-            if state == DeviceState.Playing:
+            if state is DeviceState.Playing:
                 return MediaPlayerState.PLAYING
             if state in (DeviceState.Paused, DeviceState.Seeking, DeviceState.Stopped):
                 return MediaPlayerState.PAUSED
-            return MediaPlayerState.STANDBY  # Bad or unknown state?
+            return MediaPlayerState.IDLE  # Bad or unknown state?
         return None
 
     @callback
@@ -208,6 +210,7 @@ class AppleTvMediaPlayer(
         This is a callback function from pyatv.interface.PushListener.
         """
         self._playing = playstatus
+        self._playing_last_updated = dt_util.utcnow()
         self.async_write_ha_state()
 
     @callback
@@ -235,6 +238,15 @@ class AppleTvMediaPlayer(
         This is a callback function from pyatv.interface.AudioListener.
         """
         self.async_write_ha_state()
+
+    @callback
+    def volume_device_update(
+        self, output_device: OutputDevice, old_level: float, new_level: float
+    ) -> None:
+        """Output device volume was updated.
+
+        This is a callback function from pyatv.interface.AudioListener.
+        """
 
     @callback
     def outputdevices_update(
@@ -315,7 +327,7 @@ class AppleTvMediaPlayer(
     def media_position_updated_at(self) -> datetime | None:
         """Last valid time of media position."""
         if self.state in {MediaPlayerState.PLAYING, MediaPlayerState.PAUSED}:
-            return dt_util.utcnow()
+            return self._playing_last_updated
         return None
 
     async def async_play_media(
@@ -334,7 +346,10 @@ class AppleTvMediaPlayer(
             play_item = await media_source.async_resolve_media(
                 self.hass, media_id, self.entity_id
             )
-            media_id = async_process_play_media_url(self.hass, play_item.url)
+            if play_item.path and self._is_feature_available(FeatureName.StreamFile):
+                media_id = str(play_item.path)
+            else:
+                media_id = async_process_play_media_url(self.hass, play_item.url)
             media_type = MediaType.MUSIC
 
         if self._is_feature_available(FeatureName.StreamFile) and (
@@ -342,11 +357,16 @@ class AppleTvMediaPlayer(
         ):
             _LOGGER.debug("Streaming %s via RAOP", media_id)
             await self.atv.stream.stream_file(media_id)
-        elif self._is_feature_available(FeatureName.PlayUrl):
+        elif self._is_feature_available(FeatureName.PlayUrl) and (
+            (parsed_url := URL(media_id)).is_absolute() and parsed_url.host
+        ):
             _LOGGER.debug("Playing %s via AirPlay", media_id)
             await self.atv.stream.play_url(media_id)
         else:
-            _LOGGER.error("Media streaming is not possible with current configuration")
+            _LOGGER.error(
+                "Media streaming is not possible with current configuration for %s",
+                media_id,
+            )
 
     @property
     def media_image_hash(self) -> str | None:
@@ -435,7 +455,7 @@ class AppleTvMediaPlayer(
     def shuffle(self) -> bool | None:
         """Boolean if shuffle is enabled."""
         if self._playing and self._is_feature_available(FeatureName.Shuffle):
-            return self._playing.shuffle != ShuffleState.Off
+            return self._playing.shuffle is not ShuffleState.Off
         return None
 
     def _is_feature_available(self, feature: FeatureName) -> bool:
@@ -452,7 +472,8 @@ class AppleTvMediaPlayer(
         """Implement the websocket media browsing helper."""
         if media_content_id == "apps" or (
             # If we can't stream files or URLs, we can't browse media.
-            # In that case the `BROWSE_MEDIA` feature was added because of AppList/LaunchApp
+            # In that case the `BROWSE_MEDIA` feature was added
+            # because of AppList/LaunchApp
             not self._is_feature_available(FeatureName.PlayUrl)
             and not self._is_feature_available(FeatureName.StreamFile)
         ):
@@ -494,7 +515,7 @@ class AppleTvMediaPlayer(
             and (self._is_feature_available(FeatureName.TurnOff))
             and (
                 not self._is_feature_available(FeatureName.PowerState)
-                or self.atv.power.power_state == PowerState.On
+                or self.atv.power.power_state is PowerState.On
             )
         ):
             await self.atv.power.turn_off()

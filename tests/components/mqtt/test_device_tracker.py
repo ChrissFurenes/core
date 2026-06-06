@@ -6,13 +6,13 @@ from freezegun.api import FrozenDateTimeFactory
 import pytest
 
 from homeassistant.components import device_tracker, mqtt
-from homeassistant.components.mqtt.const import DOMAIN as MQTT_DOMAIN
+from homeassistant.components.mqtt.const import DOMAIN
 from homeassistant.const import STATE_HOME, STATE_NOT_HOME, STATE_UNKNOWN
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import device_registry as dr, entity_registry as er
 from homeassistant.setup import async_setup_component
 
-from .test_common import (
+from .common import (
     help_custom_config,
     help_test_reloadable,
     help_test_setting_blocked_attribute_via_mqtt_json_message,
@@ -275,7 +275,7 @@ async def test_cleanup_device_tracker(
     assert state is not None
 
     # Remove MQTT from the device
-    mqtt_config_entry = hass.config_entries.async_entries(MQTT_DOMAIN)[0]
+    mqtt_config_entry = hass.config_entries.async_entries(DOMAIN)[0]
     response = await ws_client.remove_device(
         device_entry.id, mqtt_config_entry.entry_id
     )
@@ -296,7 +296,11 @@ async def test_cleanup_device_tracker(
 
     # Verify retained discovery topic has been cleared
     mqtt_mock.async_publish.assert_called_once_with(
-        "homeassistant/device_tracker/bla/config", None, 0, True
+        "homeassistant/device_tracker/bla/config",
+        None,
+        0,
+        True,
+        message_expiry_interval=None,
     )
 
 
@@ -344,7 +348,8 @@ async def test_setting_device_tracker_value_via_mqtt_message_and_template(
         "{"
         '"name": "test", '
         '"state_topic": "test-topic", '
-        '"value_template": "{% if value is equalto \\"proxy_for_home\\" %}home{% else %}not_home{% endif %}" '
+        '"value_template": "{% if value is equalto \\"proxy_for_home\\"'
+        ' %}home{% else %}not_home{% endif %}" '
         "}",
     )
     await hass.async_block_till_done()
@@ -431,7 +436,8 @@ async def test_setting_device_tracker_location_via_lat_lon_message(
     async_fire_mqtt_message(
         hass,
         "attributes-topic",
-        '{"latitude":32.87336,"longitude": -117.22743, "gps_accuracy":1.5, "source_type": "router"}',
+        '{"latitude":32.87336,"longitude": -117.22743,'
+        ' "gps_accuracy":1.5, "source_type": "router"}',
     )
     state = hass.states.get("device_tracker.test")
     assert state.attributes["latitude"] == 32.87336
@@ -450,16 +456,86 @@ async def test_setting_device_tracker_location_via_lat_lon_message(
     assert state.attributes["latitude"] == 50.1
     assert state.attributes["longitude"] == -2.1
     assert state.attributes["gps_accuracy"] == 0
+    assert state.attributes["source_type"] == "gps"
     assert state.state == STATE_NOT_HOME
 
+    # incomplete coordinates results in unknown state
     async_fire_mqtt_message(hass, "attributes-topic", '{"longitude": -117.22743}')
     state = hass.states.get("device_tracker.test")
-    assert state.attributes["longitude"] == -117.22743
+    assert "latitude" not in state.attributes
+    assert "longitude" not in state.attributes
+    assert state.attributes["source_type"] == "gps"
     assert state.state == STATE_UNKNOWN
 
     async_fire_mqtt_message(hass, "attributes-topic", '{"latitude":32.87336}')
     state = hass.states.get("device_tracker.test")
-    assert state.attributes["latitude"] == 32.87336
+    assert "latitude" not in state.attributes
+    assert "longitude" not in state.attributes
+    assert state.attributes["source_type"] == "gps"
+    assert state.state == STATE_UNKNOWN
+
+    # invalid coordinates results in unknown state
+    async_fire_mqtt_message(
+        hass, "attributes-topic", '{"longitude": -117.22743, "latitude":null}'
+    )
+    state = hass.states.get("device_tracker.test")
+    assert "latitude" not in state.attributes
+    assert "longitude" not in state.attributes
+    assert state.attributes["source_type"] == "gps"
+    assert state.state == STATE_UNKNOWN
+
+    # Test number validation
+    async_fire_mqtt_message(
+        hass,
+        "attributes-topic",
+        '{"latitude": "32.87336","longitude": "-117.22743",'
+        ' "gps_accuracy": "1.5", "source_type": "router"}',
+    )
+    state = hass.states.get("device_tracker.test")
+    assert "latitude" not in state.attributes
+    assert "longitude" not in state.attributes
+    assert "gps_accuracy" not in state.attributes
+    # assert source_type is overridden by discovery
+    assert state.attributes["source_type"] == "router"
+    assert state.state == STATE_UNKNOWN
+
+    # Test with invalid GPS accuracy should default to 0,
+    # but location updates as expected
+    async_fire_mqtt_message(
+        hass,
+        "attributes-topic",
+        '{"latitude": 32.871234,"longitude": -117.21234,'
+        ' "gps_accuracy": "invalid", "source_type": "router"}',
+    )
+    state = hass.states.get("device_tracker.test")
+    assert state.state == STATE_NOT_HOME
+    assert state.attributes["latitude"] == 32.871234
+    assert state.attributes["longitude"] == -117.21234
+    assert state.attributes["gps_accuracy"] == 0
+    assert state.attributes["source_type"] == "router"
+
+    # Test with invalid latitude
+    async_fire_mqtt_message(
+        hass,
+        "attributes-topic",
+        '{"latitude": null,"longitude": "-117.22743",'
+        ' "gps_accuracy": 1, "source_type": "router"}',
+    )
+    state = hass.states.get("device_tracker.test")
+    assert "latitude" not in state.attributes
+    assert "longitude" not in state.attributes
+    assert state.state == STATE_UNKNOWN
+
+    # Test with invalid longitude
+    async_fire_mqtt_message(
+        hass,
+        "attributes-topic",
+        '{"latitude": 32.87336,"longitude": "unknown",'
+        ' "gps_accuracy": 1, "source_type": "router"}',
+    )
+    state = hass.states.get("device_tracker.test")
+    assert "latitude" not in state.attributes
+    assert "longitude" not in state.attributes
     assert state.state == STATE_UNKNOWN
 
 
@@ -578,6 +654,31 @@ async def test_setting_device_tracker_location_via_abbr_reset_message(
     assert state.attributes["source_type"] == "gps"
     assert state.state == STATE_HOME
 
+    # Override the GPS state via a direct state update
+    async_fire_mqtt_message(hass, "test-topic", "office")
+    state = hass.states.get("device_tracker.test")
+    assert state.state == "office"
+
+    # Test a GPS attributes update without a reset
+    async_fire_mqtt_message(
+        hass,
+        "attributes-topic",
+        '{"latitude":32.87336,"longitude": -117.22743, "gps_accuracy":1.5}',
+    )
+
+    state = hass.states.get("device_tracker.test")
+    assert state.state == "office"
+
+    # Reset the manual set location
+    # This should calculate the location from GPS attributes
+    async_fire_mqtt_message(hass, "test-topic", "reset")
+    state = hass.states.get("device_tracker.test")
+    assert state.attributes["latitude"] == 32.87336
+    assert state.attributes["longitude"] == -117.22743
+    assert state.attributes["gps_accuracy"] == 1.5
+    assert state.attributes["source_type"] == "gps"
+    assert state.state == STATE_HOME
+
 
 async def test_setting_blocked_attribute_via_mqtt_json_message(
     hass: HomeAssistant, mqtt_mock_entry: MqttMockHAClientGenerator
@@ -675,6 +776,6 @@ async def test_value_template_fails(
     await mqtt_mock_entry()
     async_fire_mqtt_message(hass, "test-topic", '{"some_var": null }')
     assert (
-        "TypeError: unsupported operand type(s) for *: 'NoneType' and 'int' rendering template"
-        in caplog.text
+        "TypeError: unsupported operand type(s) for *:"
+        " 'NoneType' and 'int' rendering template" in caplog.text
     )

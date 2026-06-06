@@ -1,7 +1,5 @@
 """Support for Ripple sensors."""
 
-from __future__ import annotations
-
 from datetime import timedelta
 
 from pyripple import get_balance
@@ -13,7 +11,7 @@ from homeassistant.components.sensor import (
 )
 from homeassistant.const import CONF_ADDRESS, CONF_NAME
 from homeassistant.core import HomeAssistant
-import homeassistant.helpers.config_validation as cv
+from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
 

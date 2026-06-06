@@ -1,7 +1,5 @@
 """The Dremel 3D Printer (3D20, 3D40, 3D45) integration."""
 
-from __future__ import annotations
-
 from dremel3dpy import Dremel3DPrinter
 from requests.exceptions import ConnectTimeout, HTTPError
 
@@ -29,7 +27,7 @@ async def async_setup_entry(
             f"Unable to connect to Dremel 3D Printer: {ex}"
         ) from ex
 
-    coordinator = Dremel3DPrinterDataUpdateCoordinator(hass, api)
+    coordinator = Dremel3DPrinterDataUpdateCoordinator(hass, config_entry, api)
     await coordinator.async_config_entry_first_refresh()
     config_entry.runtime_data = coordinator
     platforms = list(PLATFORMS)

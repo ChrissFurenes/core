@@ -1,7 +1,5 @@
 """Config flow for Webmin."""
 
-from __future__ import annotations
-
 from collections.abc import Mapping
 from http import HTTPStatus
 from typing import Any, cast
@@ -26,7 +24,7 @@ from homeassistant.helpers.schema_config_entry_flow import (
     SchemaFlowFormStep,
 )
 
-from .const import DEFAULT_PORT, DEFAULT_SSL, DEFAULT_VERIFY_SSL, DOMAIN
+from .const import DEFAULT_PORT, DEFAULT_SSL, DEFAULT_VERIFY_SSL, DOMAIN, LOGGER
 from .helpers import get_instance_from_options, get_sorted_mac_addresses
 
 
@@ -45,9 +43,8 @@ async def validate_user_input(
             raise SchemaFlowError("invalid_auth") from err
         raise SchemaFlowError("cannot_connect") from err
     except Fault as fault:
-        raise SchemaFlowError(
-            f"Fault {fault.faultCode}: {fault.faultString}"
-        ) from fault
+        LOGGER.exception("Fault %s: %s", fault.faultCode, fault.faultString)
+        raise SchemaFlowError("unknown") from fault
     except ClientConnectionError as err:
         raise SchemaFlowError("cannot_connect") from err
     except Exception as err:

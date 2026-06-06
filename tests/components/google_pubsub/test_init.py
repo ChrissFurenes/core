@@ -45,11 +45,7 @@ async def test_nested() -> None:
 def mock_client_fixture() -> Generator[MagicMock]:
     """Mock the pubsub client."""
     with patch(f"{GOOGLE_PUBSUB_PATH}.PublisherClient") as client:
-        setattr(
-            client,
-            "from_service_account_json",
-            MagicMock(return_value=MagicMock()),
-        )
+        client.from_service_account_json = MagicMock(return_value=MagicMock())
         yield client
 
 
@@ -148,7 +144,7 @@ async def test_allowlist(hass: HomeAssistant, mock_client) -> None:
     ]
 
     for test in tests:
-        hass.states.async_set(test.id, "not blank")
+        hass.states.async_set(test.id, "on")
         await hass.async_block_till_done()
 
         was_called = publish_client.publish.call_count == 1
@@ -178,7 +174,7 @@ async def test_denylist(hass: HomeAssistant, mock_client) -> None:
     ]
 
     for test in tests:
-        hass.states.async_set(test.id, "not blank")
+        hass.states.async_set(test.id, "on")
         await hass.async_block_till_done()
 
         was_called = publish_client.publish.call_count == 1

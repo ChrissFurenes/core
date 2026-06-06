@@ -1,14 +1,13 @@
 """The Tessie integration models."""
 
-from __future__ import annotations
-
 from dataclasses import dataclass
 
-from tesla_fleet_api import EnergySpecific
+from tesla_fleet_api.tessie import EnergySite, Vehicle
 
 from homeassistant.helpers.device_registry import DeviceInfo
 
 from .coordinator import (
+    TessieEnergyHistoryCoordinator,
     TessieEnergySiteInfoCoordinator,
     TessieEnergySiteLiveCoordinator,
     TessieStateUpdateCoordinator,
@@ -27,9 +26,10 @@ class TessieData:
 class TessieEnergyData:
     """Data for a Energy Site in the Tessie integration."""
 
-    api: EnergySpecific
-    live_coordinator: TessieEnergySiteLiveCoordinator
+    api: EnergySite
+    live_coordinator: TessieEnergySiteLiveCoordinator | None
     info_coordinator: TessieEnergySiteInfoCoordinator
+    history_coordinator: TessieEnergyHistoryCoordinator | None
     id: int
     device: DeviceInfo
 
@@ -38,6 +38,7 @@ class TessieEnergyData:
 class TessieVehicleData:
     """Data for a Tessie vehicle."""
 
+    api: Vehicle
     data_coordinator: TessieStateUpdateCoordinator
     device: DeviceInfo
     vin: str

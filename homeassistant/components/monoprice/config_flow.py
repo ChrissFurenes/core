@@ -1,7 +1,5 @@
 """Config flow for Monoprice 6-Zone Amplifier integration."""
 
-from __future__ import annotations
-
 import logging
 from typing import Any
 
@@ -108,7 +106,7 @@ class MonoPriceConfigFlow(ConfigFlow, domain=DOMAIN):
         config_entry: ConfigEntry,
     ) -> MonopriceOptionsFlowHandler:
         """Define the config flow to handle options."""
-        return MonopriceOptionsFlowHandler(config_entry)
+        return MonopriceOptionsFlowHandler()
 
 
 @callback
@@ -126,10 +124,6 @@ def _key_for_source(index, source, previous_sources):
 class MonopriceOptionsFlowHandler(OptionsFlow):
     """Handle a Monoprice options flow."""
 
-    def __init__(self, config_entry: ConfigEntry) -> None:
-        """Initialize."""
-        self.config_entry = config_entry
-
     @callback
     def _previous_sources(self):
         if CONF_SOURCES in self.config_entry.options:
@@ -139,7 +133,9 @@ class MonopriceOptionsFlowHandler(OptionsFlow):
 
         return previous
 
-    async def async_step_init(self, user_input=None):
+    async def async_step_init(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
         """Manage the options."""
         if user_input is not None:
             return self.async_create_entry(

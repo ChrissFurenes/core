@@ -1,7 +1,5 @@
 """Test the Developer Credentials integration."""
 
-from __future__ import annotations
-
 from collections.abc import Callable, Generator
 import logging
 from typing import Any
@@ -93,7 +91,7 @@ async def mock_application_credentials_integration(
 ):
     """Mock a application_credentials integration."""
     with patch("homeassistant.loader.APPLICATION_CREDENTIALS", [TEST_DOMAIN]):
-        assert await async_setup_component(hass, "application_credentials", {})
+        assert await async_setup_component(hass, DOMAIN, {})
         await setup_application_credentials_integration(
             hass, TEST_DOMAIN, authorization_server
         )
@@ -238,6 +236,25 @@ async def test_websocket_list_empty(ws_client: ClientFixture) -> None:
     assert await client.cmd_result("list") == []
 
 
+async def test_websocket_config_entry_requires_admin(
+    hass: HomeAssistant,
+    hass_ws_client: WebSocketGenerator,
+    hass_read_only_access_token: str,
+) -> None:
+    """Test config_entry websocket command requires admin."""
+    ws_client = await hass_ws_client(hass, hass_read_only_access_token)
+    await ws_client.send_json(
+        {
+            "id": 1,
+            "type": "application_credentials/config_entry",
+            "config_entry_id": "some_id",
+        }
+    )
+    resp = await ws_client.receive_json()
+    assert not resp["success"]
+    assert resp["error"]["code"] == "unauthorized"
+
+
 async def test_websocket_create(ws_client: ClientFixture) -> None:
     """Test websocket create command."""
     client = await ws_client()
@@ -265,6 +282,22 @@ async def test_websocket_create(ws_client: ClientFixture) -> None:
             "id": ID,
         }
     ]
+
+
+@pytest.mark.parametrize("cmd", ["list", "subscribe"])
+async def test_websocket_list_subscribe_require_admin(
+    hass: HomeAssistant,
+    hass_ws_client: WebSocketGenerator,
+    hass_read_only_access_token: str,
+    cmd: str,
+) -> None:
+    """Test that list and subscribe are restricted to admin users."""
+    ws = await hass_ws_client(access_token=hass_read_only_access_token)
+    await ws.send_json({"id": 1, "type": f"{DOMAIN}/{cmd}"})
+    resp = await ws.receive_json()
+    assert resp["id"] == 1
+    assert not resp["success"]
+    assert resp["error"]["code"] == "unauthorized"
 
 
 async def test_websocket_create_invalid_domain(ws_client: ClientFixture) -> None:
@@ -423,6 +456,7 @@ async def test_import_named_credential(
     ]
 
 
+@pytest.mark.parametrize("ignore_translations_for_mock_domains", ["fake_integration"])
 async def test_config_flow_no_credentials(hass: HomeAssistant) -> None:
     """Test config flow base case with no credentials registered."""
     result = await hass.config_entries.flow.async_init(
@@ -432,6 +466,7 @@ async def test_config_flow_no_credentials(hass: HomeAssistant) -> None:
     assert result.get("reason") == "missing_credentials"
 
 
+@pytest.mark.parametrize("ignore_translations_for_mock_domains", ["fake_integration"])
 async def test_config_flow_other_domain(
     hass: HomeAssistant,
     ws_client: ClientFixture,
@@ -559,6 +594,7 @@ async def test_config_flow_multiple_entries(
     )
 
 
+@pytest.mark.parametrize("ignore_translations_for_mock_domains", ["fake_integration"])
 async def test_config_flow_create_delete_credential(
     hass: HomeAssistant,
     ws_client: ClientFixture,
@@ -604,6 +640,7 @@ async def test_config_flow_with_config_credential(
     assert result["data"].get("auth_implementation") == TEST_DOMAIN
 
 
+@pytest.mark.parametrize("ignore_translations_for_mock_domains", ["fake_integration"])
 @pytest.mark.parametrize("mock_application_credentials_integration", [None])
 async def test_import_without_setup(hass: HomeAssistant, config_credential) -> None:
     """Test import of credentials without setting up the integration."""
@@ -619,12 +656,13 @@ async def test_import_without_setup(hass: HomeAssistant, config_credential) -> N
     assert result.get("reason") == "missing_configuration"
 
 
+@pytest.mark.parametrize("ignore_translations_for_mock_domains", ["fake_integration"])
 @pytest.mark.parametrize("mock_application_credentials_integration", [None])
 async def test_websocket_without_platform(
     hass: HomeAssistant, ws_client: ClientFixture
 ) -> None:
     """Test an integration without the application credential platform."""
-    assert await async_setup_component(hass, "application_credentials", {})
+    assert await async_setup_component(hass, DOMAIN, {})
     hass.config.components.add(TEST_DOMAIN)
 
     client = await ws_client()
@@ -653,7 +691,7 @@ async def test_websocket_without_authorization_server(
     hass: HomeAssistant, ws_client: ClientFixture
 ) -> None:
     """Test platform with incorrect implementation."""
-    assert await async_setup_component(hass, "application_credentials", {})
+    assert await async_setup_component(hass, DOMAIN, {})
     hass.config.components.add(TEST_DOMAIN)
 
     # Platform does not implemenent async_get_authorization_server
@@ -698,7 +736,7 @@ async def test_platform_with_auth_implementation(
 ) -> None:
     """Test config flow with custom OAuth2 implementation."""
 
-    assert await async_setup_component(hass, "application_credentials", {})
+    assert await async_setup_component(hass, DOMAIN, {})
     hass.config.components.add(TEST_DOMAIN)
 
     async def get_auth_impl(

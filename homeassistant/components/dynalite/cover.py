@@ -7,21 +7,20 @@ from homeassistant.components.cover import (
     CoverDeviceClass,
     CoverEntity,
 )
-from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant, callback
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 from homeassistant.util.enum import try_parse_enum
 
-from .bridge import DynaliteBridge
-from .dynalitebase import DynaliteBase, async_setup_entry_base
+from .bridge import DynaliteBridge, DynaliteConfigEntry
+from .entity import DynaliteBase, async_setup_entry_base
 
 
 async def async_setup_entry(
     hass: HomeAssistant,
-    config_entry: ConfigEntry,
-    async_add_entities: AddEntitiesCallback,
+    config_entry: DynaliteConfigEntry,
+    async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
-    """Record the async_add_entities function to add them later when received from Dynalite."""
+    """Record the async_add_entities function to add them later."""
 
     @callback
     def cover_from_device(device: Any, bridge: DynaliteBridge) -> CoverEntity:
@@ -87,7 +86,7 @@ class DynaliteCover(DynaliteBase, CoverEntity):
 
 
 class DynaliteCoverWithTilt(DynaliteCover):
-    """Representation of a Dynalite Channel as a Home Assistant Cover that uses up and down for tilt."""
+    """Representation of a Dynalite Channel as a Cover with tilt."""
 
     @property
     def current_cover_tilt_position(self) -> int:

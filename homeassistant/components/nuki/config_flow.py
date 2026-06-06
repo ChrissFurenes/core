@@ -9,9 +9,10 @@ from pynuki.bridge import InvalidCredentialsException
 from requests.exceptions import RequestException
 import voluptuous as vol
 
-from homeassistant.components import dhcp
 from homeassistant.config_entries import ConfigFlow, ConfigFlowResult
 from homeassistant.const import CONF_HOST, CONF_PORT, CONF_TOKEN
+from homeassistant.core import HomeAssistant
+from homeassistant.helpers.service_info.dhcp import DhcpServiceInfo
 
 from .const import CONF_ENCRYPT_TOKEN, DEFAULT_PORT, DEFAULT_TIMEOUT, DOMAIN
 from .helpers import CannotConnect, InvalidAuth, parse_id
@@ -34,23 +35,26 @@ REAUTH_SCHEMA = vol.Schema(
 )
 
 
-async def validate_input(hass, data):
+def _get_bridge_info(data: dict[str, Any]) -> dict[str, Any]:
+    """Get Nuki bridge info."""
+    bridge = NukiBridge(
+        data[CONF_HOST],
+        data[CONF_TOKEN],
+        data[CONF_PORT],
+        data.get(CONF_ENCRYPT_TOKEN, True),
+        DEFAULT_TIMEOUT,
+    )
+    return bridge.info()
+
+
+async def validate_input(hass: HomeAssistant, data: dict[str, Any]) -> dict[str, Any]:
     """Validate the user input allows us to connect.
 
     Data has the keys from USER_SCHEMA with values provided by the user.
     """
 
     try:
-        bridge = await hass.async_add_executor_job(
-            NukiBridge,
-            data[CONF_HOST],
-            data[CONF_TOKEN],
-            data[CONF_PORT],
-            data.get(CONF_ENCRYPT_TOKEN, True),
-            DEFAULT_TIMEOUT,
-        )
-
-        info = await hass.async_add_executor_job(bridge.info)
+        info = await hass.async_add_executor_job(_get_bridge_info, data)
     except InvalidCredentialsException as err:
         raise InvalidAuth from err
     except RequestException as err:
@@ -62,17 +66,19 @@ async def validate_input(hass, data):
 class NukiConfigFlow(ConfigFlow, domain=DOMAIN):
     """Nuki config flow."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the Nuki config flow."""
-        self.discovery_schema = {}
-        self._data = {}
+        self.discovery_schema: vol.Schema | None = None
+        self._data: Mapping[str, Any] = {}
 
-    async def async_step_user(self, user_input=None):
+    async def async_step_user(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
         """Handle a flow initiated by the user."""
         return await self.async_step_validate(user_input)
 
     async def async_step_dhcp(
-        self, discovery_info: dhcp.DhcpServiceInfo
+        self, discovery_info: DhcpServiceInfo
     ) -> ConfigFlowResult:
         """Prepare configuration for a DHCP discovered Nuki bridge."""
         await self.async_set_unique_id(discovery_info.hostname[12:].upper())
@@ -97,7 +103,9 @@ class NukiConfigFlow(ConfigFlow, domain=DOMAIN):
 
         return await self.async_step_reauth_confirm()
 
-    async def async_step_reauth_confirm(self, user_input=None):
+    async def async_step_reauth_confirm(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
         """Dialog that inform the user that reauth is required."""
         errors = {}
         if user_input is None:
@@ -138,7 +146,9 @@ class NukiConfigFlow(ConfigFlow, domain=DOMAIN):
             step_id="reauth_confirm", data_schema=REAUTH_SCHEMA, errors=errors
         )
 
-    async def async_step_validate(self, user_input=None):
+    async def async_step_validate(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
         """Handle init step of a flow."""
 
         data_schema = self.discovery_schema or USER_SCHEMA
@@ -170,4 +180,5 @@ class NukiConfigFlow(ConfigFlow, domain=DOMAIN):
             step_id="user",
             data_schema=self.add_suggested_values_to_schema(data_schema, user_input),
             errors=errors,
+            description_placeholders={"sample_ip": "192.168.1.25"},
         )

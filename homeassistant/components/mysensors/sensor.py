@@ -1,7 +1,5 @@
 """Support for MySensors sensors."""
 
-from __future__ import annotations
-
 from typing import Any
 
 from awesomeversion import AwesomeVersion
@@ -35,10 +33,10 @@ from homeassistant.const import (
 )
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 from homeassistant.util.unit_system import METRIC_SYSTEM
 
-from .. import mysensors
+from . import setup_mysensors_platform
 from .const import (
     ATTR_GATEWAY_ID,
     ATTR_NODE_ID,
@@ -49,7 +47,7 @@ from .const import (
     DiscoveryInfo,
     NodeDiscoveryInfo,
 )
-from .helpers import on_unload
+from .entity import MySensorNodeEntity, MySensorsChildEntity
 
 SENSORS: dict[str, SensorEntityDescription] = {
     "V_TEMP": SensorEntityDescription(
@@ -101,6 +99,8 @@ SENSORS: dict[str, SensorEntityDescription] = {
         key="V_DIRECTION",
         native_unit_of_measurement=DEGREE,
         icon="mdi:compass",
+        device_class=SensorDeviceClass.WIND_DIRECTION,
+        state_class=SensorStateClass.MEASUREMENT_ANGLE,
     ),
     "V_WEIGHT": SensorEntityDescription(
         key="V_WEIGHT",
@@ -183,7 +183,7 @@ SENSORS: dict[str, SensorEntityDescription] = {
     ),
     "V_PH": SensorEntityDescription(
         key="V_PH",
-        native_unit_of_measurement="pH",
+        device_class=SensorDeviceClass.PH,
     ),
     "V_ORP": SensorEntityDescription(
         key="V_ORP",
@@ -192,7 +192,7 @@ SENSORS: dict[str, SensorEntityDescription] = {
     ),
     "V_EC": SensorEntityDescription(
         key="V_EC",
-        native_unit_of_measurement=UnitOfConductivity.MICROSIEMENS,
+        native_unit_of_measurement=UnitOfConductivity.MICROSIEMENS_PER_CM,
     ),
     "V_VAR": SensorEntityDescription(
         key="V_VAR",
@@ -209,13 +209,13 @@ SENSORS: dict[str, SensorEntityDescription] = {
 async def async_setup_entry(
     hass: HomeAssistant,
     config_entry: ConfigEntry,
-    async_add_entities: AddEntitiesCallback,
+    async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up this platform for a specific ConfigEntry(==Gateway)."""
 
     async def async_discover(discovery_info: DiscoveryInfo) -> None:
         """Discover and add a MySensors sensor."""
-        mysensors.setup_mysensors_platform(
+        setup_mysensors_platform(
             hass,
             Platform.SENSOR,
             discovery_info,
@@ -228,12 +228,12 @@ async def async_setup_entry(
         """Add battery sensor for each MySensors node."""
         gateway_id = discovery_info[ATTR_GATEWAY_ID]
         node_id = discovery_info[ATTR_NODE_ID]
+        # Uses legacy hass.data[DOMAIN] pattern
+        # pylint: disable-next=home-assistant-use-runtime-data
         gateway: BaseAsyncGateway = hass.data[DOMAIN][MYSENSORS_GATEWAYS][gateway_id]
         async_add_entities([MyBatterySensor(gateway_id, gateway, node_id)])
 
-    on_unload(
-        hass,
-        config_entry.entry_id,
+    config_entry.async_on_unload(
         async_dispatcher_connect(
             hass,
             MYSENSORS_DISCOVERY.format(config_entry.entry_id, Platform.SENSOR),
@@ -241,18 +241,16 @@ async def async_setup_entry(
         ),
     )
 
-    on_unload(
-        hass,
-        config_entry.entry_id,
+    config_entry.async_on_unload(
         async_dispatcher_connect(
             hass,
-            MYSENSORS_NODE_DISCOVERY,
+            MYSENSORS_NODE_DISCOVERY.format(config_entry.entry_id),
             async_node_discover,
         ),
     )
 
 
-class MyBatterySensor(mysensors.device.MySensorNodeEntity, SensorEntity):
+class MyBatterySensor(MySensorNodeEntity, SensorEntity):
     """Battery sensor of MySensors node."""
 
     _attr_device_class = SensorDeviceClass.BATTERY
@@ -277,7 +275,7 @@ class MyBatterySensor(mysensors.device.MySensorNodeEntity, SensorEntity):
         self.async_write_ha_state()
 
 
-class MySensorsSensor(mysensors.device.MySensorsChildEntity, SensorEntity):
+class MySensorsSensor(MySensorsChildEntity, SensorEntity):
     """Representation of a MySensors Sensor child node."""
 
     _attr_force_update = True

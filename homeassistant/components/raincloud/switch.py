@@ -1,7 +1,5 @@
 """Support for Melnor RainCloud sprinkler water timer."""
 
-from __future__ import annotations
-
 import logging
 from typing import Any
 
@@ -13,20 +11,20 @@ from homeassistant.components.switch import (
 )
 from homeassistant.const import CONF_MONITORED_CONDITIONS
 from homeassistant.core import HomeAssistant
-import homeassistant.helpers.config_validation as cv
+from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
 
-from . import (
-    ALLOWED_WATERING_TIME,
-    CONF_WATERING_TIME,
-    DATA_RAINCLOUD,
-    DEFAULT_WATERING_TIME,
-    SWITCHES,
-    RainCloudEntity,
-)
+from .const import DATA_RAINCLOUD
+from .entity import RainCloudEntity
 
 _LOGGER = logging.getLogger(__name__)
+
+ALLOWED_WATERING_TIME = [5, 10, 15, 30, 45, 60]
+CONF_WATERING_TIME = "watering_minutes"
+DEFAULT_WATERING_TIME = 15
+
+SWITCHES = ["auto_watering", "manual_watering"]
 
 PLATFORM_SCHEMA = SWITCH_PLATFORM_SCHEMA.extend(
     {
@@ -68,18 +66,13 @@ class RainCloudSwitch(RainCloudEntity, SwitchEntity):
         super().__init__(*args)
         self._default_watering_timer = default_watering_timer
 
-    @property
-    def is_on(self):
-        """Return true if device is on."""
-        return self._state
-
     def turn_on(self, **kwargs: Any) -> None:
         """Turn the device on."""
         if self._sensor_type == "manual_watering":
             self.data.watering_time = self._default_watering_timer
         elif self._sensor_type == "auto_watering":
             self.data.auto_watering = True
-        self._state = True
+        self._attr_is_on = True
 
     def turn_off(self, **kwargs: Any) -> None:
         """Turn the device off."""
@@ -87,18 +80,18 @@ class RainCloudSwitch(RainCloudEntity, SwitchEntity):
             self.data.watering_time = "off"
         elif self._sensor_type == "auto_watering":
             self.data.auto_watering = False
-        self._state = False
+        self._attr_is_on = False
 
     def update(self) -> None:
         """Update device state."""
-        _LOGGER.debug("Updating RainCloud switch: %s", self._name)
+        _LOGGER.debug("Updating RainCloud switch: %s", self.name)
         if self._sensor_type == "manual_watering":
-            self._state = bool(self.data.watering_time)
+            self._attr_is_on = bool(self.data.watering_time)
         elif self._sensor_type == "auto_watering":
-            self._state = self.data.auto_watering
+            self._attr_is_on = self.data.auto_watering
 
     @property
-    def extra_state_attributes(self):
+    def extra_state_attributes(self) -> dict[str, Any]:
         """Return the state attributes."""
         return {
             "default_manual_timer": self._default_watering_timer,

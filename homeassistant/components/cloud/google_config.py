@@ -1,18 +1,18 @@
 """Google config for Cloud."""
 
-from __future__ import annotations
-
 import asyncio
 from http import HTTPStatus
 import logging
 from typing import TYPE_CHECKING, Any
 
-from hass_nabucasa import Cloud, cloud_api
+from hass_nabucasa import Cloud
 from hass_nabucasa.google_report_state import ErrorResponse
 
 from homeassistant.components.binary_sensor import BinarySensorDeviceClass
 from homeassistant.components.google_assistant import DOMAIN as GOOGLE_DOMAIN
-from homeassistant.components.google_assistant.helpers import AbstractConfig
+from homeassistant.components.google_assistant.helpers import (  # pylint: disable=home-assistant-component-root-import
+    AbstractConfig,
+)
 from homeassistant.components.homeassistant.exposed_entities import (
     async_expose_entity,
     async_get_assistant_settings,
@@ -22,7 +22,6 @@ from homeassistant.components.homeassistant.exposed_entities import (
     async_should_expose,
 )
 from homeassistant.components.sensor import SensorDeviceClass
-from homeassistant.const import CLOUD_NEVER_EXPOSED_ENTITIES
 from homeassistant.core import (
     CoreState,
     Event,
@@ -41,7 +40,7 @@ from .const import (
     CONF_ENTITY_CONFIG,
     CONF_FILTER,
     DEFAULT_DISABLE_2FA,
-    DOMAIN as CLOUD_DOMAIN,
+    DOMAIN,
     PREF_DISABLE_2FA,
     PREF_SHOULD_EXPOSE,
 )
@@ -52,7 +51,7 @@ if TYPE_CHECKING:
 
 _LOGGER = logging.getLogger(__name__)
 
-CLOUD_GOOGLE = f"{CLOUD_DOMAIN}.{GOOGLE_DOMAIN}"
+CLOUD_GOOGLE = f"{DOMAIN}.{GOOGLE_DOMAIN}"
 
 
 SUPPORTED_DOMAINS = {
@@ -171,7 +170,7 @@ class CloudGoogleConfig(AbstractConfig):
         return self.enabled and self._prefs.google_report_state
 
     def get_local_webhook_id(self, agent_user_id: Any) -> str:
-        """Return the webhook ID to be used for actions for a given agent user id via the local SDK."""
+        """Return the webhook ID for actions for an agent user id via the local SDK."""
         return self._prefs.google_local_webhook_id
 
     def get_local_user_id(self, webhook_id: Any) -> str:
@@ -226,7 +225,8 @@ class CloudGoogleConfig(AbstractConfig):
                     GOOGLE_SETTINGS_VERSION,
                 )
                 if self._prefs.google_settings_version < 2 or (
-                    # Recover from a bug we had in 2023.5.0 where entities didn't get exposed
+                    # Recover from a bug we had in 2023.5.0
+                    # where entities didn't get exposed
                     self._prefs.google_settings_version < 3
                     and not any(
                         settings.get("should_expose", False)
@@ -275,15 +275,16 @@ class CloudGoogleConfig(AbstractConfig):
             )
         )
 
-    def should_expose(self, state: State) -> bool:
-        """If a state object should be exposed."""
-        return self._should_expose_entity_id(state.entity_id)
+    def should_expose(self, entity_id: str) -> bool:
+        """If an entity should be exposed."""
+        entity_filter: EntityFilter = self._config[CONF_FILTER]
+        if not entity_filter.empty_filter:
+            return entity_filter(entity_id)
+
+        return async_should_expose(self.hass, CLOUD_GOOGLE, entity_id)
 
     def _should_expose_legacy(self, entity_id: str) -> bool:
         """If an entity ID should be exposed."""
-        if entity_id in CLOUD_NEVER_EXPOSED_ENTITIES:
-            return False
-
         entity_configs = self._prefs.google_entity_configs
         entity_config = entity_configs.get(entity_id, {})
         entity_expose: bool | None = entity_config.get(PREF_SHOULD_EXPOSE)
@@ -310,16 +311,6 @@ class CloudGoogleConfig(AbstractConfig):
             and split_entity_id(entity_id)[0] in default_expose
             and _supported_legacy(self.hass, entity_id)
         )
-
-    def _should_expose_entity_id(self, entity_id: str) -> bool:
-        """If an entity should be exposed."""
-        entity_filter: EntityFilter = self._config[CONF_FILTER]
-        if not entity_filter.empty_filter:
-            if entity_id in CLOUD_NEVER_EXPOSED_ENTITIES:
-                return False
-            return entity_filter(entity_id)
-
-        return async_should_expose(self.hass, CLOUD_GOOGLE, entity_id)
 
     @property
     def agent_user_id(self) -> str:
@@ -377,7 +368,7 @@ class CloudGoogleConfig(AbstractConfig):
             return HTTPStatus.OK
 
         async with self._sync_entities_lock:
-            resp = await cloud_api.async_google_actions_request_sync(self._cloud)
+            resp = await self._cloud.google_report_state.request_sync()
             return resp.status
 
     async def async_connect_agent_user(self, agent_user_id: str) -> None:
@@ -472,13 +463,13 @@ class CloudGoogleConfig(AbstractConfig):
 
         entity_id = event.data["entity_id"]
 
-        if not self._should_expose_entity_id(entity_id):
+        if not self.should_expose(entity_id):
             return
 
         self.async_schedule_google_sync_all()
 
     @callback
-    async def _handle_device_registry_updated(
+    def _handle_device_registry_updated(
         self, event: Event[dr.EventDeviceRegistryUpdatedData]
     ) -> None:
         """Handle when device registry updated."""
@@ -495,8 +486,7 @@ class CloudGoogleConfig(AbstractConfig):
 
         # Check if any exposed entity uses the device area
         if not any(
-            entity_entry.area_id is None
-            and self._should_expose_entity_id(entity_entry.entity_id)
+            entity_entry.area_id is None and self.should_expose(entity_entry.entity_id)
             for entity_entry in er.async_entries_for_device(
                 er.async_get(self.hass), event.data["device_id"]
             )

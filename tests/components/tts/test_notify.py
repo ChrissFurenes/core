@@ -6,11 +6,11 @@ import pytest
 
 from homeassistant.components import notify, tts
 from homeassistant.components.media_player import (
-    DOMAIN as DOMAIN_MP,
+    DOMAIN as MP_DOMAIN,
     SERVICE_PLAY_MEDIA,
 )
-from homeassistant.config import async_process_ha_core_config
 from homeassistant.core import HomeAssistant
+from homeassistant.core_config import async_process_ha_core_config
 from homeassistant.setup import async_setup_component
 
 from .common import MockTTSEntity, mock_config_entry_setup
@@ -89,7 +89,7 @@ async def test_setup_platform_missing_key(hass: HomeAssistant) -> None:
 
 async def test_setup_legacy_service(hass: HomeAssistant) -> None:
     """Set up the demo platform and call service."""
-    calls = async_mock_service(hass, DOMAIN_MP, SERVICE_PLAY_MEDIA)
+    calls = async_mock_service(hass, MP_DOMAIN, SERVICE_PLAY_MEDIA)
 
     config = {
         tts.DOMAIN: {"platform": "demo"},
@@ -130,7 +130,7 @@ async def test_setup_service(
     hass: HomeAssistant, mock_tts_entity: MockTTSEntity
 ) -> None:
     """Set up platform and call service."""
-    calls = async_mock_service(hass, DOMAIN_MP, SERVICE_PLAY_MEDIA)
+    calls = async_mock_service(hass, MP_DOMAIN, SERVICE_PLAY_MEDIA)
 
     config = {
         notify.DOMAIN: {

@@ -1,12 +1,10 @@
 """Diagnostics support for Internet Printing Protocol (IPP)."""
 
-from __future__ import annotations
-
 from typing import Any
 
 from homeassistant.core import HomeAssistant
 
-from . import IPPConfigEntry
+from .coordinator import IPPConfigEntry
 
 
 async def async_get_config_entry_diagnostics(

@@ -36,8 +36,7 @@ class ConfigEntryLyricClient(LyricClient):
 
     async def async_get_access_token(self):
         """Return a valid access token."""
-        if not self._oauth_session.valid_token:
-            await self._oauth_session.async_ensure_token_valid()
+        await self._oauth_session.async_ensure_token_valid()
 
         return self._oauth_session.token["access_token"]
 
@@ -46,6 +45,11 @@ class LyricLocalOAuth2Implementation(
     AuthImplementation,
 ):
     """Lyric Local OAuth2 implementation."""
+
+    @property
+    def extra_authorize_data(self) -> dict:
+        """Prompt the user to choose between Resideo and First Alert apps."""
+        return {"appSelect": "1"}
 
     async def _token_request(self, data: dict) -> dict:
         """Make a token request."""

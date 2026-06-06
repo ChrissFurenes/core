@@ -1,7 +1,5 @@
 """Component to interact with Hassbian tools."""
 
-from __future__ import annotations
-
 from typing import Any
 
 from aiohttp import web
@@ -13,7 +11,7 @@ from homeassistant.components.sensor import async_update_suggested_units
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers import check_config, config_validation as cv
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
-from homeassistant.util import location, unit_system
+from homeassistant.util import location as location_util, unit_system
 
 
 @callback
@@ -62,7 +60,9 @@ class CheckConfigView(HomeAssistantView):
         vol.Optional("location_name"): str,
         vol.Optional("longitude"): cv.longitude,
         vol.Optional("radius"): cv.positive_int,
-        vol.Optional("time_zone"): cv.time_zone,
+        # Validated by async_set_time_zone in the executor to avoid
+        # blocking I/O loading zoneinfo data on the event loop.
+        vol.Optional("time_zone"): str,
         vol.Optional("update_units"): bool,
         vol.Optional("unit_system"): unit_system.validate_unit_system,
     }
@@ -99,7 +99,7 @@ async def websocket_detect_config(
 ) -> None:
     """Detect core config."""
     session = async_get_clientsession(hass)
-    location_info = await location.async_detect_location_info(session)
+    location_info = await location_util.async_detect_location_info(session)
 
     info: dict[str, Any] = {}
 

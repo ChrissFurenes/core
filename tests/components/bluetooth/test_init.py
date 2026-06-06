@@ -2,9 +2,10 @@
 
 import asyncio
 from datetime import timedelta
+import sys
 import time
 from typing import Any
-from unittest.mock import ANY, AsyncMock, MagicMock, Mock, patch
+from unittest.mock import AsyncMock, MagicMock, Mock, patch
 
 from bleak import BleakError
 from bleak.backends.scanner import AdvertisementData, BLEDevice
@@ -18,18 +19,25 @@ from homeassistant.components.bluetooth import (
     BluetoothChange,
     BluetoothScanningMode,
     BluetoothServiceInfo,
+    HaBluetoothConnector,
+    async_clear_address_from_match_history,
     async_process_advertisements,
     async_rediscover_address,
     async_track_unavailable,
 )
 from homeassistant.components.bluetooth.const import (
     BLUETOOTH_DISCOVERY_COOLDOWN_SECONDS,
+    CONF_MODE,
     CONF_PASSIVE,
+    CONF_SOURCE_CONFIG_ENTRY_ID,
+    CONF_SOURCE_DOMAIN,
+    CONF_SOURCE_MODEL,
     DOMAIN,
     LINUX_FIRMWARE_LOAD_FALLBACK_SECONDS,
     SOURCE_LOCAL,
     UNAVAILABLE_TRACK_SECONDS,
 )
+from homeassistant.components.bluetooth.manager import HomeAssistantBluetoothManager
 from homeassistant.components.bluetooth.match import (
     ADDRESS,
     CONNECTABLE,
@@ -39,14 +47,20 @@ from homeassistant.components.bluetooth.match import (
     SERVICE_UUID,
 )
 from homeassistant.config_entries import ConfigEntryState
-from homeassistant.const import EVENT_HOMEASSISTANT_STARTED, EVENT_HOMEASSISTANT_STOP
+from homeassistant.const import (
+    CONF_SOURCE,
+    EVENT_HOMEASSISTANT_STARTED,
+    EVENT_HOMEASSISTANT_STOP,
+)
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers import issue_registry as ir
 from homeassistant.setup import async_setup_component
 from homeassistant.util import dt as dt_util
 
 from . import (
+    FakeRemoteScanner,
     FakeScanner,
+    MockBleakClient,
     _get_manager,
     async_setup_with_default_adapter,
     async_setup_with_one_adapter,
@@ -86,15 +100,27 @@ async def test_setup_and_stop(
     assert len(mock_bleak_scanner_start.mock_calls) == 1
 
 
+@pytest.mark.skipif(sys.platform != "linux", reason="Requires Linux BlueZ scanner")
+@pytest.mark.parametrize(
+    "options",
+    [{CONF_MODE: "passive"}, {CONF_PASSIVE: True}],
+    ids=["mode_passive", "legacy_passive_true"],
+)
 @pytest.mark.usefixtures("one_adapter")
 async def test_setup_and_stop_passive(
-    hass: HomeAssistant, mock_bleak_scanner_start: MagicMock
+    hass: HomeAssistant,
+    mock_bleak_scanner_start: MagicMock,
+    options: dict[str, Any],
 ) -> None:
-    """Test we and setup and stop the scanner the passive scanner."""
+    """Test we set up and stop the scanner in passive mode.
+
+    Covers both the new CONF_MODE key and the legacy CONF_PASSIVE boolean
+    so the fallback path in async_setup_entry stays exercised.
+    """
     entry = MockConfigEntry(
         domain=bluetooth.DOMAIN,
         data={},
-        options={CONF_PASSIVE: True},
+        options=options,
         unique_id="00:00:00:00:00:01",
     )
     entry.add_to_hass(hass)
@@ -129,19 +155,21 @@ async def test_setup_and_stop_passive(
         await hass.async_block_till_done()
 
     assert init_kwargs == {
-        "adapter": "hci0",
-        "bluez": scanner.PASSIVE_SCANNER_ARGS,  # pylint: disable=c-extension-no-member
+        "bluez": {
+            **scanner.PASSIVE_SCANNER_ARGS,  # pylint: disable=c-extension-no-member
+            "adapter": "hci0",
+        },
         "scanning_mode": "passive",
-        "detection_callback": ANY,
     }
 
 
+@pytest.mark.skipif(sys.platform != "linux", reason="Requires Linux BlueZ scanner")
 async def test_setup_and_stop_old_bluez(
     hass: HomeAssistant,
     mock_bleak_scanner_start: MagicMock,
     one_adapter_old_bluez: None,
 ) -> None:
-    """Test we and setup and stop the scanner the passive scanner with older bluez."""
+    """Default AUTO falls back to active on adapters without passive scan support."""
     entry = MockConfigEntry(
         domain=bluetooth.DOMAIN,
         data={},
@@ -180,9 +208,8 @@ async def test_setup_and_stop_old_bluez(
         await hass.async_block_till_done()
 
     assert init_kwargs == {
-        "adapter": "hci0",
+        "bluez": {"adapter": "hci0"},
         "scanning_mode": "active",
-        "detection_callback": ANY,
     }
 
 
@@ -356,7 +383,7 @@ async def test_no_race_during_manual_reload_in_retry_state(
 async def test_calling_async_discovered_devices_no_bluetooth(
     hass: HomeAssistant, caplog: pytest.LogCaptureFixture
 ) -> None:
-    """Test we fail gracefully when asking for discovered devices and there is no blueooth."""
+    """Test we fail gracefully when there is no bluetooth."""
     mock_bt = []
     with (
         patch(
@@ -481,7 +508,7 @@ def _domains_from_mock_config_flow(mock_config_flow: Mock) -> list[str]:
 async def test_discovery_match_by_service_uuid_connectable(
     hass: HomeAssistant, mock_bleak_scanner_start: MagicMock
 ) -> None:
-    """Test bluetooth discovery match by service_uuid and the ble device is connectable."""
+    """Test discovery match by service_uuid, connectable."""
     mock_bt = [
         {
             "domain": "switchbot",
@@ -533,7 +560,7 @@ async def test_discovery_match_by_service_uuid_connectable(
 async def test_discovery_match_by_service_uuid_not_connectable(
     hass: HomeAssistant, mock_bleak_scanner_start: MagicMock
 ) -> None:
-    """Test bluetooth discovery match by service_uuid and the ble device is not connectable."""
+    """Test discovery match by service_uuid, not connectable."""
     mock_bt = [
         {
             "domain": "switchbot",
@@ -583,7 +610,7 @@ async def test_discovery_match_by_service_uuid_not_connectable(
 async def test_discovery_match_by_name_connectable_false(
     hass: HomeAssistant, mock_bleak_scanner_start: MagicMock
 ) -> None:
-    """Test bluetooth discovery match by name and the integration will take non-connectable devices."""
+    """Test discovery match by name with non-connectable."""
     mock_bt = [
         {
             "domain": "qingping",
@@ -695,6 +722,67 @@ async def test_discovery_match_by_local_name(
 
         assert len(mock_config_flow.mock_calls) == 1
         assert mock_config_flow.mock_calls[0][1][0] == "switchbot"
+
+
+@pytest.mark.usefixtures("enable_bluetooth")
+async def test_discovery_match_by_service_uuid_when_name_changes_from_mac(
+    hass: HomeAssistant, mock_bleak_scanner_start: MagicMock
+) -> None:
+    """Test discovery matches when name changes from MAC."""
+    mock_bt = [
+        {
+            "domain": "improv_ble",
+            "service_uuid": "00467768-6228-2272-4663-277478268000",
+        }
+    ]
+    with (
+        patch(
+            "homeassistant.components.bluetooth.async_get_bluetooth",
+            return_value=mock_bt,
+        ),
+        patch.object(hass.config_entries.flow, "async_init") as mock_config_flow,
+    ):
+        await async_setup_with_default_adapter(hass)
+        hass.bus.async_fire(EVENT_HOMEASSISTANT_STARTED)
+        await hass.async_block_till_done()
+
+        assert len(mock_bleak_scanner_start.mock_calls) == 1
+
+        # First advertisement: name is MAC address, with service UUID
+        # This should trigger discovery
+        device_mac_name = generate_ble_device("64:E8:33:7E:0D:9E", "64:E8:33:7E:0D:9E")
+        adv_mac_name = generate_advertisement_data(
+            local_name="64:E8:33:7E:0D:9E",
+            service_uuids=["00467768-6228-2272-4663-277478268000"],
+            service_data={
+                "00004677-0000-1000-8000-00805f9b34fb": b"\x02\x00\x00\x00\x00\x00"
+            },
+        )
+
+        inject_advertisement(hass, device_mac_name, adv_mac_name)
+        await hass.async_block_till_done()
+
+        assert len(mock_config_flow.mock_calls) == 1
+        assert mock_config_flow.mock_calls[0][1][0] == "improv_ble"
+        mock_config_flow.reset_mock()
+
+        # Second advertisement: name changes to real name, same service UUID
+        # This should trigger discovery again because the name changed
+        device_real_name = generate_ble_device("64:E8:33:7E:0D:9E", "improvtest")
+        adv_real_name = generate_advertisement_data(
+            local_name="improvtest",
+            service_uuids=["00467768-6228-2272-4663-277478268000"],
+            service_data={
+                "00004677-0000-1000-8000-00805f9b34fb": b"\x02\x00\x00\x00\x00\x00"
+            },
+        )
+
+        inject_advertisement(hass, device_real_name, adv_real_name)
+        await hass.async_block_till_done()
+
+        # Should still match improv_ble even though name changed
+        assert len(mock_config_flow.mock_calls) == 1
+        assert mock_config_flow.mock_calls[0][1][0] == "improv_ble"
 
 
 @pytest.mark.usefixtures("macos_adapter")
@@ -1060,7 +1148,7 @@ async def test_discovery_match_by_service_data_uuid_bthome(
 async def test_discovery_match_first_by_service_uuid_and_then_manufacturer_id(
     hass: HomeAssistant, mock_bleak_scanner_start: MagicMock
 ) -> None:
-    """Test bluetooth discovery matches twice for service_uuid and then manufacturer_id."""
+    """Test discovery matches for service_uuid then mfr_id."""
     mock_bt = [
         {
             "domain": "my_domain",
@@ -1169,6 +1257,62 @@ async def test_rediscovery(
         assert mock_config_flow.mock_calls[1][1][0] == "switchbot"
 
 
+@pytest.mark.usefixtures("enable_bluetooth")
+async def test_clear_address_from_match_history(
+    hass: HomeAssistant, mock_bleak_scanner_start: MagicMock
+) -> None:
+    """Test clearing match history without re-triggering discovery."""
+    mock_bt = [
+        {"domain": "switchbot", "service_uuid": "cba20d00-224d-11e6-9fb8-0002a5d5c51b"}
+    ]
+    with (
+        patch(
+            "homeassistant.components.bluetooth.async_get_bluetooth",
+            return_value=mock_bt,
+        ),
+        patch.object(hass.config_entries.flow, "async_init") as mock_config_flow,
+    ):
+        await async_setup_with_default_adapter(hass)
+        hass.bus.async_fire(EVENT_HOMEASSISTANT_STARTED)
+        await hass.async_block_till_done()
+
+        assert len(mock_bleak_scanner_start.mock_calls) == 1
+
+        switchbot_device = generate_ble_device("44:44:33:11:23:45", "wohand")
+        switchbot_adv = generate_advertisement_data(
+            local_name="wohand", service_uuids=["cba20d00-224d-11e6-9fb8-0002a5d5c51b"]
+        )
+        switchbot_adv_2 = generate_advertisement_data(
+            local_name="wohand",
+            service_uuids=["cba20d00-224d-11e6-9fb8-0002a5d5c51b"],
+            manufacturer_data={1: b"\x01"},
+        )
+        inject_advertisement(hass, switchbot_device, switchbot_adv)
+        await hass.async_block_till_done()
+
+        inject_advertisement(hass, switchbot_device, switchbot_adv)
+        await hass.async_block_till_done()
+
+        assert len(mock_config_flow.mock_calls) == 1
+        assert mock_config_flow.mock_calls[0][1][0] == "switchbot"
+
+        # Clear match history - should NOT trigger immediate rediscovery
+        async_clear_address_from_match_history(hass, "44:44:33:11:23:45")
+        await hass.async_block_till_done()
+
+        # No new discovery should have been triggered
+        assert len(mock_config_flow.mock_calls) == 1
+
+        # But when we inject new advertisement with
+        # different data, it should be discovered
+        inject_advertisement(hass, switchbot_device, switchbot_adv_2)
+        await hass.async_block_till_done()
+
+        # Now discovery should happen because history was cleared and data changed
+        assert len(mock_config_flow.mock_calls) == 2
+        assert mock_config_flow.mock_calls[1][1][0] == "switchbot"
+
+
 @pytest.mark.usefixtures("macos_adapter")
 async def test_async_discovered_device_api(
     hass: HomeAssistant, mock_bleak_scanner_start: MagicMock
@@ -1182,7 +1326,8 @@ async def test_async_discovered_device_api(
             return_value=mock_bt,
         ),
         patch(
-            "bleak.BleakScanner.discovered_devices_and_advertisement_data",  # Must patch before we setup
+            # Must patch before we setup
+            "bleak.BleakScanner.discovered_devices_and_advertisement_data",
             {
                 "44:44:33:11:23:45": (
                     MagicMock(address="44:44:33:11:23:45"),
@@ -1513,6 +1658,117 @@ async def test_register_callback_by_address(
         assert service_info.name == "wohand"
         assert service_info.manufacturer == "Nordic Semiconductor ASA"
         assert service_info.manufacturer_id == 89
+
+
+@pytest.mark.parametrize(
+    ("matcher", "mode", "kwargs", "expected_args"),
+    [
+        pytest.param(
+            {"address": "44:44:33:11:23:45"},
+            BluetoothScanningMode.ACTIVE,
+            {"scan_interval": 300.0, "scan_duration": 5.0},
+            ("44:44:33:11:23:45", 300.0, 5.0),
+            id="active_with_interval_and_duration",
+        ),
+        pytest.param(
+            {"address": "44:44:33:11:23:45"},
+            BluetoothScanningMode.ACTIVE,
+            {"scan_interval": 300.0},
+            ("44:44:33:11:23:45", 300.0, None),
+            id="active_with_interval_default_duration",
+        ),
+        pytest.param(
+            {"address": "44:44:33:11:23:45"},
+            BluetoothScanningMode.ACTIVE,
+            {},
+            ("44:44:33:11:23:45", None, None),
+            id="active_with_address_default_cadence",
+        ),
+    ],
+)
+@pytest.mark.usefixtures("enable_bluetooth", "mock_bleak_scanner_start")
+async def test_register_callback_registers_active_scan(
+    hass: HomeAssistant,
+    matcher: dict[str, str],
+    mode: BluetoothScanningMode,
+    kwargs: dict[str, float],
+    expected_args: tuple[str, float | None, float | None],
+) -> None:
+    """An address matcher in non-PASSIVE mode registers an active-scan request."""
+    mock_bt: list[Any] = []
+    with patch(
+        "homeassistant.components.bluetooth.async_get_bluetooth", return_value=mock_bt
+    ):
+        await async_setup_with_default_adapter(hass)
+
+    with patch.object(hass.config_entries.flow, "async_init"):
+        hass.bus.async_fire(EVENT_HOMEASSISTANT_STARTED)
+        await hass.async_block_till_done()
+
+        def _cb(_si: BluetoothServiceInfo, _ch: BluetoothChange) -> None:
+            return None
+
+        mock_cancel = Mock()
+        with patch.object(
+            HomeAssistantBluetoothManager,
+            "async_register_active_scan",
+            return_value=mock_cancel,
+        ) as mock_register:
+            cancel = bluetooth.async_register_callback(
+                hass, _cb, matcher, mode, **kwargs
+            )
+            mock_register.assert_called_once_with(*expected_args)
+            mock_cancel.assert_not_called()
+            cancel()
+            mock_cancel.assert_called_once()
+
+
+@pytest.mark.parametrize(
+    ("matcher", "mode", "kwargs"),
+    [
+        pytest.param(
+            {"address": "44:44:33:11:23:45"},
+            BluetoothScanningMode.PASSIVE,
+            {"scan_interval": 300.0},
+            id="passive_mode",
+        ),
+        pytest.param(
+            {SERVICE_UUID: "cba20d00-224d-11e6-9fb8-0002a5d5c51b"},
+            BluetoothScanningMode.ACTIVE,
+            {"scan_interval": 300.0},
+            id="no_address_in_matcher",
+        ),
+    ],
+)
+@pytest.mark.usefixtures("enable_bluetooth", "mock_bleak_scanner_start")
+async def test_register_callback_skips_active_scan(
+    hass: HomeAssistant,
+    matcher: dict[str, str],
+    mode: BluetoothScanningMode,
+    kwargs: dict[str, float],
+) -> None:
+    """PASSIVE mode or a matcher without an address never registers an active scan."""
+    mock_bt: list[Any] = []
+    with patch(
+        "homeassistant.components.bluetooth.async_get_bluetooth", return_value=mock_bt
+    ):
+        await async_setup_with_default_adapter(hass)
+
+    with patch.object(hass.config_entries.flow, "async_init"):
+        hass.bus.async_fire(EVENT_HOMEASSISTANT_STARTED)
+        await hass.async_block_till_done()
+
+        def _cb(_si: BluetoothServiceInfo, _ch: BluetoothChange) -> None:
+            return None
+
+        with patch.object(
+            HomeAssistantBluetoothManager, "async_register_active_scan"
+        ) as mock_register:
+            cancel = bluetooth.async_register_callback(
+                hass, _cb, matcher, mode, **kwargs
+            )
+            mock_register.assert_not_called()
+            cancel()
 
 
 @pytest.mark.usefixtures("enable_bluetooth")
@@ -2374,7 +2630,8 @@ async def test_process_advertisements_ignore_bad_advertisement(
         )
     )
 
-    # The goal of this loop is to make sure that async_process_advertisements sees at least one
+    # The goal of this loop is to make sure that
+    # async_process_advertisements sees at least one
     # callback that returns False
     while not done.is_set():
         inject_advertisement(hass, device, adv)
@@ -2408,11 +2665,40 @@ async def test_process_advertisements_timeout(
         )
 
 
+@pytest.mark.usefixtures("enable_bluetooth", "mock_bleak_scanner_start")
+async def test_process_advertisements_wires_timeout_as_scan_duration(
+    hass: HomeAssistant,
+) -> None:
+    """async_process_advertisements forwards its timeout as scan_duration."""
+
+    def _callback(service_info: BluetoothServiceInfo) -> bool:
+        return False
+
+    mock_cancel = Mock()
+    with (
+        patch.object(
+            HomeAssistantBluetoothManager,
+            "async_register_active_scan",
+            return_value=mock_cancel,
+        ) as mock_register,
+        pytest.raises(TimeoutError),
+    ):
+        await async_process_advertisements(
+            hass,
+            _callback,
+            {"address": "aa:44:33:11:23:45"},
+            BluetoothScanningMode.ACTIVE,
+            0,
+        )
+    mock_register.assert_called_once_with("aa:44:33:11:23:45", None, 0)
+    mock_cancel.assert_called_once()
+
+
 @pytest.mark.usefixtures("enable_bluetooth")
 async def test_wrapped_instance_with_filter(
     hass: HomeAssistant, mock_bleak_scanner_start: MagicMock
 ) -> None:
-    """Test consumers can use the wrapped instance with a filter as if it was normal BleakScanner."""
+    """Test wrapped instance with a filter works like BleakScanner."""
     with patch(
         "homeassistant.components.bluetooth.async_get_bluetooth", return_value=[]
     ):
@@ -2485,7 +2771,7 @@ async def test_wrapped_instance_with_filter(
 async def test_wrapped_instance_with_service_uuids(
     hass: HomeAssistant, mock_bleak_scanner_start: MagicMock
 ) -> None:
-    """Test consumers can use the wrapped instance with a service_uuids list as if it was normal BleakScanner."""
+    """Test wrapped instance with service_uuids list."""
     with patch(
         "homeassistant.components.bluetooth.async_get_bluetooth", return_value=[]
     ):
@@ -2542,7 +2828,7 @@ async def test_wrapped_instance_with_service_uuids(
 async def test_wrapped_instance_with_service_uuids_with_coro_callback(
     hass: HomeAssistant, mock_bleak_scanner_start: MagicMock
 ) -> None:
-    """Test consumers can use the wrapped instance with a service_uuids list as if it was normal BleakScanner.
+    """Test wrapped instance with service_uuids list.
 
     Verify that coro callbacks are supported.
     """
@@ -2798,7 +3084,8 @@ async def test_async_ble_device_from_address(
             return_value=mock_bt,
         ),
         patch(
-            "bleak.BleakScanner.discovered_devices_and_advertisement_data",  # Must patch before we setup
+            # Must patch before we setup
+            "bleak.BleakScanner.discovered_devices_and_advertisement_data",
             {
                 "44:44:33:11:23:45": (
                     MagicMock(address="44:44:33:11:23:45"),
@@ -2872,7 +3159,7 @@ async def test_default_address_config_entries_removed_linux(
     assert not hass.config_entries.async_entries(bluetooth.DOMAIN)
 
 
-@pytest.mark.usefixtures("enable_bluetooth", "one_adapter")
+@pytest.mark.usefixtures("one_adapter")
 async def test_can_unsetup_bluetooth_single_adapter_linux(
     hass: HomeAssistant, mock_bleak_scanner_start: MagicMock
 ) -> None:
@@ -2890,12 +3177,17 @@ async def test_can_unsetup_bluetooth_single_adapter_linux(
         await hass.async_block_till_done()
 
 
-@pytest.mark.usefixtures("enable_bluetooth", "two_adapters")
+@pytest.mark.usefixtures("two_adapters")
 async def test_can_unsetup_bluetooth_multiple_adapters(
     hass: HomeAssistant,
     mock_bleak_scanner_start: MagicMock,
 ) -> None:
     """Test we can setup and unsetup bluetooth with multiple adapters."""
+    # Setup bluetooth first since otherwise loading the first
+    # config entry will load the second one as well
+    await async_setup_component(hass, bluetooth.DOMAIN, {})
+    await hass.async_block_till_done()
+
     entry1 = MockConfigEntry(
         domain=bluetooth.DOMAIN, data={}, unique_id="00:00:00:00:00:01"
     )
@@ -3015,6 +3307,23 @@ async def test_scanner_count_connectable(hass: HomeAssistant) -> None:
     cancel = bluetooth.async_register_scanner(hass, scanner)
     assert bluetooth.async_scanner_count(hass, connectable=True) == 1
     cancel()
+
+
+@pytest.mark.usefixtures("enable_bluetooth")
+async def test_scanner_remove(hass: HomeAssistant) -> None:
+    """Test permanently removing a scanner."""
+    scanner = FakeScanner("any", "any")
+    cancel = bluetooth.async_register_scanner(hass, scanner)
+    assert bluetooth.async_scanner_count(hass, connectable=True) == 1
+    device = generate_ble_device("44:44:33:11:23:45", "name")
+    adv = generate_advertisement_data(local_name="name", service_uuids=[])
+    inject_advertisement_with_time_and_source_connectable(
+        hass, device, adv, time.monotonic(), scanner.source, True
+    )
+    cancel()
+    bluetooth.async_remove_scanner(hass, scanner.source)
+    manager: HomeAssistantBluetoothManager = _get_manager()
+    assert not manager.storage.async_get_advertisement_history(scanner.source)
 
 
 @pytest.mark.usefixtures("enable_bluetooth")
@@ -3240,3 +3549,82 @@ async def test_title_updated_if_mac_address(
     await hass.config_entries.async_setup(entry.entry_id)
     await hass.async_block_till_done()
     assert entry.title == "ACME Bluetooth Adapter 5.0 (00:00:00:00:00:01)"
+
+
+@pytest.mark.usefixtures("enable_bluetooth")
+async def test_cleanup_orphened_remote_scanner_config_entry(
+    hass: HomeAssistant,
+) -> None:
+    """Test the remote scanner config entries get cleaned up when orphened."""
+    connector = (
+        HaBluetoothConnector(MockBleakClient, "mock_bleak_client", lambda: False),
+    )
+    scanner = FakeRemoteScanner("esp32", "esp32", connector, True)
+
+    entry = MockConfigEntry(
+        domain=DOMAIN,
+        data={
+            CONF_SOURCE: scanner.source,
+            CONF_SOURCE_DOMAIN: "test",
+            CONF_SOURCE_MODEL: "test",
+            CONF_SOURCE_CONFIG_ENTRY_ID: "no_longer_exists",
+        },
+        unique_id=scanner.source,
+    )
+    entry.add_to_hass(hass)
+    await hass.config_entries.async_setup(entry.entry_id)
+    await hass.async_block_till_done()
+
+    # Orphened remote scanner config entry should be cleaned up
+    assert not hass.config_entries.async_entry_for_domain_unique_id(
+        "bluetooth", scanner.source
+    )
+
+
+@pytest.mark.usefixtures("enable_bluetooth")
+async def test_fix_incorrect_mac_remote_scanner_config_entry(
+    hass: HomeAssistant,
+) -> None:
+    """Test the remote scanner config entries can replace a incorrect mac."""
+    source_entry = MockConfigEntry(domain="test")
+    source_entry.add_to_hass(hass)
+    connector = (
+        HaBluetoothConnector(MockBleakClient, "mock_bleak_client", lambda: False),
+    )
+    scanner = FakeRemoteScanner("AA:BB:CC:DD:EE:FF", "esp32", connector, True)
+    assert scanner.source == "AA:BB:CC:DD:EE:FF"
+    entry = MockConfigEntry(
+        domain=DOMAIN,
+        data={
+            CONF_SOURCE: scanner.source,
+            CONF_SOURCE_DOMAIN: "test",
+            CONF_SOURCE_MODEL: "test",
+            CONF_SOURCE_CONFIG_ENTRY_ID: source_entry.entry_id,
+        },
+        unique_id=scanner.source,
+    )
+    entry.add_to_hass(hass)
+    await hass.config_entries.async_setup(entry.entry_id)
+    await hass.async_block_till_done()
+    assert hass.config_entries.async_entry_for_domain_unique_id(
+        "bluetooth", scanner.source
+    )
+    await hass.config_entries.async_unload(entry.entry_id)
+
+    new_scanner = FakeRemoteScanner("AA:BB:CC:DD:EE:AA", "esp32", connector, True)
+    assert new_scanner.source == "AA:BB:CC:DD:EE:AA"
+    hass.config_entries.async_update_entry(
+        entry,
+        data={**entry.data, CONF_SOURCE: new_scanner.source},
+        unique_id=new_scanner.source,
+    )
+
+    await hass.config_entries.async_setup(entry.entry_id)
+    await hass.async_block_till_done()
+    assert hass.config_entries.async_entry_for_domain_unique_id(
+        "bluetooth", new_scanner.source
+    )
+    # Incorrect connection should be removed
+    assert not hass.config_entries.async_entry_for_domain_unique_id(
+        "bluetooth", scanner.source
+    )

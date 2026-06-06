@@ -1,13 +1,11 @@
 """The test for the Trafikverket camera platform."""
 
-from __future__ import annotations
-
 from datetime import timedelta
 from unittest.mock import patch
 
 from freezegun.api import FrozenDateTimeFactory
 import pytest
-from pytrafikverket.models import CameraInfoModel
+from pytrafikverket import CameraInfoModel
 
 from homeassistant.components.camera import async_get_image
 from homeassistant.config_entries import ConfigEntry

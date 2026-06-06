@@ -1,7 +1,5 @@
 """Support managing EventTypes."""
 
-from __future__ import annotations
-
 from collections.abc import Iterable
 from typing import TYPE_CHECKING, Any, cast
 
@@ -27,8 +25,6 @@ CACHE_SIZE = 2048
 
 class EventTypeManager(BaseLRUTableManager[EventTypes]):
     """Manage the EventTypes table."""
-
-    active = False
 
     def __init__(self, recorder: Recorder) -> None:
         """Initialize the event type manager."""
@@ -125,7 +121,7 @@ class EventTypeManager(BaseLRUTableManager[EventTypes]):
         self._pending[event_type] = db_event_type
 
     def post_commit_pending(self) -> None:
-        """Call after commit to load the event_type_ids of the new EventTypes into the LRU.
+        """Call after commit to load new EventTypes into the LRU.
 
         This call is not thread-safe and must be called from the
         recorder thread.

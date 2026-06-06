@@ -1,7 +1,5 @@
 """Support for Google Cloud Pub/Sub."""
 
-from __future__ import annotations
-
 import datetime
 import json
 import logging
@@ -12,7 +10,7 @@ import voluptuous as vol
 
 from homeassistant.const import EVENT_STATE_CHANGED, STATE_UNAVAILABLE, STATE_UNKNOWN
 from homeassistant.core import Event, EventStateChangedData, HomeAssistant
-import homeassistant.helpers.config_validation as cv
+from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.entityfilter import FILTER_SCHEMA
 from homeassistant.helpers.typing import ConfigType
 

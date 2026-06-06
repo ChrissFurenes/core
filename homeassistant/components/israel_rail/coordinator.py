@@ -1,7 +1,5 @@
 """DataUpdateCoordinator for the israel rail integration."""
 
-from __future__ import annotations
-
 from dataclasses import dataclass
 from datetime import datetime
 import logging
@@ -13,7 +11,7 @@ from israelrailapi.train_station import station_name_to_id
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
-import homeassistant.util.dt as dt_util
+from homeassistant.util import dt as dt_util
 
 from .const import DEFAULT_SCAN_INTERVAL, DEPARTURES_COUNT, DOMAIN
 
@@ -25,6 +23,7 @@ class DataConnection:
     """A connection data class."""
 
     departure: datetime | None
+    departure_delay: int | None
     platform: str
     start: str
     destination: str
@@ -38,14 +37,18 @@ def departure_time(train_route: TrainRoute) -> datetime | None:
     return start_datetime.astimezone() if start_datetime else None
 
 
+type IsraelRailConfigEntry = ConfigEntry[IsraelRailDataUpdateCoordinator]
+
+
 class IsraelRailDataUpdateCoordinator(DataUpdateCoordinator[list[DataConnection]]):
     """A IsraelRail Data Update Coordinator."""
 
-    config_entry: ConfigEntry
+    config_entry: IsraelRailConfigEntry
 
     def __init__(
         self,
         hass: HomeAssistant,
+        config_entry: IsraelRailConfigEntry,
         train_schedule: TrainSchedule,
         start: str,
         destination: str,
@@ -54,6 +57,7 @@ class IsraelRailDataUpdateCoordinator(DataUpdateCoordinator[list[DataConnection]
         super().__init__(
             hass,
             _LOGGER,
+            config_entry=config_entry,
             name=DOMAIN,
             update_interval=DEFAULT_SCAN_INTERVAL,
         )
@@ -75,15 +79,27 @@ class IsraelRailDataUpdateCoordinator(DataUpdateCoordinator[list[DataConnection]
                 "Unable to connect and retrieve data from israelrail api",
             ) from e
 
+        offset = 0
+        now = dt_util.now()
+        while offset < len(train_routes):
+            route = train_routes[offset]
+            if route is None:
+                break
+            route_departure = departure_time(route)
+            if route_departure is None or route_departure >= now:
+                break
+            offset += 1
+
         return [
             DataConnection(
                 departure=departure_time(train_routes[i]),
+                departure_delay=train_routes[i].trains[0].departure_delay,
                 train_number=train_routes[i].trains[0].data["trainNumber"],
                 platform=train_routes[i].trains[0].platform,
                 trains=len(train_routes[i].trains),
                 start=station_name_to_id(train_routes[i].trains[0].src),
                 destination=station_name_to_id(train_routes[i].trains[-1].dst),
             )
-            for i in range(DEPARTURES_COUNT)
+            for i in range(offset, offset + DEPARTURES_COUNT)
             if len(train_routes) > i and train_routes[i] is not None
         ]

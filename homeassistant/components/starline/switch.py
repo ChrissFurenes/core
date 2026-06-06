@@ -1,16 +1,13 @@
 """Support for StarLine switch."""
 
-from __future__ import annotations
-
 from typing import Any
 
 from homeassistant.components.switch import SwitchEntity, SwitchEntityDescription
-from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
+from . import StarlineConfigEntry
 from .account import StarlineAccount, StarlineDevice
-from .const import DOMAIN
 from .entity import StarlineEntity
 
 SWITCH_TYPES: tuple[SwitchEntityDescription, ...] = (
@@ -34,10 +31,12 @@ SWITCH_TYPES: tuple[SwitchEntityDescription, ...] = (
 
 
 async def async_setup_entry(
-    hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback
+    hass: HomeAssistant,
+    entry: StarlineConfigEntry,
+    async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up the StarLine switch."""
-    account: StarlineAccount = hass.data[DOMAIN][entry.entry_id]
+    account = entry.runtime_data
     entities = [
         switch
         for device in account.api.devices.values()
@@ -69,17 +68,8 @@ class StarlineSwitch(StarlineEntity, SwitchEntity):
         return super().available and self._device.online
 
     @property
-    def extra_state_attributes(self):
-        """Return the state attributes of the switch."""
-        if self._key == "ign":
-            return self._account.engine_attrs(self._device)
-        return None
-
-    @property
-    def is_on(self):
+    def is_on(self) -> bool | None:
         """Return True if entity is on."""
-        if self._key == "poke":
-            return False
         return self._device.car_state.get(self._key)
 
     def turn_on(self, **kwargs: Any) -> None:
@@ -88,6 +78,4 @@ class StarlineSwitch(StarlineEntity, SwitchEntity):
 
     def turn_off(self, **kwargs: Any) -> None:
         """Turn the entity off."""
-        if self._key == "poke":
-            return
         self._account.api.set_car_state(self._device.device_id, self._key, False)

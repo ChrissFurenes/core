@@ -1,7 +1,5 @@
 """Adapter to wrap the rachiopy api for home assistant."""
 
-from __future__ import annotations
-
 from http import HTTPStatus
 import logging
 from typing import Any
@@ -57,11 +55,13 @@ RESUME_SERVICE_SCHEMA = vol.Schema({vol.Optional(ATTR_DEVICES): cv.string})
 
 STOP_SERVICE_SCHEMA = vol.Schema({vol.Optional(ATTR_DEVICES): cv.string})
 
+type RachioConfigEntry = ConfigEntry[RachioPerson]
+
 
 class RachioPerson:
     """Represent a Rachio user."""
 
-    def __init__(self, rachio: Rachio, config_entry: ConfigEntry) -> None:
+    def __init__(self, rachio: Rachio, config_entry: RachioConfigEntry) -> None:
         """Create an object from the provided API instance."""
         # Use API token to get user ID
         self.rachio = rachio
@@ -158,13 +158,14 @@ class RachioPerson:
         for controller in devices:
             webhooks = rachio.notification.get_device_webhook(controller[KEY_ID])[1]
             # The API does not provide a way to tell if a controller is shared
-            # or if they are the owner. To work around this problem we fetch the webhooks
+            # or if they are the owner. To work around this problem
+            # we fetch the webhooks
             # before we setup the device so we can skip it instead of failing.
             # webhooks are normally a list, however if there is an error
             # rachio hands us back a dict
             if isinstance(webhooks, dict):
                 if webhooks.get("code") == PERMISSION_ERROR:
-                    _LOGGER.info(
+                    _LOGGER.warning(
                         (
                             "Not adding controller '%s', only controllers owned by '%s'"
                             " may be added"
@@ -189,13 +190,15 @@ class RachioPerson:
             RachioBaseStation(
                 rachio,
                 base,
-                RachioUpdateCoordinator(hass, rachio, base, base_count),
-                RachioScheduleUpdateCoordinator(hass, rachio, base),
+                RachioUpdateCoordinator(
+                    hass, rachio, self.config_entry, base, base_count
+                ),
+                RachioScheduleUpdateCoordinator(hass, rachio, self.config_entry, base),
             )
             for base in base_stations
         )
 
-        _LOGGER.info('Using Rachio API as user "%s"', self.username)
+        _LOGGER.debug('Using Rachio API as user "%s"', self.username)
 
     @property
     def user_id(self) -> str | None:
@@ -255,7 +258,8 @@ class RachioIro:
         def _deinit_webhooks(_) -> None:
             """Stop getting updates from the Rachio API."""
             if not self._webhooks:
-                # We fetched webhooks when we created the device, however if we call _init_webhooks
+                # We fetched webhooks when we created the device,
+                # however if we call _init_webhooks
                 # again we need to fetch again
                 self._webhooks = self.rachio.notification.get_device_webhook(
                     self.controller_id
@@ -334,7 +338,7 @@ class RachioIro:
     def stop_watering(self) -> None:
         """Stop watering all zones connected to this controller."""
         self.rachio.device.stop_water(self.controller_id)
-        _LOGGER.info("Stopped watering of all zones on %s", self)
+        _LOGGER.debug("Stopped watering of all zones on %s", self)
 
     def pause_watering(self, duration) -> None:
         """Pause watering on this controller."""

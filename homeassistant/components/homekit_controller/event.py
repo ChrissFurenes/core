@@ -1,7 +1,5 @@
 """Support for Homekit motion sensors."""
 
-from __future__ import annotations
-
 from aiohomekit.model.characteristics import CharacteristicsTypes
 from aiohomekit.model.characteristics.const import InputEventValues
 from aiohomekit.model.services import Service, ServicesTypes
@@ -14,7 +12,7 @@ from homeassistant.components.event import (
 )
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant, callback
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
 from . import KNOWN_DEVICES
 from .connection import HKDevice
@@ -50,8 +48,9 @@ class HomeKitEventEntity(BaseCharacteristicEntity, EventEntity):
 
         self.entity_description = entity_description
 
-        # An INPUT_EVENT may support single_press, long_press and double_press. All are optional. So we have to
-        # clamp InputEventValues for this exact device
+        # An INPUT_EVENT may support single_press, long_press and
+        # double_press. All are optional. So we have to clamp
+        # InputEventValues for this exact device
         self._attr_event_types = [
             INPUT_EVENT_VALUES[v]
             for v in clamp_enum_to_char(InputEventValues, self._char)
@@ -86,7 +85,7 @@ class HomeKitEventEntity(BaseCharacteristicEntity, EventEntity):
 async def async_setup_entry(
     hass: HomeAssistant,
     config_entry: ConfigEntry,
-    async_add_entities: AddEntitiesCallback,
+    async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up Homekit event."""
     hkid: str = config_entry.data["AccessoryPairingID"]

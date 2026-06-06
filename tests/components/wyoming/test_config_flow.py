@@ -8,11 +8,11 @@ from syrupy.assertion import SnapshotAssertion
 from wyoming.info import Info
 
 from homeassistant import config_entries
-from homeassistant.components.hassio import HassioServiceInfo
 from homeassistant.components.wyoming.const import DOMAIN
-from homeassistant.components.zeroconf import ZeroconfServiceInfo
 from homeassistant.core import HomeAssistant
 from homeassistant.data_entry_flow import FlowResultType
+from homeassistant.helpers.service_info.hassio import HassioServiceInfo
+from homeassistant.helpers.service_info.zeroconf import ZeroconfServiceInfo
 
 from . import EMPTY_INFO, SATELLITE_INFO, STT_INFO, TTS_INFO
 
@@ -178,11 +178,11 @@ async def test_hassio_addon_discovery(
 
 async def test_hassio_addon_already_configured(hass: HomeAssistant) -> None:
     """Test we abort discovery if the add-on is already configured."""
-    MockConfigEntry(
+    entry = MockConfigEntry(
         domain=DOMAIN,
-        data={"host": "mock-piper", "port": "10200"},
-        unique_id="1234",
-    ).add_to_hass(hass)
+        data={"host": "mock-piper", "port": 10200},
+    )
+    entry.add_to_hass(hass)
 
     result = await hass.config_entries.flow.async_init(
         DOMAIN,
@@ -191,6 +191,7 @@ async def test_hassio_addon_already_configured(hass: HomeAssistant) -> None:
     )
     assert result.get("type") is FlowResultType.ABORT
     assert result.get("reason") == "already_configured"
+    assert entry.unique_id == "1234"
 
 
 async def test_hassio_addon_cannot_connect(hass: HomeAssistant) -> None:
@@ -230,9 +231,7 @@ async def test_hassio_addon_no_supported_services(hass: HomeAssistant) -> None:
 
 
 async def test_zeroconf_discovery(
-    hass: HomeAssistant,
-    mock_setup_entry: AsyncMock,
-    snapshot: SnapshotAssertion,
+    hass: HomeAssistant, snapshot: SnapshotAssertion
 ) -> None:
     """Test config flow initiated by Supervisor."""
     with patch(
@@ -257,9 +256,7 @@ async def test_zeroconf_discovery(
 
 
 async def test_zeroconf_discovery_no_port(
-    hass: HomeAssistant,
-    mock_setup_entry: AsyncMock,
-    snapshot: SnapshotAssertion,
+    hass: HomeAssistant, snapshot: SnapshotAssertion
 ) -> None:
     """Test discovery when the zeroconf service does not have a port."""
     with (
@@ -280,9 +277,7 @@ async def test_zeroconf_discovery_no_port(
 
 
 async def test_zeroconf_discovery_no_services(
-    hass: HomeAssistant,
-    mock_setup_entry: AsyncMock,
-    snapshot: SnapshotAssertion,
+    hass: HomeAssistant, snapshot: SnapshotAssertion
 ) -> None:
     """Test discovery when there are no supported services on the client."""
     with patch(
@@ -297,3 +292,56 @@ async def test_zeroconf_discovery_no_services(
 
     assert result.get("type") is FlowResultType.ABORT
     assert result.get("reason") == "no_services"
+
+
+async def test_zeroconf_discovery_already_configured(
+    hass: HomeAssistant, snapshot: SnapshotAssertion
+) -> None:
+    """Test config flow initiated by Supervisor."""
+    entry = MockConfigEntry(
+        domain=DOMAIN,
+        data={"host": "127.0.0.1", "port": 12345},
+    )
+    entry.add_to_hass(hass)
+
+    with patch(
+        "homeassistant.components.wyoming.data.load_wyoming_info",
+        return_value=SATELLITE_INFO,
+    ):
+        result = await hass.config_entries.flow.async_init(
+            DOMAIN,
+            data=ZEROCONF_DISCOVERY,
+            context={"source": config_entries.SOURCE_ZEROCONF},
+        )
+
+    assert result.get("type") is FlowResultType.ABORT
+    assert entry.unique_id == "test_zeroconf_name._wyoming._tcp.local._Test Satellite"
+
+
+async def test_bad_config_entry(hass: HomeAssistant) -> None:
+    """Test we can continue if a config entry is missing info."""
+    entry = MockConfigEntry(
+        domain=DOMAIN,
+        data={},  # no host/port
+    )
+    entry.add_to_hass(hass)
+
+    # hassio
+    result = await hass.config_entries.flow.async_init(
+        DOMAIN,
+        data=ADDON_DISCOVERY,
+        context={"source": config_entries.SOURCE_HASSIO},
+    )
+    assert result.get("type") is FlowResultType.FORM
+
+    # zeroconf
+    with patch(
+        "homeassistant.components.wyoming.data.load_wyoming_info",
+        return_value=SATELLITE_INFO,
+    ):
+        result = await hass.config_entries.flow.async_init(
+            DOMAIN,
+            data=ZEROCONF_DISCOVERY,
+            context={"source": config_entries.SOURCE_ZEROCONF},
+        )
+        assert result.get("type") is FlowResultType.FORM

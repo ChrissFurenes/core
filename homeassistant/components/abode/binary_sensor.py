@@ -1,30 +1,28 @@
 """Support for Abode Security System binary sensors."""
 
-from __future__ import annotations
-
 from typing import cast
 
-from jaraco.abode.devices.sensor import BinarySensor
+from jaraco.abode.devices.binary_sensor import BinarySensor
 
 from homeassistant.components.binary_sensor import (
     BinarySensorDeviceClass,
     BinarySensorEntity,
 )
-from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 from homeassistant.util.enum import try_parse_enum
 
-from . import AbodeSystem
-from .const import DOMAIN
+from . import AbodeConfigEntry
 from .entity import AbodeDevice
 
 
 async def async_setup_entry(
-    hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback
+    hass: HomeAssistant,
+    entry: AbodeConfigEntry,
+    async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up Abode binary sensor devices."""
-    data: AbodeSystem = hass.data[DOMAIN]
+    data = entry.runtime_data
 
     device_types = [
         "connectivity",

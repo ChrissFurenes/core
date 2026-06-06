@@ -17,13 +17,15 @@
 # ---
 # name: test_controlling_state_via_mqtt[sensor_config0-entity_ids0-messages0].1
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': dict({
       'state_class': <SensorStateClass.MEASUREMENT: 'measurement'>,
     }),
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -37,13 +39,18 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'DHT11 Temperature',
     'options': dict({
+      'sensor': dict({
+        'suggested_display_precision': 1,
+      }),
     }),
     'original_device_class': <SensorDeviceClass.TEMPERATURE: 'temperature'>,
     'original_icon': None,
     'original_name': 'DHT11 Temperature',
     'platform': 'tasmota',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': None,
     'unique_id': '00000049A3BC_sensor_sensor_DHT11_Temperature',
@@ -98,11 +105,13 @@
 # ---
 # name: test_controlling_state_via_mqtt[sensor_config1-entity_ids1-messages1].1
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': None,
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -116,6 +125,7 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'TX23 Speed Act',
     'options': dict({
     }),
     'original_device_class': None,
@@ -123,6 +133,7 @@
     'original_name': 'TX23 Speed Act',
     'platform': 'tasmota',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': None,
     'unique_id': '00000049A3BC_sensor_sensor_TX23_Speed_Act',
@@ -144,11 +155,13 @@
 # ---
 # name: test_controlling_state_via_mqtt[sensor_config1-entity_ids1-messages1].3
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': None,
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -162,6 +175,7 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'TX23 Dir Card',
     'options': dict({
     }),
     'original_device_class': None,
@@ -169,6 +183,7 @@
     'original_name': 'TX23 Dir Card',
     'platform': 'tasmota',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': None,
     'unique_id': '00000049A3BC_sensor_sensor_TX23_Dir_Card',
@@ -247,13 +262,15 @@
 # ---
 # name: test_controlling_state_via_mqtt[sensor_config2-entity_ids2-messages2].1
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': dict({
       'state_class': <SensorStateClass.TOTAL: 'total'>,
     }),
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -267,13 +284,18 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'ENERGY TotalTariff 0',
     'options': dict({
+      'sensor': dict({
+        'suggested_display_precision': 2,
+      }),
     }),
     'original_device_class': <SensorDeviceClass.ENERGY: 'energy'>,
     'original_icon': None,
     'original_name': 'ENERGY TotalTariff 0',
     'platform': 'tasmota',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': None,
     'unique_id': '00000049A3BC_sensor_sensor_ENERGY_TotalTariff_0',
@@ -394,13 +416,15 @@
 # ---
 # name: test_controlling_state_via_mqtt[sensor_config2-entity_ids2-messages2].3
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': dict({
       'state_class': <SensorStateClass.TOTAL: 'total'>,
     }),
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -414,13 +438,18 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'ENERGY TotalTariff 1',
     'options': dict({
+      'sensor': dict({
+        'suggested_display_precision': 2,
+      }),
     }),
     'original_device_class': <SensorDeviceClass.ENERGY: 'energy'>,
     'original_icon': None,
     'original_name': 'ENERGY TotalTariff 1',
     'platform': 'tasmota',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': None,
     'unique_id': '00000049A3BC_sensor_sensor_ENERGY_TotalTariff_1',
@@ -445,13 +474,15 @@
 # ---
 # name: test_controlling_state_via_mqtt[sensor_config2-entity_ids2-messages2].5
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': dict({
       'state_class': <SensorStateClass.TOTAL: 'total'>,
     }),
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -465,13 +496,18 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'ENERGY ExportTariff 0',
     'options': dict({
+      'sensor': dict({
+        'suggested_display_precision': 2,
+      }),
     }),
     'original_device_class': <SensorDeviceClass.ENERGY: 'energy'>,
     'original_icon': None,
     'original_name': 'ENERGY ExportTariff 0',
     'platform': 'tasmota',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': None,
     'unique_id': '00000049A3BC_sensor_sensor_ENERGY_ExportTariff_0',
@@ -496,13 +532,15 @@
 # ---
 # name: test_controlling_state_via_mqtt[sensor_config2-entity_ids2-messages2].7
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': dict({
       'state_class': <SensorStateClass.TOTAL: 'total'>,
     }),
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -516,13 +554,18 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'ENERGY ExportTariff 1',
     'options': dict({
+      'sensor': dict({
+        'suggested_display_precision': 2,
+      }),
     }),
     'original_device_class': <SensorDeviceClass.ENERGY: 'energy'>,
     'original_icon': None,
     'original_name': 'ENERGY ExportTariff 1',
     'platform': 'tasmota',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': None,
     'unique_id': '00000049A3BC_sensor_sensor_ENERGY_ExportTariff_1',
@@ -579,13 +622,15 @@
 # ---
 # name: test_controlling_state_via_mqtt[sensor_config3-entity_ids3-messages3].1
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': dict({
       'state_class': <SensorStateClass.MEASUREMENT: 'measurement'>,
     }),
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -599,13 +644,18 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'DS18B20 Temperature',
     'options': dict({
+      'sensor': dict({
+        'suggested_display_precision': 1,
+      }),
     }),
     'original_device_class': <SensorDeviceClass.TEMPERATURE: 'temperature'>,
     'original_icon': None,
     'original_name': 'DS18B20 Temperature',
     'platform': 'tasmota',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': None,
     'unique_id': '00000049A3BC_sensor_sensor_DS18B20_Temperature',
@@ -627,11 +677,13 @@
 # ---
 # name: test_controlling_state_via_mqtt[sensor_config3-entity_ids3-messages3].3
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': None,
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -645,6 +697,7 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'DS18B20 Id',
     'options': dict({
     }),
     'original_device_class': None,
@@ -652,6 +705,7 @@
     'original_name': 'DS18B20 Id',
     'platform': 'tasmota',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': None,
     'unique_id': '00000049A3BC_sensor_sensor_DS18B20_Id',
@@ -734,13 +788,15 @@
 # ---
 # name: test_controlling_state_via_mqtt[sensor_config4-entity_ids4-messages4].1
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': dict({
       'state_class': <SensorStateClass.TOTAL: 'total'>,
     }),
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -754,13 +810,18 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'ENERGY Total',
     'options': dict({
+      'sensor': dict({
+        'suggested_display_precision': 2,
+      }),
     }),
     'original_device_class': <SensorDeviceClass.ENERGY: 'energy'>,
     'original_icon': None,
     'original_name': 'ENERGY Total',
     'platform': 'tasmota',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': None,
     'unique_id': '00000049A3BC_sensor_sensor_ENERGY_Total',
@@ -817,13 +878,15 @@
 # ---
 # name: test_controlling_state_via_mqtt[sensor_config5-entity_ids5-messages5].1
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': dict({
       'state_class': <SensorStateClass.TOTAL: 'total'>,
     }),
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -837,13 +900,18 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'ENERGY Total 0',
     'options': dict({
+      'sensor': dict({
+        'suggested_display_precision': 2,
+      }),
     }),
     'original_device_class': <SensorDeviceClass.ENERGY: 'energy'>,
     'original_icon': None,
     'original_name': 'ENERGY Total 0',
     'platform': 'tasmota',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': None,
     'unique_id': '00000049A3BC_sensor_sensor_ENERGY_Total_0',
@@ -868,13 +936,15 @@
 # ---
 # name: test_controlling_state_via_mqtt[sensor_config5-entity_ids5-messages5].3
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': dict({
       'state_class': <SensorStateClass.TOTAL: 'total'>,
     }),
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -888,13 +958,18 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'ENERGY Total 1',
     'options': dict({
+      'sensor': dict({
+        'suggested_display_precision': 2,
+      }),
     }),
     'original_device_class': <SensorDeviceClass.ENERGY: 'energy'>,
     'original_icon': None,
     'original_name': 'ENERGY Total 1',
     'platform': 'tasmota',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': None,
     'unique_id': '00000049A3BC_sensor_sensor_ENERGY_Total_1',
@@ -983,13 +1058,15 @@
 # ---
 # name: test_controlling_state_via_mqtt[sensor_config6-entity_ids6-messages6].1
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': dict({
       'state_class': <SensorStateClass.TOTAL: 'total'>,
     }),
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -1003,13 +1080,18 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'ENERGY Total Phase1',
     'options': dict({
+      'sensor': dict({
+        'suggested_display_precision': 2,
+      }),
     }),
     'original_device_class': <SensorDeviceClass.ENERGY: 'energy'>,
     'original_icon': None,
     'original_name': 'ENERGY Total Phase1',
     'platform': 'tasmota',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': None,
     'unique_id': '00000049A3BC_sensor_sensor_ENERGY_Total_Phase1',
@@ -1034,13 +1116,15 @@
 # ---
 # name: test_controlling_state_via_mqtt[sensor_config6-entity_ids6-messages6].3
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': dict({
       'state_class': <SensorStateClass.TOTAL: 'total'>,
     }),
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -1054,13 +1138,18 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'ENERGY Total Phase2',
     'options': dict({
+      'sensor': dict({
+        'suggested_display_precision': 2,
+      }),
     }),
     'original_device_class': <SensorDeviceClass.ENERGY: 'energy'>,
     'original_icon': None,
     'original_name': 'ENERGY Total Phase2',
     'platform': 'tasmota',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': None,
     'unique_id': '00000049A3BC_sensor_sensor_ENERGY_Total_Phase2',
@@ -1149,13 +1238,15 @@
 # ---
 # name: test_controlling_state_via_mqtt[sensor_config7-entity_ids7-messages7].1
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': dict({
       'state_class': <SensorStateClass.MEASUREMENT: 'measurement'>,
     }),
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -1169,13 +1260,18 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'ANALOG Temperature1',
     'options': dict({
+      'sensor': dict({
+        'suggested_display_precision': 1,
+      }),
     }),
     'original_device_class': <SensorDeviceClass.TEMPERATURE: 'temperature'>,
     'original_icon': None,
     'original_name': 'ANALOG Temperature1',
     'platform': 'tasmota',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': None,
     'unique_id': '00000049A3BC_sensor_sensor_ANALOG_Temperature1',
@@ -1232,13 +1328,15 @@
 # ---
 # name: test_controlling_state_via_mqtt[sensor_config7-entity_ids7-messages7].3
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': dict({
       'state_class': <SensorStateClass.MEASUREMENT: 'measurement'>,
     }),
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -1252,13 +1350,18 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'ANALOG Temperature2',
     'options': dict({
+      'sensor': dict({
+        'suggested_display_precision': 1,
+      }),
     }),
     'original_device_class': <SensorDeviceClass.TEMPERATURE: 'temperature'>,
     'original_icon': None,
     'original_name': 'ANALOG Temperature2',
     'platform': 'tasmota',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': None,
     'unique_id': '00000049A3BC_sensor_sensor_ANALOG_Temperature2',
@@ -1283,13 +1386,15 @@
 # ---
 # name: test_controlling_state_via_mqtt[sensor_config7-entity_ids7-messages7].5
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': dict({
       'state_class': <SensorStateClass.MEASUREMENT: 'measurement'>,
     }),
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -1303,6 +1408,7 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'ANALOG Illuminance3',
     'options': dict({
     }),
     'original_device_class': <SensorDeviceClass.ILLUMINANCE: 'illuminance'>,
@@ -1310,6 +1416,7 @@
     'original_name': 'ANALOG Illuminance3',
     'platform': 'tasmota',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': None,
     'unique_id': '00000049A3BC_sensor_sensor_ANALOG_Illuminance3',
@@ -1398,13 +1505,15 @@
 # ---
 # name: test_controlling_state_via_mqtt[sensor_config8-entity_ids8-messages8].1
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': dict({
       'state_class': <SensorStateClass.TOTAL: 'total'>,
     }),
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -1418,13 +1527,18 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'ANALOG CTEnergy1 Energy',
     'options': dict({
+      'sensor': dict({
+        'suggested_display_precision': 2,
+      }),
     }),
     'original_device_class': <SensorDeviceClass.ENERGY: 'energy'>,
     'original_icon': None,
     'original_name': 'ANALOG CTEnergy1 Energy',
     'platform': 'tasmota',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': None,
     'unique_id': '00000049A3BC_sensor_sensor_ANALOG_CTEnergy1_Energy',
@@ -1545,13 +1659,15 @@
 # ---
 # name: test_controlling_state_via_mqtt[sensor_config8-entity_ids8-messages8].3
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': dict({
       'state_class': <SensorStateClass.MEASUREMENT: 'measurement'>,
     }),
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -1565,13 +1681,18 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'ANALOG CTEnergy1 Power',
     'options': dict({
+      'sensor': dict({
+        'suggested_display_precision': 0,
+      }),
     }),
     'original_device_class': <SensorDeviceClass.POWER: 'power'>,
     'original_icon': None,
     'original_name': 'ANALOG CTEnergy1 Power',
     'platform': 'tasmota',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': None,
     'unique_id': '00000049A3BC_sensor_sensor_ANALOG_CTEnergy1_Power',
@@ -1596,13 +1717,15 @@
 # ---
 # name: test_controlling_state_via_mqtt[sensor_config8-entity_ids8-messages8].5
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': dict({
       'state_class': <SensorStateClass.MEASUREMENT: 'measurement'>,
     }),
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -1616,13 +1739,18 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'ANALOG CTEnergy1 Voltage',
     'options': dict({
+      'sensor': dict({
+        'suggested_display_precision': 0,
+      }),
     }),
     'original_device_class': <SensorDeviceClass.VOLTAGE: 'voltage'>,
     'original_icon': None,
     'original_name': 'ANALOG CTEnergy1 Voltage',
     'platform': 'tasmota',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': None,
     'unique_id': '00000049A3BC_sensor_sensor_ANALOG_CTEnergy1_Voltage',
@@ -1647,13 +1775,15 @@
 # ---
 # name: test_controlling_state_via_mqtt[sensor_config8-entity_ids8-messages8].7
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': dict({
       'state_class': <SensorStateClass.MEASUREMENT: 'measurement'>,
     }),
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -1667,13 +1797,18 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'ANALOG CTEnergy1 Current',
     'options': dict({
+      'sensor': dict({
+        'suggested_display_precision': 2,
+      }),
     }),
     'original_device_class': <SensorDeviceClass.CURRENT: 'current'>,
     'original_icon': None,
     'original_name': 'ANALOG CTEnergy1 Current',
     'platform': 'tasmota',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': None,
     'unique_id': '00000049A3BC_sensor_sensor_ANALOG_CTEnergy1_Current',
@@ -1727,11 +1862,13 @@
 # ---
 # name: test_controlling_state_via_mqtt[sensor_config9-entity_ids9-messages9].1
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': None,
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -1745,6 +1882,7 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'SENSOR1 Unknown',
     'options': dict({
     }),
     'original_device_class': None,
@@ -1752,6 +1890,7 @@
     'original_name': 'SENSOR1 Unknown',
     'platform': 'tasmota',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': None,
     'unique_id': '00000049A3BC_sensor_sensor_SENSOR1_Unknown',
@@ -1855,11 +1994,13 @@
 # ---
 # name: test_controlling_state_via_mqtt[sensor_config9-entity_ids9-messages9].3
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': None,
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -1873,6 +2014,7 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'SENSOR2 Unknown',
     'options': dict({
     }),
     'original_device_class': None,
@@ -1880,6 +2022,7 @@
     'original_name': 'SENSOR2 Unknown',
     'platform': 'tasmota',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': None,
     'unique_id': '00000049A3BC_sensor_sensor_SENSOR2_Unknown',
@@ -1902,13 +2045,15 @@
 # ---
 # name: test_controlling_state_via_mqtt[sensor_config9-entity_ids9-messages9].5
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': dict({
       'state_class': <SensorStateClass.MEASUREMENT: 'measurement'>,
     }),
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -1922,6 +2067,7 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'SENSOR3 Unknown',
     'options': dict({
     }),
     'original_device_class': None,
@@ -1929,6 +2075,7 @@
     'original_name': 'SENSOR3 Unknown',
     'platform': 'tasmota',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': None,
     'unique_id': '00000049A3BC_sensor_sensor_SENSOR3_Unknown',
@@ -1951,13 +2098,15 @@
 # ---
 # name: test_controlling_state_via_mqtt[sensor_config9-entity_ids9-messages9].7
   EntityRegistryEntrySnapshot({
-    'aliases': set({
-    }),
+    'aliases': list([
+      None,
+    ]),
     'area_id': None,
     'capabilities': dict({
       'state_class': <SensorStateClass.MEASUREMENT: 'measurement'>,
     }),
     'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
     'device_class': None,
     'device_id': <ANY>,
     'disabled_by': None,
@@ -1971,6 +2120,7 @@
     'labels': set({
     }),
     'name': None,
+    'object_id_base': 'SENSOR4 Unknown',
     'options': dict({
     }),
     'original_device_class': None,
@@ -1978,6 +2128,7 @@
     'original_name': 'SENSOR4 Unknown',
     'platform': 'tasmota',
     'previous_unique_id': None,
+    'suggested_object_id': None,
     'supported_features': 0,
     'translation_key': None,
     'unique_id': '00000049A3BC_sensor_sensor_SENSOR4_Unknown',

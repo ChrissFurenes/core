@@ -1,7 +1,5 @@
 """Config flow for the BLE Tracker."""
 
-from __future__ import annotations
-
 import base64
 import binascii
 import logging
@@ -20,8 +18,7 @@ CONF_IRK = "irk"
 
 
 def _parse_irk(irk: str) -> bytes | None:
-    if irk.startswith("irk:"):
-        irk = irk[4:]
+    irk = irk.removeprefix("irk:")
 
     if irk.endswith("="):
         try:

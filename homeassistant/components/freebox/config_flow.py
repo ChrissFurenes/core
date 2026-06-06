@@ -6,9 +6,9 @@ from typing import Any
 from freebox_api.exceptions import AuthorizationError, HttpRequestError
 import voluptuous as vol
 
-from homeassistant.components import zeroconf
 from homeassistant.config_entries import ConfigFlow, ConfigFlowResult
 from homeassistant.const import CONF_HOST, CONF_PORT
+from homeassistant.helpers.service_info.zeroconf import ZeroconfServiceInfo
 
 from .const import DOMAIN
 from .router import get_api, get_hosts_list_if_supported
@@ -19,7 +19,7 @@ _LOGGER = logging.getLogger(__name__)
 class FreeboxFlowHandler(ConfigFlow, domain=DOMAIN):
     """Handle a config flow."""
 
-    VERSION = 1
+    VERSION = 2
 
     def __init__(self) -> None:
         """Initialize config flow."""
@@ -44,6 +44,8 @@ class FreeboxFlowHandler(ConfigFlow, domain=DOMAIN):
         self._data = user_input
 
         # Check if already configured
+        # Uses the host/IP value from CONF_HOST as unique ID, which is no longer allowed
+        # pylint: disable-next=home-assistant-unique-id-ip-based
         await self.async_set_unique_id(self._data[CONF_HOST])
         self._abort_if_unique_id_configured()
 
@@ -99,10 +101,12 @@ class FreeboxFlowHandler(ConfigFlow, domain=DOMAIN):
         return self.async_show_form(step_id="link", errors=errors)
 
     async def async_step_zeroconf(
-        self, discovery_info: zeroconf.ZeroconfServiceInfo
+        self, discovery_info: ZeroconfServiceInfo
     ) -> ConfigFlowResult:
         """Initialize flow from zeroconf."""
         zeroconf_properties = discovery_info.properties
-        host = zeroconf_properties["api_domain"]
-        port = zeroconf_properties["https_port"]
+        host = zeroconf_properties.get("api_domain")
+        if not host:
+            return self.async_abort(reason="missing_api_domain")
+        port = zeroconf_properties.get("https_port") or discovery_info.port
         return await self.async_step_user({CONF_HOST: host, CONF_PORT: port})

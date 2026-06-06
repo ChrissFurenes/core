@@ -1,7 +1,5 @@
 """Utility functions for Ista EcoTrend integration."""
 
-from __future__ import annotations
-
 import datetime
 from enum import StrEnum
 from typing import Any
@@ -108,22 +106,22 @@ def get_statistics(
     if monthly_consumptions := get_consumptions(data, value_type):
         return [
             {
-                "value": as_number(
-                    get_values_by_type(
-                        consumptions=consumptions,
-                        consumption_type=consumption_type,
-                    ).get(
-                        "additionalValue"
-                        if value_type == IstaValueType.ENERGY
-                        else "value"
-                    )
-                ),
+                "value": as_number(value),
                 "date": consumptions["date"],
             }
             for consumptions in monthly_consumptions
-            if get_values_by_type(
-                consumptions=consumptions,
-                consumption_type=consumption_type,
-            ).get("additionalValue" if value_type == IstaValueType.ENERGY else "value")
+            if (
+                value := (
+                    consumption := get_values_by_type(
+                        consumptions=consumptions,
+                        consumption_type=consumption_type,
+                    )
+                ).get(
+                    "additionalValue"
+                    if value_type == IstaValueType.ENERGY
+                    and consumption.get("additionalValue") is not None
+                    else "value"
+                )
+            )
         ]
     return None

@@ -7,13 +7,13 @@ pubsub subscriber.
 from collections.abc import Awaitable, Callable
 from http import HTTPStatus
 from typing import Any
+from unittest.mock import AsyncMock
 
 import aiohttp
-from google_nest_sdm.auth import AbstractAuth
-from google_nest_sdm.event import EventMessage
 import pytest
 
 from homeassistant.components.climate import (
+    ATTR_CURRENT_HUMIDITY,
     ATTR_CURRENT_TEMPERATURE,
     ATTR_FAN_MODE,
     ATTR_FAN_MODES,
@@ -39,14 +39,19 @@ from homeassistant.const import (
     STATE_UNAVAILABLE,
 )
 from homeassistant.core import HomeAssistant
-from homeassistant.exceptions import HomeAssistantError, ServiceValidationError
+from homeassistant.exceptions import (
+    HomeAssistantError,
+    ServiceNotSupported,
+    ServiceValidationError,
+)
 
 from .common import (
     DEVICE_COMMAND,
     DEVICE_ID,
+    DOMAIN,
     CreateDevice,
-    FakeSubscriber,
     PlatformSetup,
+    create_nest_event,
 )
 from .conftest import FakeAuth
 
@@ -72,14 +77,13 @@ def device_traits() -> dict[str, Any]:
 @pytest.fixture
 async def create_event(
     hass: HomeAssistant,
-    auth: AbstractAuth,
-    subscriber: FakeSubscriber,
+    subscriber: AsyncMock,
 ) -> CreateEvent:
     """Fixture to send a pub/sub event."""
 
     async def create_event(traits: dict[str, Any]) -> None:
         await subscriber.async_receive_event(
-            EventMessage.create_event(
+            create_nest_event(
                 {
                     "eventId": EVENT_ID,
                     "timestamp": "2019-01-01T00:00:01Z",
@@ -88,7 +92,6 @@ async def create_event(
                         "traits": traits,
                     },
                 },
-                auth=auth,
             )
         )
         await hass.async_block_till_done()
@@ -125,6 +128,9 @@ async def test_thermostat_off(
             "sdm.devices.traits.Temperature": {
                 "ambientTemperatureCelsius": 16.2,
             },
+            "sdm.devices.traits.Humidity": {
+                "ambientHumidityPercent": 40.6,
+            },
         },
     )
     await setup_platform()
@@ -134,6 +140,7 @@ async def test_thermostat_off(
     assert thermostat is not None
     assert thermostat.state == HVACMode.OFF
     assert thermostat.attributes[ATTR_HVAC_ACTION] == HVACAction.OFF
+    assert thermostat.attributes[ATTR_CURRENT_HUMIDITY] == 40.6
     assert thermostat.attributes[ATTR_CURRENT_TEMPERATURE] == 16.2
     assert set(thermostat.attributes[ATTR_HVAC_MODES]) == {
         HVACMode.HEAT,
@@ -166,6 +173,9 @@ async def test_thermostat_heat(
             "sdm.devices.traits.Temperature": {
                 "ambientTemperatureCelsius": 16.2,
             },
+            "sdm.devices.traits.Humidity": {
+                "ambientHumidityPercent": 40.6,
+            },
             "sdm.devices.traits.ThermostatTemperatureSetpoint": {
                 "heatCelsius": 22.0,
             },
@@ -178,6 +188,7 @@ async def test_thermostat_heat(
     assert thermostat is not None
     assert thermostat.state == HVACMode.HEAT
     assert thermostat.attributes[ATTR_HVAC_ACTION] == HVACAction.HEATING
+    assert thermostat.attributes[ATTR_CURRENT_HUMIDITY] == 40.6
     assert thermostat.attributes[ATTR_CURRENT_TEMPERATURE] == 16.2
     assert set(thermostat.attributes[ATTR_HVAC_MODES]) == {
         HVACMode.HEAT,
@@ -514,7 +525,7 @@ async def test_thermostat_invalid_hvac_mode(
     assert thermostat.state == HVACMode.OFF
     assert thermostat.attributes[ATTR_HVAC_ACTION] == HVACAction.OFF
 
-    with pytest.raises(ValueError):
+    with pytest.raises(ServiceValidationError):
         await common.async_set_hvac_mode(hass, HVACMode.DRY)
 
     assert thermostat.state == HVACMode.OFF
@@ -886,6 +897,9 @@ async def test_thermostat_fan_off(
             "sdm.devices.traits.Temperature": {
                 "ambientTemperatureCelsius": 16.2,
             },
+            "sdm.devices.traits.Humidity": {
+                "ambientHumidityPercent": 40.6,
+            },
         }
     )
     await setup_platform()
@@ -895,6 +909,7 @@ async def test_thermostat_fan_off(
     assert thermostat is not None
     assert thermostat.state == HVACMode.COOL
     assert thermostat.attributes[ATTR_HVAC_ACTION] == HVACAction.IDLE
+    assert thermostat.attributes[ATTR_CURRENT_HUMIDITY] == 40.6
     assert thermostat.attributes[ATTR_CURRENT_TEMPERATURE] == 16.2
     assert set(thermostat.attributes[ATTR_HVAC_MODES]) == {
         HVACMode.HEAT,
@@ -935,6 +950,9 @@ async def test_thermostat_fan_on(
             "sdm.devices.traits.Temperature": {
                 "ambientTemperatureCelsius": 16.2,
             },
+            "sdm.devices.traits.Humidity": {
+                "ambientHumidityPercent": 40.6,
+            },
         }
     )
     await setup_platform()
@@ -944,6 +962,7 @@ async def test_thermostat_fan_on(
     assert thermostat is not None
     assert thermostat.state == HVACMode.COOL
     assert thermostat.attributes[ATTR_HVAC_ACTION] == HVACAction.IDLE
+    assert thermostat.attributes[ATTR_CURRENT_HUMIDITY] == 40.6
     assert thermostat.attributes[ATTR_CURRENT_TEMPERATURE] == 16.2
     assert set(thermostat.attributes[ATTR_HVAC_MODES]) == {
         HVACMode.HEAT,
@@ -1071,6 +1090,191 @@ async def test_thermostat_set_fan(
     }
 
 
+async def test_set_fan_timer(
+    hass: HomeAssistant,
+    setup_platform: PlatformSetup,
+    auth: FakeAuth,
+    create_device: CreateDevice,
+) -> None:
+    """Test the set_fan_timer service."""
+    create_device.create(
+        {
+            "sdm.devices.traits.Fan": {
+                "timerMode": "OFF",
+            },
+            "sdm.devices.traits.ThermostatHvac": {"status": "HEATING"},
+            "sdm.devices.traits.ThermostatMode": {
+                "availableModes": ["HEAT", "OFF"],
+                "mode": "HEAT",
+            },
+            "sdm.devices.traits.TemperatureTrait": {"ambientTemperatureCelsius": 20.0},
+        }
+    )
+    await setup_platform()
+
+    # Call the set_fan_timer service
+    await hass.services.async_call(
+        DOMAIN,
+        "set_fan_timer",
+        {
+            "entity_id": "climate.my_thermostat",
+            "duration": {"minutes": 15},
+        },
+        blocking=True,
+    )
+
+    assert auth.method == "post"
+    assert auth.url == DEVICE_COMMAND
+    assert auth.json == {
+        "command": "sdm.devices.commands.Fan.SetTimer",
+        "params": {
+            "duration": "900s",
+            "timerMode": "ON",
+        },
+    }
+
+
+async def test_set_fan_timer_hvac_off(
+    hass: HomeAssistant,
+    setup_platform: PlatformSetup,
+    auth: FakeAuth,
+    create_device: CreateDevice,
+) -> None:
+    """Test the set_fan_timer service when HVAC is off."""
+    create_device.create(
+        {
+            "sdm.devices.traits.Fan": {
+                "timerMode": "OFF",
+            },
+            "sdm.devices.traits.ThermostatHvac": {"status": "OFF"},
+            "sdm.devices.traits.ThermostatMode": {
+                "availableModes": ["HEAT", "OFF"],
+                "mode": "OFF",
+            },
+        }
+    )
+    await setup_platform()
+
+    with pytest.raises(HomeAssistantError, match="Cannot turn on fan"):
+        await hass.services.async_call(
+            DOMAIN,
+            "set_fan_timer",
+            {
+                "entity_id": "climate.my_thermostat",
+                "duration": {"minutes": 15},
+            },
+            blocking=True,
+        )
+
+
+async def test_set_fan_timer_no_fan(
+    hass: HomeAssistant,
+    setup_platform: PlatformSetup,
+    create_device: CreateDevice,
+) -> None:
+    """Test the set_fan_timer service when device does not support fan."""
+    create_device.create(
+        {
+            "sdm.devices.traits.ThermostatHvac": {"status": "HEATING"},
+            "sdm.devices.traits.ThermostatMode": {
+                "availableModes": ["HEAT", "OFF"],
+                "mode": "HEAT",
+            },
+        }
+    )
+    await setup_platform()
+
+    with pytest.raises(ServiceNotSupported, match="does not support action"):
+        await hass.services.async_call(
+            DOMAIN,
+            "set_fan_timer",
+            {
+                "entity_id": "climate.my_thermostat",
+                "duration": {"minutes": 15},
+            },
+            blocking=True,
+        )
+
+
+async def test_set_fan_timer_api_error(
+    hass: HomeAssistant,
+    setup_platform: PlatformSetup,
+    auth: FakeAuth,
+    create_device: CreateDevice,
+) -> None:
+    """Test the set_fan_timer service with an API error."""
+    create_device.create(
+        {
+            "sdm.devices.traits.Fan": {
+                "timerMode": "OFF",
+            },
+            "sdm.devices.traits.ThermostatHvac": {"status": "HEATING"},
+            "sdm.devices.traits.ThermostatMode": {
+                "availableModes": ["HEAT", "OFF"],
+                "mode": "HEAT",
+            },
+        }
+    )
+    await setup_platform()
+
+    auth.responses = [aiohttp.web.Response(status=HTTPStatus.INTERNAL_SERVER_ERROR)]
+    with pytest.raises(HomeAssistantError, match="Error setting .* fan timer"):
+        await hass.services.async_call(
+            DOMAIN,
+            "set_fan_timer",
+            {
+                "entity_id": "climate.my_thermostat",
+                "duration": {"minutes": 15},
+            },
+            blocking=True,
+        )
+
+
+async def test_set_fan_timer_invalid_duration(
+    hass: HomeAssistant,
+    setup_platform: PlatformSetup,
+    create_device: CreateDevice,
+) -> None:
+    """Test the set_fan_timer service with invalid durations."""
+    create_device.create(
+        {
+            "sdm.devices.traits.Fan": {
+                "timerMode": "OFF",
+            },
+            "sdm.devices.traits.ThermostatHvac": {"status": "HEATING"},
+            "sdm.devices.traits.ThermostatMode": {
+                "availableModes": ["HEAT", "OFF"],
+                "mode": "HEAT",
+            },
+        }
+    )
+    await setup_platform()
+
+    # Duration too long (over 12 hours)
+    with pytest.raises(ValueError, match="must be between 1 and 43200 seconds"):
+        await hass.services.async_call(
+            DOMAIN,
+            "set_fan_timer",
+            {
+                "entity_id": "climate.my_thermostat",
+                "duration": {"hours": 16},
+            },
+            blocking=True,
+        )
+
+    # Duration zero
+    with pytest.raises(ValueError, match="must be between 1 and 43200 seconds"):
+        await hass.services.async_call(
+            DOMAIN,
+            "set_fan_timer",
+            {
+                "entity_id": "climate.my_thermostat",
+                "duration": {"seconds": 0},
+            },
+            blocking=True,
+        )
+
+
 async def test_thermostat_set_fan_when_off(
     hass: HomeAssistant,
     setup_platform: PlatformSetup,
@@ -1131,6 +1335,9 @@ async def test_thermostat_fan_empty(
             "sdm.devices.traits.Temperature": {
                 "ambientTemperatureCelsius": 16.2,
             },
+            "sdm.devices.traits.Humidity": {
+                "ambientHumidityPercent": 40.6,
+            },
         }
     )
     await setup_platform()
@@ -1140,6 +1347,7 @@ async def test_thermostat_fan_empty(
     assert thermostat is not None
     assert thermostat.state == HVACMode.OFF
     assert thermostat.attributes[ATTR_HVAC_ACTION] == HVACAction.OFF
+    assert thermostat.attributes[ATTR_CURRENT_HUMIDITY] == 40.6
     assert thermostat.attributes[ATTR_CURRENT_TEMPERATURE] == 16.2
     assert set(thermostat.attributes[ATTR_HVAC_MODES]) == {
         HVACMode.HEAT,
@@ -1184,6 +1392,9 @@ async def test_thermostat_invalid_fan_mode(
             "sdm.devices.traits.Temperature": {
                 "ambientTemperatureCelsius": 16.2,
             },
+            "sdm.devices.traits.Humidity": {
+                "ambientHumidityPercent": 40.6,
+            },
         }
     )
     await setup_platform()
@@ -1193,6 +1404,7 @@ async def test_thermostat_invalid_fan_mode(
     assert thermostat is not None
     assert thermostat.state == HVACMode.COOL
     assert thermostat.attributes[ATTR_HVAC_ACTION] == HVACAction.IDLE
+    assert thermostat.attributes[ATTR_CURRENT_HUMIDITY] == 40.6
     assert thermostat.attributes[ATTR_CURRENT_TEMPERATURE] == 16.2
     assert set(thermostat.attributes[ATTR_HVAC_MODES]) == {
         HVACMode.HEAT,
@@ -1374,7 +1586,7 @@ async def test_thermostat_unexpected_hvac_status(
     assert ATTR_FAN_MODE not in thermostat.attributes
     assert ATTR_FAN_MODES not in thermostat.attributes
 
-    with pytest.raises(ValueError):
+    with pytest.raises(ServiceValidationError):
         await common.async_set_hvac_mode(hass, HVACMode.DRY)
     assert thermostat.state == HVACMode.OFF
 

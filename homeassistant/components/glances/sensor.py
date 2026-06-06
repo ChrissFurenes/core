@@ -1,6 +1,4 @@
-"""Support gathering system information of hosts which are running glances."""
-
-from __future__ import annotations
+"""Support gathering system information of hosts which are running Glances."""
 
 from dataclasses import dataclass
 
@@ -19,11 +17,11 @@ from homeassistant.const import (
 )
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.device_registry import DeviceInfo
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from . import GlancesConfigEntry, GlancesDataUpdateCoordinator
 from .const import CPU_ICON, DOMAIN
+from .coordinator import GlancesConfigEntry, GlancesDataUpdateCoordinator
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -45,6 +43,14 @@ SENSOR_TYPES = {
         key="disk_use",
         type="fs",
         translation_key="disk_used",
+        native_unit_of_measurement=UnitOfInformation.GIBIBYTES,
+        device_class=SensorDeviceClass.DATA_SIZE,
+        state_class=SensorStateClass.MEASUREMENT,
+    ),
+    ("fs", "disk_size"): GlancesSensorEntityDescription(
+        key="disk_size",
+        type="fs",
+        translation_key="disk_size",
         native_unit_of_measurement=UnitOfInformation.GIBIBYTES,
         device_class=SensorDeviceClass.DATA_SIZE,
         state_class=SensorStateClass.MEASUREMENT,
@@ -288,7 +294,7 @@ SENSOR_TYPES = {
 async def async_setup_entry(
     hass: HomeAssistant,
     config_entry: GlancesConfigEntry,
-    async_add_entities: AddEntitiesCallback,
+    async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up the Glances sensors."""
 
@@ -375,6 +381,8 @@ class GlancesSensor(CoordinatorEntity[GlancesDataUpdateCoordinator], SensorEntit
         self._data_valid = self._attr_native_value is not None and (
             not self._numeric_state_expected
             or isinstance(self._attr_native_value, (int, float))
-            or isinstance(self._attr_native_value, str)
-            and self._attr_native_value.isnumeric()
+            or (
+                isinstance(self._attr_native_value, str)
+                and self._attr_native_value.isnumeric()
+            )
         )

@@ -15,15 +15,20 @@ from .const import CONF_APP_ID, POLLING_PERIOD_S
 
 _LOGGER = logging.getLogger(__name__)
 
+type TTNConfigEntry = ConfigEntry[TTNCoordinator]
+
 
 class TTNCoordinator(DataUpdateCoordinator[TTNClient.DATA_TYPE]):
     """TTN coordinator."""
 
-    def __init__(self, hass: HomeAssistant, entry: ConfigEntry) -> None:
+    config_entry: TTNConfigEntry
+
+    def __init__(self, hass: HomeAssistant, entry: TTNConfigEntry) -> None:
         """Initialize my coordinator."""
         super().__init__(
             hass,
             _LOGGER,
+            config_entry=entry,
             # Name of the data. For logging purposes.
             name=f"TheThingsNetwork_{entry.data[CONF_APP_ID]}",
             # Polling interval. Will only be polled if there are subscribers.

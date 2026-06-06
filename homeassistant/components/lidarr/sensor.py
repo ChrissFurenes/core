@@ -1,7 +1,5 @@
 """Support for Lidarr."""
 
-from __future__ import annotations
-
 from collections.abc import Callable
 import dataclasses
 from typing import Any, Generic
@@ -16,11 +14,11 @@ from homeassistant.components.sensor import (
 )
 from homeassistant.const import UnitOfInformation
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
-from . import LidarrConfigEntry, LidarrEntity
 from .const import BYTE_SIZES
-from .coordinator import LidarrDataUpdateCoordinator, T
+from .coordinator import LidarrConfigEntry, LidarrDataUpdateCoordinator, T
+from .entity import LidarrEntity
 
 
 def get_space(data: list[LidarrRootFolder], name: str) -> str:
@@ -49,7 +47,7 @@ def get_modified_description(
 
 
 @dataclasses.dataclass(frozen=True)
-class LidarrSensorEntityDescriptionMixIn(Generic[T]):
+class LidarrSensorEntityDescriptionMixIn(Generic[T]):  # noqa: UP046
     """Mixin for required keys."""
 
     value_fn: Callable[[T, str], str | int]
@@ -57,7 +55,9 @@ class LidarrSensorEntityDescriptionMixIn(Generic[T]):
 
 @dataclasses.dataclass(frozen=True)
 class LidarrSensorEntityDescription(
-    SensorEntityDescription, LidarrSensorEntityDescriptionMixIn[T], Generic[T]
+    SensorEntityDescription,
+    LidarrSensorEntityDescriptionMixIn[T],
+    Generic[T],  # noqa: UP046
 ):
     """Class to describe a Lidarr sensor."""
 
@@ -84,7 +84,7 @@ SENSOR_TYPES: dict[str, LidarrSensorEntityDescription[Any]] = {
     "queue": LidarrSensorEntityDescription[LidarrQueue](
         key="queue",
         translation_key="queue",
-        native_unit_of_measurement="Albums",
+        native_unit_of_measurement="albums",
         value_fn=lambda data, _: data.totalRecords,
         state_class=SensorStateClass.TOTAL,
         attributes_fn=lambda data: {i.title: queue_str(i) for i in data.records},
@@ -92,13 +92,22 @@ SENSOR_TYPES: dict[str, LidarrSensorEntityDescription[Any]] = {
     "wanted": LidarrSensorEntityDescription[LidarrQueue](
         key="wanted",
         translation_key="wanted",
-        native_unit_of_measurement="Albums",
+        native_unit_of_measurement="albums",
         value_fn=lambda data, _: data.totalRecords,
         state_class=SensorStateClass.TOTAL,
         entity_registry_enabled_default=False,
         attributes_fn=lambda data: {
-            album.title: album.artist.artistName for album in data.records
+            album.title: album.artist.artistName  # type: ignore[misc]
+            for album in data.records
         },
+    ),
+    "albums": LidarrSensorEntityDescription[int](
+        key="albums",
+        translation_key="albums",
+        native_unit_of_measurement="albums",
+        value_fn=lambda data, _: data,
+        state_class=SensorStateClass.TOTAL,
+        entity_registry_enabled_default=False,
     ),
 }
 
@@ -106,7 +115,7 @@ SENSOR_TYPES: dict[str, LidarrSensorEntityDescription[Any]] = {
 async def async_setup_entry(
     hass: HomeAssistant,
     entry: LidarrConfigEntry,
-    async_add_entities: AddEntitiesCallback,
+    async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up Lidarr sensors based on a config entry."""
     entities: list[LidarrSensor[Any]] = []
@@ -151,10 +160,8 @@ class LidarrSensor(LidarrEntity[T], SensorEntity):
 
 def queue_str(item: LidarrQueueItem) -> str:
     """Return string description of queue item."""
-    if (
-        item.sizeleft > 0
-        and item.timeleft == "00:00:00"
-        or not hasattr(item, "trackedDownloadState")
+    if (item.sizeleft > 0 and item.timeleft == "00:00:00") or not hasattr(
+        item, "trackedDownloadState"
     ):
         return "stopped"
     return item.trackedDownloadState

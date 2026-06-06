@@ -1,14 +1,11 @@
 """Support for the Roku media player."""
 
-from __future__ import annotations
-
 import datetime as dt
 import logging
 import mimetypes
 from typing import Any
 
 from rokuecp.helpers import guess_stream_format
-import voluptuous as vol
 import yarl
 
 from homeassistant.components import media_source
@@ -23,30 +20,23 @@ from homeassistant.components.media_player import (
     async_process_play_media_url,
 )
 from homeassistant.components.stream import FORMAT_CONTENT_TYPE, HLS_PROVIDER
-from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import ATTR_NAME
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers import entity_platform
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
-from homeassistant.helpers.typing import VolDictType
+from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
 from .browse_media import async_browse_media
 from .const import (
     ATTR_ARTIST_NAME,
     ATTR_CONTENT_ID,
     ATTR_FORMAT,
-    ATTR_KEYWORD,
     ATTR_MEDIA_TYPE,
     ATTR_THUMBNAIL,
-    DOMAIN,
-    SERVICE_SEARCH,
 )
-from .coordinator import RokuDataUpdateCoordinator
+from .coordinator import RokuConfigEntry, RokuDataUpdateCoordinator
 from .entity import RokuEntity
 from .helpers import format_channel_name, roku_exception_handler
 
 _LOGGER = logging.getLogger(__name__)
-
 
 STREAM_FORMAT_TO_MEDIA_TYPE = {
     "dash": MediaType.VIDEO,
@@ -79,30 +69,22 @@ ATTRS_TO_PLAY_ON_ROKU_AUDIO_PARAMS = {
     ATTR_THUMBNAIL: "albumArtUrl",
 }
 
-SEARCH_SCHEMA: VolDictType = {vol.Required(ATTR_KEYWORD): str}
+PARALLEL_UPDATES = 1
 
 
 async def async_setup_entry(
-    hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback
+    hass: HomeAssistant,
+    entry: RokuConfigEntry,
+    async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up the Roku config entry."""
-    coordinator: RokuDataUpdateCoordinator = hass.data[DOMAIN][entry.entry_id]
-
     async_add_entities(
         [
             RokuMediaPlayer(
-                coordinator=coordinator,
+                coordinator=entry.runtime_data,
             )
         ],
         True,
-    )
-
-    platform = entity_platform.async_get_current_platform()
-
-    platform.async_register_entity_service(
-        SERVICE_SEARCH,
-        SEARCH_SCHEMA,
-        "search",
     )
 
 
@@ -143,7 +125,7 @@ class RokuMediaPlayer(RokuEntity, MediaPlayerEntity):
     def state(self) -> MediaPlayerState | None:
         """Return the state of the device."""
         if self.coordinator.data.state.standby:
-            return MediaPlayerState.STANDBY
+            return MediaPlayerState.OFF
 
         if self.coordinator.data.app is None:
             return None
@@ -309,21 +291,21 @@ class RokuMediaPlayer(RokuEntity, MediaPlayerEntity):
     @roku_exception_handler()
     async def async_media_pause(self) -> None:
         """Send pause command."""
-        if self.state not in {MediaPlayerState.STANDBY, MediaPlayerState.PAUSED}:
+        if self.state not in {MediaPlayerState.OFF, MediaPlayerState.PAUSED}:
             await self.coordinator.roku.remote("play")
             await self.coordinator.async_request_refresh()
 
     @roku_exception_handler()
     async def async_media_play(self) -> None:
         """Send play command."""
-        if self.state not in {MediaPlayerState.STANDBY, MediaPlayerState.PLAYING}:
+        if self.state not in {MediaPlayerState.OFF, MediaPlayerState.PLAYING}:
             await self.coordinator.roku.remote("play")
             await self.coordinator.async_request_refresh()
 
     @roku_exception_handler()
     async def async_media_play_pause(self) -> None:
         """Send play/pause command."""
-        if self.state != MediaPlayerState.STANDBY:
+        if self.state != MediaPlayerState.OFF:
             await self.coordinator.roku.remote("play")
             await self.coordinator.async_request_refresh()
 
@@ -359,7 +341,7 @@ class RokuMediaPlayer(RokuEntity, MediaPlayerEntity):
     async def async_play_media(
         self, media_type: MediaType | str, media_id: str, **kwargs: Any
     ) -> None:
-        """Play media from a URL or file, launch an application, or tune to a channel."""
+        """Play media from a URL or file, launch an app, or tune to a channel."""
         extra: dict[str, Any] = kwargs.get(ATTR_MEDIA_EXTRA) or {}
         original_media_type: str = media_type
         original_media_id: str = media_id
@@ -445,17 +427,25 @@ class RokuMediaPlayer(RokuEntity, MediaPlayerEntity):
                 if attr in extra
             }
 
-            params = {"t": "a", **params}
+            params = {"u": media_id, "t": "a", **params}
 
-            await self.coordinator.roku.play_on_roku(media_id, params)
+            await self.coordinator.roku.launch(
+                self.coordinator.play_media_app_id,
+                params,
+            )
         elif media_type in {MediaType.URL, MediaType.VIDEO}:
             params = {
                 param: extra[attr]
                 for (attr, param) in ATTRS_TO_PLAY_ON_ROKU_PARAMS.items()
                 if attr in extra
             }
+            params["u"] = media_id
+            params["t"] = "v"
 
-            await self.coordinator.roku.play_on_roku(media_id, params)
+            await self.coordinator.roku.launch(
+                self.coordinator.play_media_app_id,
+                params,
+            )
         else:
             _LOGGER.error("Media type %s is not supported", original_media_type)
             return

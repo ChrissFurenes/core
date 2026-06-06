@@ -19,6 +19,7 @@ from .conftest import (
     CONFIG_ENTRY_DATA,
     HOST,
     MAC_ADDRESS_UNIQUE_ID,
+    MODEL_AND_VERSION_RESPONSE,
     PASSWORD,
     SERIAL_NUMBER,
     SERIAL_RESPONSE,
@@ -36,7 +37,11 @@ from tests.test_util.aiohttp import AiohttpClientMocker, AiohttpClientMockRespon
 @pytest.fixture(name="responses")
 def mock_responses() -> list[AiohttpClientMockResponse]:
     """Set up fake serial number response when testing the connection."""
-    return [mock_response(SERIAL_RESPONSE), mock_json_response(WIFI_PARAMS_RESPONSE)]
+    return [
+        mock_response(MODEL_AND_VERSION_RESPONSE),
+        mock_response(SERIAL_RESPONSE),
+        mock_json_response(WIFI_PARAMS_RESPONSE),
+    ]
 
 
 @pytest.fixture(autouse=True)
@@ -56,7 +61,7 @@ async def mock_setup() -> AsyncGenerator[AsyncMock]:
         yield mock_setup
 
 
-async def complete_flow(hass: HomeAssistant) -> FlowResult:
+async def complete_flow(hass: HomeAssistant, password: str = PASSWORD) -> FlowResult:
     """Start the config flow and enter the host and password."""
     result = await hass.config_entries.flow.async_init(
         DOMAIN, context={"source": config_entries.SOURCE_USER}
@@ -77,6 +82,7 @@ async def complete_flow(hass: HomeAssistant) -> FlowResult:
     [
         (
             [
+                mock_response(MODEL_AND_VERSION_RESPONSE),
                 mock_response(SERIAL_RESPONSE),
                 mock_json_response(WIFI_PARAMS_RESPONSE),
             ],
@@ -85,6 +91,7 @@ async def complete_flow(hass: HomeAssistant) -> FlowResult:
         ),
         (
             [
+                mock_response(MODEL_AND_VERSION_RESPONSE),
                 mock_response(ZERO_SERIAL_RESPONSE),
                 mock_json_response(WIFI_PARAMS_RESPONSE),
             ],
@@ -123,7 +130,11 @@ async def test_controller_flow(
         (
             "other-serial-number",
             {**CONFIG_ENTRY_DATA, "host": "other-host"},
-            [mock_response(SERIAL_RESPONSE), mock_json_response(WIFI_PARAMS_RESPONSE)],
+            [
+                mock_response(MODEL_AND_VERSION_RESPONSE),
+                mock_response(SERIAL_RESPONSE),
+                mock_json_response(WIFI_PARAMS_RESPONSE),
+            ],
             CONFIG_ENTRY_DATA,
         ),
         (
@@ -133,6 +144,7 @@ async def test_controller_flow(
                 "host": "other-host",
             },
             [
+                mock_response(MODEL_AND_VERSION_RESPONSE),
                 mock_response(SERIAL_RESPONSE),
                 mock_json_response(WIFI_PARAMS_RESPONSE),
             ],
@@ -142,6 +154,7 @@ async def test_controller_flow(
             None,
             {**CONFIG_ENTRY_DATA, "serial_number": 0, "host": "other-host"},
             [
+                mock_response(MODEL_AND_VERSION_RESPONSE),
                 mock_response(ZERO_SERIAL_RESPONSE),
                 mock_json_response(WIFI_PARAMS_RESPONSE),
             ],
@@ -185,6 +198,7 @@ async def test_multiple_config_entries(
             MAC_ADDRESS_UNIQUE_ID,
             CONFIG_ENTRY_DATA,
             [
+                mock_response(MODEL_AND_VERSION_RESPONSE),
                 mock_response(SERIAL_RESPONSE),
                 mock_json_response(WIFI_PARAMS_RESPONSE),
             ],
@@ -194,7 +208,11 @@ async def test_multiple_config_entries(
         (
             SERIAL_NUMBER,
             CONFIG_ENTRY_DATA,
-            [mock_response(SERIAL_RESPONSE), mock_json_response(WIFI_PARAMS_RESPONSE)],
+            [
+                mock_response(MODEL_AND_VERSION_RESPONSE),
+                mock_response(SERIAL_RESPONSE),
+                mock_json_response(WIFI_PARAMS_RESPONSE),
+            ],
             CONFIG_ENTRY_DATA,
         ),
         # Old unique id with no serial, but same host
@@ -202,6 +220,7 @@ async def test_multiple_config_entries(
             None,
             {**CONFIG_ENTRY_DATA, "serial_number": 0},
             [
+                mock_response(MODEL_AND_VERSION_RESPONSE),
                 mock_response(ZERO_SERIAL_RESPONSE),
                 mock_json_response(WIFI_PARAMS_RESPONSE),
             ],
@@ -214,7 +233,11 @@ async def test_multiple_config_entries(
                 **CONFIG_ENTRY_DATA,
                 "host": f"other-{HOST}",
             },
-            [mock_response(SERIAL_RESPONSE), mock_json_response(WIFI_PARAMS_RESPONSE)],
+            [
+                mock_response(MODEL_AND_VERSION_RESPONSE),
+                mock_response(SERIAL_RESPONSE),
+                mock_json_response(WIFI_PARAMS_RESPONSE),
+            ],
             CONFIG_ENTRY_DATA,  # Updated the host
         ),
     ],
@@ -268,6 +291,59 @@ async def test_controller_cannot_connect(
     assert not mock_setup.mock_calls
 
 
+async def test_controller_invalid_auth(
+    hass: HomeAssistant,
+    mock_setup: Mock,
+    responses: list[AiohttpClientMockResponse],
+    aioclient_mock: AiohttpClientMocker,
+) -> None:
+    """Test an invalid password."""
+
+    responses.clear()
+    responses.extend(
+        [
+            # Incorrect password response
+            AiohttpClientMockResponse("POST", URL, status=HTTPStatus.FORBIDDEN),
+            # Second attempt with the correct password
+            mock_response(MODEL_AND_VERSION_RESPONSE),
+            mock_response(SERIAL_RESPONSE),
+            mock_json_response(WIFI_PARAMS_RESPONSE),
+        ]
+    )
+
+    result = await hass.config_entries.flow.async_init(
+        DOMAIN, context={"source": config_entries.SOURCE_USER}
+    )
+    assert result.get("type") is FlowResultType.FORM
+    assert result.get("step_id") == "user"
+    assert not result.get("errors")
+    assert "flow_id" in result
+
+    # Simulate authentication error
+    result = await hass.config_entries.flow.async_configure(
+        result["flow_id"],
+        {CONF_HOST: HOST, CONF_PASSWORD: "wrong-password"},
+    )
+    assert result.get("type") is FlowResultType.FORM
+    assert result.get("step_id") == "user"
+    assert result.get("errors") == {"base": "invalid_auth"}
+
+    assert not mock_setup.mock_calls
+
+    # Correct the form and enter the password again and setup completes
+    result = await hass.config_entries.flow.async_configure(
+        result["flow_id"],
+        {CONF_HOST: HOST, CONF_PASSWORD: PASSWORD},
+    )
+    assert result.get("type") is FlowResultType.CREATE_ENTRY
+    assert result.get("title") == HOST
+    assert "result" in result
+    assert dict(result["result"].data) == CONFIG_ENTRY_DATA
+    assert result["result"].unique_id == MAC_ADDRESS_UNIQUE_ID
+
+    assert len(mock_setup.mock_calls) == 1
+
+
 async def test_controller_timeout(
     hass: HomeAssistant,
     mock_setup: Mock,
@@ -284,6 +360,67 @@ async def test_controller_timeout(
         assert result.get("errors") == {"base": "timeout_connect"}
 
     assert not mock_setup.mock_calls
+
+
+@pytest.mark.parametrize(
+    ("responses", "config_entry_data"),
+    [
+        (
+            [
+                # First attempt simulate the wrong password
+                AiohttpClientMockResponse("POST", URL, status=HTTPStatus.FORBIDDEN),
+                # Second attempt simulate the correct password
+                mock_response(MODEL_AND_VERSION_RESPONSE),
+                mock_response(SERIAL_RESPONSE),
+                mock_json_response(WIFI_PARAMS_RESPONSE),
+            ],
+            {
+                **CONFIG_ENTRY_DATA,
+                CONF_PASSWORD: "old-password",
+            },
+        ),
+    ],
+)
+async def test_reauth_flow(
+    hass: HomeAssistant,
+    mock_setup: Mock,
+    config_entry: MockConfigEntry,
+) -> None:
+    """Test the controller is setup correctly."""
+    assert config_entry.data.get(CONF_PASSWORD) == "old-password"
+    config_entry.async_start_reauth(hass)
+    await hass.async_block_till_done()
+
+    flows = hass.config_entries.flow.async_progress()
+    assert len(flows) == 1
+    result = flows[0]
+    assert result.get("step_id") == "reauth_confirm"
+    assert not result.get("errors")
+
+    # Simluate the wrong password
+    result = await hass.config_entries.flow.async_configure(
+        result["flow_id"],
+        {CONF_PASSWORD: "incorrect_password"},
+    )
+    assert result.get("type") is FlowResultType.FORM
+    assert result.get("step_id") == "reauth_confirm"
+    assert result.get("errors") == {"base": "invalid_auth"}
+
+    # Enter the correct password and complete the flow
+    result = await hass.config_entries.flow.async_configure(
+        result["flow_id"],
+        {CONF_PASSWORD: PASSWORD},
+    )
+    assert result.get("type") is FlowResultType.ABORT
+    assert result.get("reason") == "reauth_successful"
+
+    entries = hass.config_entries.async_entries(DOMAIN)
+    assert len(entries) == 1
+    entry = entries[0]
+    assert entry.unique_id == MAC_ADDRESS_UNIQUE_ID
+    assert entry.data.get(CONF_PASSWORD) == PASSWORD
+
+    assert len(mock_setup.mock_calls) == 1
 
 
 async def test_options_flow(hass: HomeAssistant, mock_setup: Mock) -> None:

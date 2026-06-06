@@ -1,7 +1,5 @@
 """Config flow for Tomorrow.io integration."""
 
-from __future__ import annotations
-
 from collections.abc import Mapping
 import logging
 from typing import Any
@@ -91,10 +89,6 @@ def _get_unique_id(hass: HomeAssistant, input_dict: dict[str, Any]):
 class TomorrowioOptionsConfigFlow(OptionsFlow):
     """Handle Tomorrow.io options."""
 
-    def __init__(self, config_entry: ConfigEntry) -> None:
-        """Initialize Tomorrow.io options flow."""
-        self._config_entry = config_entry
-
     async def async_step_init(
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
@@ -105,7 +99,7 @@ class TomorrowioOptionsConfigFlow(OptionsFlow):
         options_schema = {
             vol.Required(
                 CONF_TIMESTEP,
-                default=self._config_entry.options[CONF_TIMESTEP],
+                default=self.config_entry.options[CONF_TIMESTEP],
             ): vol.In([1, 5, 15, 30, 60]),
         }
 
@@ -125,7 +119,7 @@ class TomorrowioConfigFlow(ConfigFlow, domain=DOMAIN):
         config_entry: ConfigEntry,
     ) -> TomorrowioOptionsConfigFlow:
         """Get the options flow for this handler."""
-        return TomorrowioOptionsConfigFlow(config_entry)
+        return TomorrowioOptionsConfigFlow()
 
     async def async_step_user(
         self, user_input: dict[str, Any] | None = None
@@ -176,4 +170,7 @@ class TomorrowioConfigFlow(ConfigFlow, domain=DOMAIN):
             step_id="user",
             data_schema=_get_config_schema(self.hass, self.source, user_input),
             errors=errors,
+            description_placeholders={
+                "signup_link": "[Tomorrow.io](https://app.tomorrow.io/signup)"
+            },
         )

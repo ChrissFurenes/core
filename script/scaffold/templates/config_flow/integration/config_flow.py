@@ -1,6 +1,4 @@
-"""Config flow for NEW_NAME integration."""
-
-from __future__ import annotations
+"""Config flow for the NEW_NAME integration."""
 
 import logging
 from typing import Any

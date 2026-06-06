@@ -30,19 +30,23 @@ from homeassistant.components.recorder.db_schema import (
 )
 from homeassistant.components.recorder.util import session_scope
 from homeassistant.core import HomeAssistant, State
-from homeassistant.helpers import recorder as recorder_helper
-import homeassistant.util.dt as dt_util
+from homeassistant.util import dt as dt_util
 
-from .common import async_wait_recording_done, create_engine_test
+from .common import (
+    async_wait_recorder,
+    async_wait_recording_done,
+    create_engine_test,
+    db_state_to_native,
+)
 from .conftest import InstrumentedMigration
 
 from tests.common import async_fire_time_changed
-from tests.typing import RecorderInstanceGenerator
+from tests.typing import RecorderInstanceContextManager, RecorderInstanceGenerator
 
 
 @pytest.fixture
 async def mock_recorder_before_hass(
-    async_test_recorder: RecorderInstanceGenerator,
+    async_test_recorder: RecorderInstanceContextManager,
 ) -> None:
     """Set up recorder."""
 
@@ -54,7 +58,7 @@ def _get_native_states(hass: HomeAssistant, entity_id: str) -> list[State]:
         states = []
         for dbstate in session.query(States).filter(States.metadata_id == metadata_id):
             dbstate.entity_id = entity_id
-            states.append(dbstate.to_native())
+            states.append(db_state_to_native(dbstate))
         return states
 
 
@@ -95,15 +99,29 @@ async def test_schema_update_calls(
             hass,
             engine,
             session_maker,
-            migration.SchemaValidationStatus(0, True, set(), 0),
-            42,
+            migration.SchemaValidationStatus(
+                current_version=0,
+                initial_version=0,
+                migration_needed=True,
+                non_live_data_migration_needed=True,
+                schema_errors=set(),
+                start_version=0,
+            ),
+            48,
         ),
         call(
             instance,
             hass,
             engine,
             session_maker,
-            migration.SchemaValidationStatus(42, True, set(), 0),
+            migration.SchemaValidationStatus(
+                current_version=48,
+                initial_version=0,
+                migration_needed=True,
+                non_live_data_migration_needed=True,
+                schema_errors=set(),
+                start_version=0,
+            ),
             db_schema.SCHEMA_VERSION,
         ),
     ]
@@ -215,7 +233,7 @@ async def test_database_migration_failed(
         # Test error handling in _modify_columns
         (12, "sqlalchemy.engine.base.Connection.execute", False, 1, 0),
         # Test error handling in _drop_foreign_key_constraints
-        (46, "homeassistant.components.recorder.migration.DropConstraint", False, 2, 1),
+        (46, "homeassistant.components.recorder.migration.DropConstraint", False, 1, 0),
     ],
 )
 @pytest.mark.skip_on_db_engine(["sqlite"])
@@ -542,7 +560,9 @@ async def test_events_during_migration_queue_exhausted(
         (18, False),
         (22, False),
         (25, False),
-        (43, True),
+        (43, False),
+        (48, True),
+        (50, True),
     ],
 )
 async def test_schema_migrate(
@@ -586,7 +606,7 @@ async def test_schema_migrate(
             start=self.recorder_runs_manager.recording_start, created=dt_util.utcnow()
         )
 
-    def _sometimes_failing_create_index(*args):
+    def _sometimes_failing_create_index(*args, **kwargs):
         """Make the first index create raise a retryable error to ensure we retry."""
         if recorder_db_url.startswith("mysql://"):
             nonlocal create_calls
@@ -595,7 +615,7 @@ async def test_schema_migrate(
                 mysql_exception = OperationalError("statement", {}, [])
                 mysql_exception.orig = Exception(1205, "retryable")
                 raise mysql_exception
-        real_create_index(*args)
+        real_create_index(*args, **kwargs)
 
     with (
         patch(
@@ -627,7 +647,7 @@ async def test_schema_migrate(
         )
         await hass.async_add_executor_job(instrument_migration.migration_started.wait)
         assert recorder.util.async_migration_in_progress(hass) is True
-        await recorder_helper.async_wait_recorder(hass)
+        await async_wait_recorder(hass)
 
         assert recorder.util.async_migration_in_progress(hass) is True
         assert recorder.util.async_migration_is_live(hass) == live
@@ -698,7 +718,7 @@ def test_forgiving_add_index(recorder_db_url: str) -> None:
         instance = Mock()
         instance.get_session = Mock(return_value=session)
         migration._create_index(
-            instance.get_session, "states", "ix_states_context_id_bin"
+            instance, instance.get_session, "states", "ix_states_context_id_bin"
         )
     engine.dispose()
 
@@ -774,7 +794,7 @@ def test_forgiving_add_index_with_other_db_types(
     with patch(
         "homeassistant.components.recorder.migration.Table", return_value=mocked_table
     ):
-        migration._create_index(Mock(), "states", "ix_states_context_id")
+        migration._create_index(Mock(), Mock(), "states", "ix_states_context_id")
 
     assert "already exists on states" in caplog.text
     assert "continuing" in caplog.text
@@ -788,7 +808,9 @@ def test_raise_if_exception_missing_str() -> None:
     """Test we raise an exception if strings are not present."""
     programming_exc = ProgrammingError("select * from;", Mock(), Mock())
     programming_exc.__cause__ = MockPyODBCProgrammingError(
-        "[42S11] [FreeTDS][SQL Server]The operation failed because an index or statistics with name 'ix_states_old_state_id' already exists on table 'states'. (1913) (SQLExecDirectW)"
+        "[42S11] [FreeTDS][SQL Server]The operation failed because an"
+        " index or statistics with name 'ix_states_old_state_id'"
+        " already exists on table 'states'. (1913) (SQLExecDirectW)"
     )
 
     migration.raise_if_exception_missing_str(
@@ -1028,6 +1050,287 @@ def test_drop_restore_foreign_key_constraints(recorder_db_url: str) -> None:
     engine.dispose()
 
 
+@pytest.mark.skip_on_db_engine(["sqlite"])
+@pytest.mark.usefixtures("skip_by_db_engine")
+def test_restore_foreign_key_constraints_twice(recorder_db_url: str) -> None:
+    """Test we can drop and then restore foreign keys.
+
+    This is not supported on SQLite
+    """
+
+    constraints_to_recreate = (
+        ("events", "data_id", "event_data", "data_id"),
+        ("states", "event_id", None, None),  # This won't be found
+        ("states", "old_state_id", "states", "state_id"),
+    )
+
+    db_engine = recorder_db_url.partition("://")[0]
+
+    expected_dropped_constraints = {
+        "mysql": [
+            (
+                "events",
+                "data_id",
+                {
+                    "constrained_columns": ["data_id"],
+                    "name": ANY,
+                    "options": {},
+                    "referred_columns": ["data_id"],
+                    "referred_schema": None,
+                    "referred_table": "event_data",
+                },
+            ),
+            (
+                "states",
+                "old_state_id",
+                {
+                    "constrained_columns": ["old_state_id"],
+                    "name": ANY,
+                    "options": {},
+                    "referred_columns": ["state_id"],
+                    "referred_schema": None,
+                    "referred_table": "states",
+                },
+            ),
+        ],
+        "postgresql": [
+            (
+                "events",
+                "data_id",
+                {
+                    "comment": None,
+                    "constrained_columns": ["data_id"],
+                    "name": "events_data_id_fkey",
+                    "options": {},
+                    "referred_columns": ["data_id"],
+                    "referred_schema": None,
+                    "referred_table": "event_data",
+                },
+            ),
+            (
+                "states",
+                "old_state_id",
+                {
+                    "comment": None,
+                    "constrained_columns": ["old_state_id"],
+                    "name": "states_old_state_id_fkey",
+                    "options": {},
+                    "referred_columns": ["state_id"],
+                    "referred_schema": None,
+                    "referred_table": "states",
+                },
+            ),
+        ],
+    }
+
+    def find_constraints(
+        engine: Engine, table: str, column: str
+    ) -> list[tuple[str, str, ReflectedForeignKeyConstraint]]:
+        inspector = inspect(engine)
+        return [
+            (table, column, foreign_key)
+            for foreign_key in inspector.get_foreign_keys(table)
+            if foreign_key["name"] and foreign_key["constrained_columns"] == [column]
+        ]
+
+    engine = create_engine(recorder_db_url)
+    db_schema.Base.metadata.create_all(engine)
+
+    matching_constraints_1 = [
+        dropped_constraint
+        for table, column, _, _ in constraints_to_recreate
+        for dropped_constraint in find_constraints(engine, table, column)
+    ]
+    assert matching_constraints_1 == expected_dropped_constraints[db_engine]
+
+    with Session(engine) as session:
+        session_maker = Mock(return_value=session)
+        for table, column, _, _ in constraints_to_recreate:
+            migration._drop_foreign_key_constraints(
+                session_maker, engine, table, column
+            )
+
+    # Check we don't find the constrained columns again (they are removed)
+    matching_constraints_2 = [
+        dropped_constraint
+        for table, column, _, _ in constraints_to_recreate
+        for dropped_constraint in find_constraints(engine, table, column)
+    ]
+    assert matching_constraints_2 == []
+
+    # Restore the constraints
+    with Session(engine) as session:
+        session_maker = Mock(return_value=session)
+        migration._restore_foreign_key_constraints(
+            session_maker, engine, constraints_to_recreate
+        )
+
+    # Restore the constraints again
+    with Session(engine) as session:
+        session_maker = Mock(return_value=session)
+        migration._restore_foreign_key_constraints(
+            session_maker, engine, constraints_to_recreate
+        )
+
+    # Check we do find a single the constrained columns again (they are restored
+    # only once, even though we called _restore_foreign_key_constraints twice)
+    matching_constraints_3 = [
+        dropped_constraint
+        for table, column, _, _ in constraints_to_recreate
+        for dropped_constraint in find_constraints(engine, table, column)
+    ]
+    assert matching_constraints_3 == expected_dropped_constraints[db_engine]
+
+    engine.dispose()
+
+
+@pytest.mark.skip_on_db_engine(["sqlite"])
+@pytest.mark.usefixtures("skip_by_db_engine")
+def test_drop_duplicated_foreign_key_constraints(recorder_db_url: str) -> None:
+    """Test we can drop and then restore foreign keys.
+
+    This is not supported on SQLite
+    """
+
+    constraints_to_recreate = (
+        ("events", "data_id", "event_data", "data_id"),
+        ("states", "event_id", None, None),  # This won't be found
+        ("states", "old_state_id", "states", "state_id"),
+    )
+
+    db_engine = recorder_db_url.partition("://")[0]
+
+    expected_dropped_constraints = {
+        "mysql": [
+            (
+                "events",
+                "data_id",
+                {
+                    "constrained_columns": ["data_id"],
+                    "name": ANY,
+                    "options": {},
+                    "referred_columns": ["data_id"],
+                    "referred_schema": None,
+                    "referred_table": "event_data",
+                },
+            ),
+            (
+                "states",
+                "old_state_id",
+                {
+                    "constrained_columns": ["old_state_id"],
+                    "name": ANY,
+                    "options": {},
+                    "referred_columns": ["state_id"],
+                    "referred_schema": None,
+                    "referred_table": "states",
+                },
+            ),
+        ],
+        "postgresql": [
+            (
+                "events",
+                "data_id",
+                {
+                    "comment": None,
+                    "constrained_columns": ["data_id"],
+                    "name": ANY,
+                    "options": {},
+                    "referred_columns": ["data_id"],
+                    "referred_schema": None,
+                    "referred_table": "event_data",
+                },
+            ),
+            (
+                "states",
+                "old_state_id",
+                {
+                    "comment": None,
+                    "constrained_columns": ["old_state_id"],
+                    "name": ANY,
+                    "options": {},
+                    "referred_columns": ["state_id"],
+                    "referred_schema": None,
+                    "referred_table": "states",
+                },
+            ),
+        ],
+    }
+
+    def find_constraints(
+        engine: Engine, table: str, column: str
+    ) -> list[tuple[str, str, ReflectedForeignKeyConstraint]]:
+        inspector = inspect(engine)
+        return [
+            (table, column, foreign_key)
+            for foreign_key in inspector.get_foreign_keys(table)
+            if foreign_key["name"] and foreign_key["constrained_columns"] == [column]
+        ]
+
+    engine = create_engine(recorder_db_url)
+    db_schema.Base.metadata.create_all(engine)
+
+    # Create a duplicate of the constraints
+    inspector = Mock(name="inspector")
+    inspector.get_foreign_keys = Mock(name="get_foreign_keys", return_value=[])
+    with (
+        patch(
+            "homeassistant.components.recorder.migration.sqlalchemy.inspect",
+            return_value=inspector,
+        ),
+        Session(engine) as session,
+    ):
+        session_maker = Mock(return_value=session)
+        migration._restore_foreign_key_constraints(
+            session_maker, engine, constraints_to_recreate
+        )
+
+    matching_constraints_1 = [
+        dropped_constraint
+        for table, column, _, _ in constraints_to_recreate
+        for dropped_constraint in find_constraints(engine, table, column)
+    ]
+    _expected_dropped_constraints = [
+        _dropped_constraint
+        for dropped_constraint in expected_dropped_constraints[db_engine]
+        for _dropped_constraint in (dropped_constraint, dropped_constraint)
+    ]
+    assert matching_constraints_1 == _expected_dropped_constraints
+
+    with Session(engine) as session:
+        session_maker = Mock(return_value=session)
+        for table, column, _, _ in constraints_to_recreate:
+            migration._drop_foreign_key_constraints(
+                session_maker, engine, table, column
+            )
+
+    # Check we don't find the constrained columns again (they are removed)
+    matching_constraints_2 = [
+        dropped_constraint
+        for table, column, _, _ in constraints_to_recreate
+        for dropped_constraint in find_constraints(engine, table, column)
+    ]
+    assert matching_constraints_2 == []
+
+    # Restore the constraints
+    with Session(engine) as session:
+        session_maker = Mock(return_value=session)
+        migration._restore_foreign_key_constraints(
+            session_maker, engine, constraints_to_recreate
+        )
+
+    # Check we do find a single the constrained columns again (they are restored
+    # only once, even though we called _restore_foreign_key_constraints twice)
+    matching_constraints_3 = [
+        dropped_constraint
+        for table, column, _, _ in constraints_to_recreate
+        for dropped_constraint in find_constraints(engine, table, column)
+    ]
+    assert matching_constraints_3 == expected_dropped_constraints[db_engine]
+
+    engine.dispose()
+
+
 def test_restore_foreign_key_constraints_with_error(
     caplog: pytest.LogCaptureFixture,
 ) -> None:
@@ -1045,6 +1348,9 @@ def test_restore_foreign_key_constraints_with_error(
     instance = Mock()
     instance.get_session = Mock(return_value=session)
     engine = Mock()
+    inspector = Mock(name="inspector")
+    inspector.get_foreign_keys = Mock(name="get_foreign_keys", return_value=[])
+    engine._sa_instance_state = inspector
 
     session_maker = Mock(return_value=session)
     with pytest.raises(InternalError):

@@ -1,7 +1,5 @@
 """Support for ESPHome switches."""
 
-from __future__ import annotations
-
 from functools import partial
 from typing import Any
 
@@ -17,6 +15,8 @@ from .entity import (
     esphome_state_property,
     platform_async_setup_entry,
 )
+
+PARALLEL_UPDATES = 0
 
 
 class EsphomeSwitch(EsphomeEntity[SwitchInfo, SwitchState], SwitchEntity):
@@ -34,19 +34,23 @@ class EsphomeSwitch(EsphomeEntity[SwitchInfo, SwitchState], SwitchEntity):
 
     @property
     @esphome_state_property
-    def is_on(self) -> bool | None:
+    def is_on(self) -> bool:
         """Return true if the switch is on."""
         return self._state.state
 
     @convert_api_error_ha_error
     async def async_turn_on(self, **kwargs: Any) -> None:
         """Turn the entity on."""
-        self._client.switch_command(self._key, True)
+        self._client.switch_command(
+            self._key, True, device_id=self._static_info.device_id
+        )
 
     @convert_api_error_ha_error
     async def async_turn_off(self, **kwargs: Any) -> None:
         """Turn the entity off."""
-        self._client.switch_command(self._key, False)
+        self._client.switch_command(
+            self._key, False, device_id=self._static_info.device_id
+        )
 
 
 async_setup_entry = partial(

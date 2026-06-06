@@ -1,9 +1,7 @@
 """The tests for Trafikcerket Camera recorder."""
 
-from __future__ import annotations
-
 import pytest
-from pytrafikverket.models import CameraInfoModel
+from pytrafikverket import CameraInfoModel
 
 from homeassistant.components.recorder import Recorder
 from homeassistant.components.recorder.history import get_significant_states

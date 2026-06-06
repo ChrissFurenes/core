@@ -1,7 +1,5 @@
 """Support for ESPHome cameras."""
 
-from __future__ import annotations
-
 import asyncio
 from collections.abc import Callable
 from functools import partial
@@ -15,6 +13,8 @@ from homeassistant.components.camera import Camera
 from homeassistant.core import callback
 
 from .entity import EsphomeEntity, platform_async_setup_entry
+
+PARALLEL_UPDATES = 0
 
 
 class EsphomeCamera(Camera, EsphomeEntity[CameraInfo, CameraState]):

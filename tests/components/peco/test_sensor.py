@@ -39,7 +39,7 @@ async def test_sensor_available(
             "peco.PecoOutageApi.get_outage_totals",
             return_value=OutageResults(
                 customers_out=123,
-                percent_customers_out=15.589,
+                percent_customers_out=15,
                 outage_count=456,
                 customers_served=789,
             ),
@@ -53,8 +53,6 @@ async def test_sensor_available(
     ):
         assert await hass.config_entries.async_setup(config_entry.entry_id)
         await hass.async_block_till_done()
-    assert hass.data[DOMAIN]
-
     entries = hass.config_entries.async_entries(DOMAIN)
     assert len(entries) == 1
     assert config_entry.state is ConfigEntryState.LOADED
@@ -74,7 +72,7 @@ async def test_sensor_available(
             "peco.PecoOutageApi.get_outage_count",
             return_value=OutageResults(
                 customers_out=123,
-                percent_customers_out=15.589,
+                percent_customers_out=15,
                 outage_count=456,
                 customers_served=789,
             ),

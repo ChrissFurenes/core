@@ -1,15 +1,11 @@
 """Intents for the weather integration."""
 
-from __future__ import annotations
-
 import voluptuous as vol
 
 from homeassistant.core import HomeAssistant, State
 from homeassistant.helpers import intent
 
-from . import DOMAIN
-
-INTENT_GET_WEATHER = "HassGetWeather"
+from . import DOMAIN, INTENT_GET_WEATHER
 
 
 async def async_setup_intents(hass: HomeAssistant) -> None:

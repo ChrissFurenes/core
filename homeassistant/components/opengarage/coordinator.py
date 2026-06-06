@@ -1,13 +1,12 @@
 """The OpenGarage integration."""
 
-from __future__ import annotations
-
 from datetime import timedelta
 import logging
 from typing import Any
 
 import opengarage
 
+from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import update_coordinator
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
@@ -17,13 +16,18 @@ from .const import DOMAIN
 _LOGGER = logging.getLogger(__name__)
 
 
+type OpenGarageConfigEntry = ConfigEntry[OpenGarageDataUpdateCoordinator]
+
+
 class OpenGarageDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
     """Class to manage fetching Opengarage data."""
+
+    config_entry: OpenGarageConfigEntry
 
     def __init__(
         self,
         hass: HomeAssistant,
-        *,
+        config_entry: OpenGarageConfigEntry,
         open_garage_connection: opengarage.OpenGarage,
     ) -> None:
         """Initialize global Opengarage data updater."""
@@ -32,6 +36,7 @@ class OpenGarageDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         super().__init__(
             hass,
             _LOGGER,
+            config_entry=config_entry,
             name=DOMAIN,
             update_interval=timedelta(seconds=5),
         )

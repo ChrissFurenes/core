@@ -1,7 +1,5 @@
 """An abstract class common to all Bond entities."""
 
-from __future__ import annotations
-
 from abc import abstractmethod
 from asyncio import Lock
 from datetime import datetime
@@ -33,7 +31,7 @@ _BPUP_ALIVE_SCAN_INTERVAL = 60
 
 
 class BondEntity(Entity):
-    """Generic Bond entity encapsulating common features of any Bond controlled device."""
+    """Generic Bond entity encapsulating common features of any Bond device."""
 
     _attr_should_poll = False
 
@@ -115,11 +113,8 @@ class BondEntity(Entity):
     def _async_update_if_bpup_not_alive(self, now: datetime) -> None:
         """Fetch via the API if BPUP is not alive."""
         self._async_schedule_bpup_alive_or_poll()
-        if (
-            self.hass.is_stopping
-            or self._bpup_subs.alive
-            and self._initialized
-            and self.available
+        if self.hass.is_stopping or (
+            self._bpup_subs.alive and self._initialized and self.available
         ):
             return
         if self._update_lock.locked():

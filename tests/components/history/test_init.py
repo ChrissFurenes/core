@@ -9,15 +9,15 @@ from freezegun import freeze_time
 import pytest
 
 from homeassistant.components import history
-from homeassistant.components.recorder import Recorder
 from homeassistant.components.recorder.history import get_significant_states
 from homeassistant.components.recorder.models import process_timestamp
 from homeassistant.const import EVENT_HOMEASSISTANT_FINAL_WRITE
 from homeassistant.core import HomeAssistant, State
 from homeassistant.helpers.json import JSONEncoder
 from homeassistant.setup import async_setup_component
-import homeassistant.util.dt as dt_util
+from homeassistant.util import dt as dt_util
 
+from tests.common import MockUser
 from tests.components.recorder.common import (
     assert_dict_of_states_equal_without_context_and_last_changed,
     assert_multiple_states_equal_without_context,
@@ -29,7 +29,7 @@ from tests.typing import ClientSessionGenerator
 
 
 def listeners_without_writes(listeners: dict[str, int]) -> dict[str, int]:
-    """Return listeners without final write listeners since we are not testing for these."""
+    """Return listeners without final write listeners."""
     return {
         key: value
         for key, value in listeners.items()
@@ -377,8 +377,9 @@ async def async_record_states(
     return zero, four, states
 
 
+@pytest.mark.usefixtures("recorder_mock")
 async def test_fetch_period_api(
-    hass: HomeAssistant, recorder_mock: Recorder, hass_client: ClientSessionGenerator
+    hass: HomeAssistant, hass_client: ClientSessionGenerator
 ) -> None:
     """Test the fetch period view for history."""
     await async_setup_component(hass, "history", {})
@@ -389,9 +390,9 @@ async def test_fetch_period_api(
     assert response.status == HTTPStatus.OK
 
 
+@pytest.mark.usefixtures("recorder_mock")
 async def test_fetch_period_api_with_use_include_order(
     hass: HomeAssistant,
-    recorder_mock: Recorder,
     hass_client: ClientSessionGenerator,
     caplog: pytest.LogCaptureFixture,
 ) -> None:
@@ -408,8 +409,9 @@ async def test_fetch_period_api_with_use_include_order(
     assert "The 'use_include_order' option is deprecated" in caplog.text
 
 
+@pytest.mark.usefixtures("recorder_mock")
 async def test_fetch_period_api_with_minimal_response(
-    hass: HomeAssistant, recorder_mock: Recorder, hass_client: ClientSessionGenerator
+    hass: HomeAssistant, hass_client: ClientSessionGenerator
 ) -> None:
     """Test the fetch period view for history with minimal_response."""
     now = dt_util.utcnow()
@@ -450,8 +452,9 @@ async def test_fetch_period_api_with_minimal_response(
     ).replace('"', "")
 
 
+@pytest.mark.usefixtures("recorder_mock")
 async def test_fetch_period_api_with_no_timestamp(
-    hass: HomeAssistant, recorder_mock: Recorder, hass_client: ClientSessionGenerator
+    hass: HomeAssistant, hass_client: ClientSessionGenerator
 ) -> None:
     """Test the fetch period view for history with no timestamp."""
     await async_setup_component(hass, "history", {})
@@ -460,9 +463,9 @@ async def test_fetch_period_api_with_no_timestamp(
     assert response.status == HTTPStatus.OK
 
 
+@pytest.mark.usefixtures("recorder_mock")
 async def test_fetch_period_api_with_include_order(
     hass: HomeAssistant,
-    recorder_mock: Recorder,
     hass_client: ClientSessionGenerator,
     caplog: pytest.LogCaptureFixture,
 ) -> None:
@@ -488,8 +491,9 @@ async def test_fetch_period_api_with_include_order(
     assert "The 'include' option is deprecated" in caplog.text
 
 
+@pytest.mark.usefixtures("recorder_mock")
 async def test_entity_ids_limit_via_api(
-    hass: HomeAssistant, recorder_mock: Recorder, hass_client: ClientSessionGenerator
+    hass: HomeAssistant, hass_client: ClientSessionGenerator
 ) -> None:
     """Test limiting history to entity_ids."""
     await async_setup_component(
@@ -514,8 +518,9 @@ async def test_entity_ids_limit_via_api(
     assert response_json[1][0]["entity_id"] == "light.cow"
 
 
+@pytest.mark.usefixtures("recorder_mock")
 async def test_entity_ids_limit_via_api_with_skip_initial_state(
-    hass: HomeAssistant, recorder_mock: Recorder, hass_client: ClientSessionGenerator
+    hass: HomeAssistant, hass_client: ClientSessionGenerator
 ) -> None:
     """Test limiting history to entity_ids with skip_initial_state."""
     await async_setup_component(
@@ -548,8 +553,9 @@ async def test_entity_ids_limit_via_api_with_skip_initial_state(
     assert response_json[1][0]["entity_id"] == "light.cow"
 
 
+@pytest.mark.usefixtures("recorder_mock")
 async def test_fetch_period_api_before_history_started(
-    hass: HomeAssistant, recorder_mock: Recorder, hass_client: ClientSessionGenerator
+    hass: HomeAssistant, hass_client: ClientSessionGenerator
 ) -> None:
     """Test the fetch period view for history for the far past."""
     await async_setup_component(
@@ -569,8 +575,9 @@ async def test_fetch_period_api_before_history_started(
     assert response_json == []
 
 
+@pytest.mark.usefixtures("recorder_mock")
 async def test_fetch_period_api_far_future(
-    hass: HomeAssistant, recorder_mock: Recorder, hass_client: ClientSessionGenerator
+    hass: HomeAssistant, hass_client: ClientSessionGenerator
 ) -> None:
     """Test the fetch period view for history for the far future."""
     await async_setup_component(
@@ -590,8 +597,9 @@ async def test_fetch_period_api_far_future(
     assert response_json == []
 
 
+@pytest.mark.usefixtures("recorder_mock")
 async def test_fetch_period_api_with_invalid_datetime(
-    hass: HomeAssistant, recorder_mock: Recorder, hass_client: ClientSessionGenerator
+    hass: HomeAssistant, hass_client: ClientSessionGenerator
 ) -> None:
     """Test the fetch period view for history with an invalid date time."""
     await async_setup_component(
@@ -609,8 +617,9 @@ async def test_fetch_period_api_with_invalid_datetime(
     assert response_json == {"message": "Invalid datetime"}
 
 
+@pytest.mark.usefixtures("recorder_mock")
 async def test_fetch_period_api_invalid_end_time(
-    hass: HomeAssistant, recorder_mock: Recorder, hass_client: ClientSessionGenerator
+    hass: HomeAssistant, hass_client: ClientSessionGenerator
 ) -> None:
     """Test the fetch period view for history with an invalid end time."""
     await async_setup_component(
@@ -631,8 +640,9 @@ async def test_fetch_period_api_invalid_end_time(
     assert response_json == {"message": "Invalid end_time"}
 
 
+@pytest.mark.usefixtures("recorder_mock")
 async def test_entity_ids_limit_via_api_with_end_time(
-    hass: HomeAssistant, recorder_mock: Recorder, hass_client: ClientSessionGenerator
+    hass: HomeAssistant, hass_client: ClientSessionGenerator
 ) -> None:
     """Test limiting history to entity_ids with end_time."""
     await async_setup_component(
@@ -677,8 +687,9 @@ async def test_entity_ids_limit_via_api_with_end_time(
     assert response_json[1][0]["entity_id"] == "light.cow"
 
 
+@pytest.mark.usefixtures("recorder_mock")
 async def test_fetch_period_api_with_no_entity_ids(
-    hass: HomeAssistant, recorder_mock: Recorder, hass_client: ClientSessionGenerator
+    hass: HomeAssistant, hass_client: ClientSessionGenerator
 ) -> None:
     """Test the fetch period view for history with minimal_response."""
     await async_setup_component(hass, "history", {})
@@ -730,9 +741,9 @@ async def test_fetch_period_api_with_no_entity_ids(
         ("cow", HTTPStatus.BAD_REQUEST, "message", "Invalid filter_entity_id"),
     ],
 )
+@pytest.mark.usefixtures("recorder_mock")
 async def test_history_with_invalid_entity_ids(
     hass: HomeAssistant,
-    recorder_mock: Recorder,
     hass_client: ClientSessionGenerator,
     filter_entity_id,
     status_code,
@@ -760,3 +771,44 @@ async def test_history_with_invalid_entity_ids(
     response_json = await response.json()
     assert response_contains1 in str(response_json)
     assert response_contains2 in str(response_json)
+
+
+@pytest.mark.usefixtures("recorder_mock")
+async def test_fetch_period_api_filters_unauthorized_entities(
+    hass: HomeAssistant,
+    hass_read_only_user: MockUser,
+    hass_read_only_access_token: str,
+    hass_client: ClientSessionGenerator,
+) -> None:
+    """Test history is filtered by per-entity read permissions for non-admins."""
+    assert not hass_read_only_user.is_admin
+    hass_read_only_user.mock_policy(
+        {"entities": {"entity_ids": {"light.kitchen": True}}}
+    )
+    await async_setup_component(hass, "history", {})
+
+    hass.states.async_set("light.kitchen", "on")
+    hass.states.async_set("light.cow", "on")
+    await async_wait_recording_done(hass)
+
+    client = await hass_client(hass_read_only_access_token)
+
+    now = dt_util.utcnow().isoformat()
+    response = await client.get(
+        f"/api/history/period/{now}",
+        params={"filter_entity_id": "light.kitchen,light.cow"},
+    )
+    assert response.status == HTTPStatus.OK
+    response_json = await response.json()
+    assert all(
+        state["entity_id"] == "light.kitchen"
+        for entity_states in response_json
+        for state in entity_states
+    )
+
+    response = await client.get(
+        f"/api/history/period/{now}",
+        params={"filter_entity_id": "light.cow"},
+    )
+    assert response.status == HTTPStatus.OK
+    assert await response.json() == []

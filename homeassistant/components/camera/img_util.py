@@ -1,18 +1,9 @@
 """Image processing for cameras."""
 
-from __future__ import annotations
-
-from contextlib import suppress
 import logging
 from typing import TYPE_CHECKING, Literal, cast
 
-with suppress(Exception):
-    # TurboJPEG imports numpy which may or may not work so
-    # we have to guard the import here. We still want
-    # to import it at top level so it gets loaded
-    # in the import executor and not in the event loop.
-    from turbojpeg import TurboJPEG
-
+from turbojpeg import TurboJPEG
 
 if TYPE_CHECKING:
     from . import Image
@@ -100,7 +91,8 @@ class TurboJPEGSingleton:
             TurboJPEGSingleton.__instance = TurboJPEG()
         except Exception:
             _LOGGER.exception(
-                "Error loading libturbojpeg; Camera snapshot performance will be sub-optimal"
+                "Error loading libturbojpeg;"
+                " Camera snapshot performance will be sub-optimal"
             )
             TurboJPEGSingleton.__instance = False
 

@@ -1,7 +1,5 @@
 """Config flow for Islamic Prayer Times integration."""
 
-from __future__ import annotations
-
 from typing import Any
 
 import voluptuous as vol
@@ -52,7 +50,7 @@ class IslamicPrayerFlowHandler(ConfigFlow, domain=DOMAIN):
         config_entry: ConfigEntry,
     ) -> IslamicPrayerOptionsFlowHandler:
         """Get the options flow for this handler."""
-        return IslamicPrayerOptionsFlowHandler(config_entry)
+        return IslamicPrayerOptionsFlowHandler()
 
     async def async_step_user(
         self, user_input: dict[str, Any] | None = None
@@ -81,6 +79,8 @@ class IslamicPrayerFlowHandler(ConfigFlow, domain=DOMAIN):
             step_id="user",
             data_schema=vol.Schema(
                 {
+                    # Name field is no longer allowed in config flow schemas
+                    # pylint: disable-next=home-assistant-config-flow-name-field
                     vol.Optional(CONF_NAME, default=NAME): TextSelector(),
                     vol.Required(
                         CONF_LOCATION, default=home_location
@@ -92,10 +92,6 @@ class IslamicPrayerFlowHandler(ConfigFlow, domain=DOMAIN):
 
 class IslamicPrayerOptionsFlowHandler(OptionsFlow):
     """Handle Islamic Prayer client options."""
-
-    def __init__(self, config_entry: ConfigEntry) -> None:
-        """Initialize options flow."""
-        self.config_entry = config_entry
 
     async def async_step_init(
         self, user_input: dict[str, Any] | None = None

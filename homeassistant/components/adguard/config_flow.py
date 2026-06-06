@@ -1,13 +1,10 @@
 """Config flow to configure the AdGuard Home integration."""
 
-from __future__ import annotations
-
 from typing import Any
 
 from adguardhome import AdGuardHome, AdGuardHomeConnectionError
 import voluptuous as vol
 
-from homeassistant.components.hassio import HassioServiceInfo
 from homeassistant.config_entries import ConfigFlow, ConfigFlowResult
 from homeassistant.const import (
     CONF_HOST,
@@ -18,6 +15,7 @@ from homeassistant.const import (
     CONF_VERIFY_SSL,
 )
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
+from homeassistant.helpers.service_info.hassio import HassioServiceInfo
 
 from .const import DOMAIN
 
@@ -107,7 +105,7 @@ class AdGuardHomeFlowHandler(ConfigFlow, domain=DOMAIN):
     async def async_step_hassio(
         self, discovery_info: HassioServiceInfo
     ) -> ConfigFlowResult:
-        """Prepare configuration for a Hass.io AdGuard Home add-on.
+        """Prepare configuration for a Hass.io AdGuard Home app.
 
         This flow is triggered by the discovery component.
         """

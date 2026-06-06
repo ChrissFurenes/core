@@ -1,7 +1,5 @@
 """Support for balance data via the Starling Bank API."""
 
-from __future__ import annotations
-
 from datetime import timedelta
 import logging
 
@@ -15,7 +13,7 @@ from homeassistant.components.sensor import (
 )
 from homeassistant.const import CONF_ACCESS_TOKEN, CONF_NAME
 from homeassistant.core import HomeAssistant
-import homeassistant.helpers.config_validation as cv
+from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
 
@@ -92,9 +90,8 @@ class StarlingBalanceSensor(SensorEntity):
     @property
     def name(self):
         """Return the name of the sensor."""
-        return "{} {}".format(
-            self._account_name, self._balance_data_type.replace("_", " ").capitalize()
-        )
+        balance_data_type = self._balance_data_type.replace("_", " ").capitalize()
+        return f"{self._account_name} {balance_data_type}"
 
     @property
     def native_value(self):

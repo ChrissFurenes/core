@@ -17,7 +17,7 @@ from homeassistant.components.homeworks.const import (
     CONF_RELEASE_DELAY,
     DOMAIN,
 )
-from homeassistant.config_entries import SOURCE_RECONFIGURE, SOURCE_USER
+from homeassistant.config_entries import SOURCE_USER
 from homeassistant.const import (
     CONF_HOST,
     CONF_NAME,
@@ -31,9 +31,8 @@ from homeassistant.data_entry_flow import FlowResultType
 from tests.common import MockConfigEntry
 
 
-async def test_user_flow(
-    hass: HomeAssistant, mock_homeworks: MagicMock, mock_setup_entry
-) -> None:
+@pytest.mark.usefixtures("mock_setup_entry")
+async def test_user_flow(hass: HomeAssistant, mock_homeworks: MagicMock) -> None:
     """Test the user configuration flow."""
     result = await hass.config_entries.flow.async_init(
         DOMAIN,
@@ -65,8 +64,9 @@ async def test_user_flow(
     mock_controller.join.assert_not_called()
 
 
+@pytest.mark.usefixtures("mock_setup_entry")
 async def test_user_flow_credentials(
-    hass: HomeAssistant, mock_homeworks: MagicMock, mock_setup_entry
+    hass: HomeAssistant, mock_homeworks: MagicMock
 ) -> None:
     """Test the user configuration flow."""
     result = await hass.config_entries.flow.async_init(
@@ -103,8 +103,9 @@ async def test_user_flow_credentials(
     mock_controller.join.assert_not_called()
 
 
+@pytest.mark.usefixtures("mock_setup_entry")
 async def test_user_flow_credentials_user_only(
-    hass: HomeAssistant, mock_homeworks: MagicMock, mock_setup_entry
+    hass: HomeAssistant, mock_homeworks: MagicMock
 ) -> None:
     """Test the user configuration flow."""
     result = await hass.config_entries.flow.async_init(
@@ -138,8 +139,9 @@ async def test_user_flow_credentials_user_only(
     mock_controller.join.assert_not_called()
 
 
+@pytest.mark.usefixtures("mock_setup_entry")
 async def test_user_flow_credentials_password_only(
-    hass: HomeAssistant, mock_homeworks: MagicMock, mock_setup_entry
+    hass: HomeAssistant, mock_homeworks: MagicMock
 ) -> None:
     """Test the user configuration flow."""
     result = await hass.config_entries.flow.async_init(
@@ -163,8 +165,9 @@ async def test_user_flow_credentials_password_only(
     assert result["errors"] == {"base": "need_username_with_password"}
 
 
+@pytest.mark.usefixtures("mock_setup_entry")
 async def test_user_flow_already_exists(
-    hass: HomeAssistant, mock_empty_config_entry: MockConfigEntry, mock_setup_entry
+    hass: HomeAssistant, mock_empty_config_entry: MockConfigEntry
 ) -> None:
     """Test the user configuration flow."""
     mock_empty_config_entry.add_to_hass(hass)
@@ -208,10 +211,10 @@ async def test_user_flow_already_exists(
         (Exception, "unknown_error"),
     ],
 )
+@pytest.mark.usefixtures("mock_setup_entry")
 async def test_user_flow_cannot_connect(
     hass: HomeAssistant,
     mock_homeworks: MagicMock,
-    mock_setup_entry,
     side_effect: type[Exception],
     error: str,
 ) -> None:
@@ -241,10 +244,7 @@ async def test_reconfigure_flow(
     """Test reconfigure flow."""
     mock_config_entry.add_to_hass(hass)
 
-    result = await hass.config_entries.flow.async_init(
-        DOMAIN,
-        context={"source": SOURCE_RECONFIGURE, "entry_id": mock_config_entry.entry_id},
-    )
+    result = await mock_config_entry.start_reconfigure_flow(hass)
     assert result["type"] is FlowResultType.FORM
     assert result["step_id"] == "reconfigure"
 
@@ -309,10 +309,7 @@ async def test_reconfigure_flow_flow_duplicate(
     )
     entry2.add_to_hass(hass)
 
-    result = await hass.config_entries.flow.async_init(
-        DOMAIN,
-        context={"source": SOURCE_RECONFIGURE, "entry_id": entry1.entry_id},
-    )
+    result = await entry1.start_reconfigure_flow(hass)
     assert result["type"] is FlowResultType.FORM
     assert result["step_id"] == "reconfigure"
 
@@ -334,10 +331,7 @@ async def test_reconfigure_flow_flow_no_change(
     """Test reconfigure flow."""
     mock_config_entry.add_to_hass(hass)
 
-    result = await hass.config_entries.flow.async_init(
-        DOMAIN,
-        context={"source": SOURCE_RECONFIGURE, "entry_id": mock_config_entry.entry_id},
-    )
+    result = await mock_config_entry.start_reconfigure_flow(hass)
     assert result["type"] is FlowResultType.FORM
     assert result["step_id"] == "reconfigure"
 
@@ -382,10 +376,7 @@ async def test_reconfigure_flow_credentials_password_only(
     """Test reconfigure flow."""
     mock_config_entry.add_to_hass(hass)
 
-    result = await hass.config_entries.flow.async_init(
-        DOMAIN,
-        context={"source": SOURCE_RECONFIGURE, "entry_id": mock_config_entry.entry_id},
-    )
+    result = await mock_config_entry.start_reconfigure_flow(hass)
     assert result["type"] is FlowResultType.FORM
     assert result["step_id"] == "reconfigure"
 

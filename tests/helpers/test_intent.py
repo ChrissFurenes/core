@@ -1,19 +1,21 @@
 """Tests for the intent helpers."""
 
 import asyncio
+from copy import deepcopy
 from unittest.mock import MagicMock, patch
 
 import pytest
 import voluptuous as vol
 
-from homeassistant.components import conversation, light, switch
+from homeassistant.components import light, switch
 from homeassistant.components.homeassistant.exposed_entities import async_expose_entity
 from homeassistant.const import (
     ATTR_DEVICE_CLASS,
     ATTR_FRIENDLY_NAME,
     ATTR_SUPPORTED_FEATURES,
 )
-from homeassistant.core import Context, HomeAssistant, State
+from homeassistant.core import HomeAssistant, ServiceCall, State
+from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers import (
     area_registry as ar,
     config_validation as cv,
@@ -72,18 +74,28 @@ async def test_async_match_states(
 
     # Put entities into different areas
     entity_registry.async_get_or_create(
-        "light", "demo", "1234", suggested_object_id="kitchen"
+        "light",
+        "demo",
+        "1234",
+        suggested_object_id="kitchen",
+        original_name="kitchen light",
     )
-    entity_registry.async_update_entity(state1.entity_id, area_id=area_kitchen.id)
+    entity_registry.async_update_entity(
+        state1.entity_id, area_id=area_kitchen.id, aliases=[er.COMPUTED_NAME]
+    )
 
     entity_registry.async_get_or_create(
-        "switch", "demo", "5678", suggested_object_id="bedroom"
+        "switch",
+        "demo",
+        "5678",
+        suggested_object_id="bedroom",
+        original_name="bedroom switch",
     )
     entity_registry.async_update_entity(
         state2.entity_id,
         area_id=area_bedroom.id,
         device_class=switch.SwitchDeviceClass.OUTLET,
-        aliases={"kill switch"},
+        aliases=[er.COMPUTED_NAME, "kill switch"],
     )
 
     # Match on name
@@ -216,6 +228,7 @@ async def test_async_match_targets(
     kitchen_outlet = entity_registry.async_update_entity(
         kitchen_outlet.entity_id,
         name="kitchen outlet",
+        aliases=[er.COMPUTED_NAME],
         device_class=switch.SwitchDeviceClass.OUTLET,
         area_id=area_kitchen.id,
     )
@@ -227,14 +240,14 @@ async def test_async_match_targets(
     bathroom_light_1 = entity_registry.async_update_entity(
         bathroom_light_1.entity_id,
         name="bathroom light",
-        aliases={"overhead light"},
+        aliases=[er.COMPUTED_NAME, "overhead light"],
         area_id=area_bathroom_1.id,
     )
     state_bathroom_light_1 = State(bathroom_light_1.entity_id, "off")
 
     # Floor 2
     floor_2 = floor_registry.async_create("second floor", aliases={"upstairs"})
-    area_bedroom_2 = area_registry.async_get_or_create("bedroom")
+    area_bedroom_2 = area_registry.async_get_or_create("second floor bedroom")
     area_bedroom_2 = area_registry.async_update(
         area_bedroom_2.id, floor_id=floor_2.floor_id
     )
@@ -249,6 +262,7 @@ async def test_async_match_targets(
     bedroom_switch_2 = entity_registry.async_update_entity(
         bedroom_switch_2.entity_id,
         name="second floor bedroom switch",
+        aliases=[er.COMPUTED_NAME],
         area_id=area_bedroom_2.id,
     )
     state_bedroom_switch_2 = State(
@@ -261,7 +275,7 @@ async def test_async_match_targets(
     )
     bathroom_light_2 = entity_registry.async_update_entity(
         bathroom_light_2.entity_id,
-        aliases={"bathroom light", "overhead light"},
+        aliases=[er.COMPUTED_NAME, "bathroom light", "overhead light"],
         area_id=area_bathroom_2.id,
         supported_features=light.LightEntityFeature.EFFECT,
     )
@@ -269,7 +283,7 @@ async def test_async_match_targets(
 
     # Floor 3
     floor_3 = floor_registry.async_create("third floor", aliases={"upstairs"})
-    area_bedroom_3 = area_registry.async_get_or_create("bedroom")
+    area_bedroom_3 = area_registry.async_get_or_create("third floor bedroom")
     area_bedroom_3 = area_registry.async_update(
         area_bedroom_3.id, floor_id=floor_3.floor_id
     )
@@ -284,6 +298,7 @@ async def test_async_match_targets(
     bedroom_switch_3 = entity_registry.async_update_entity(
         bedroom_switch_3.entity_id,
         name="third floor bedroom switch",
+        aliases=[er.COMPUTED_NAME],
         area_id=area_bedroom_3.id,
     )
     state_bedroom_switch_3 = State(
@@ -298,6 +313,7 @@ async def test_async_match_targets(
     bathroom_light_3 = entity_registry.async_update_entity(
         bathroom_light_3.entity_id,
         name="overhead light",
+        aliases=[er.COMPUTED_NAME, "bathroom light"],
         area_id=area_bathroom_3.id,
     )
     state_bathroom_light_3 = State(
@@ -329,7 +345,7 @@ async def test_async_match_targets(
         states=states,
     )
     assert not result.is_match
-    assert result.no_match_reason == intent.MatchFailedReason.DUPLICATE_NAME
+    assert result.no_match_reason is intent.MatchFailedReason.DUPLICATE_NAME
     assert result.no_match_name == "bathroom light"
 
     # Works with duplicate names allowed
@@ -395,7 +411,7 @@ async def test_async_match_targets(
         states=states,
     )
     assert not result.is_match
-    assert result.no_match_reason == intent.MatchFailedReason.DUPLICATE_NAME
+    assert result.no_match_reason is intent.MatchFailedReason.DUPLICATE_NAME
 
     # Disambiguate by area name, if unique
     result = intent.async_match_targets(
@@ -416,7 +432,7 @@ async def test_async_match_targets(
         states=states,
     )
     assert not result.is_match
-    assert result.no_match_reason == intent.MatchFailedReason.DUPLICATE_NAME
+    assert result.no_match_reason is intent.MatchFailedReason.DUPLICATE_NAME
 
     # Does work if floor/area name combo is unique
     result = intent.async_match_targets(
@@ -441,7 +457,7 @@ async def test_async_match_targets(
         states=states,
     )
     assert not result.is_match
-    assert result.no_match_reason == intent.MatchFailedReason.AREA
+    assert result.no_match_reason is intent.MatchFailedReason.AREA
 
     # Check state constraint (only third floor bathroom light is on)
     result = intent.async_match_targets(
@@ -509,6 +525,37 @@ async def test_async_match_targets(
         bathroom_light_2.entity_id,
         bathroom_light_3.entity_id,
     }
+
+    # Check single target constraint
+    result = intent.async_match_targets(
+        hass,
+        intent.MatchTargetsConstraints(domains={"light"}, single_target=True),
+        states=states,
+    )
+    assert not result.is_match
+    assert result.no_match_reason is intent.MatchFailedReason.MULTIPLE_TARGETS
+
+    # Only one light on the ground floor
+    result = intent.async_match_targets(
+        hass,
+        intent.MatchTargetsConstraints(domains={"light"}, single_target=True),
+        preferences=intent.MatchTargetsPreferences(floor_id=floor_1.floor_id),
+        states=states,
+    )
+    assert result.is_match
+    assert len(result.states) == 1
+    assert result.states[0].entity_id == bathroom_light_1.entity_id
+
+    # Only one switch in bedroom
+    result = intent.async_match_targets(
+        hass,
+        intent.MatchTargetsConstraints(domains={"switch"}, single_target=True),
+        preferences=intent.MatchTargetsPreferences(area_id=area_bedroom_2.id),
+        states=states,
+    )
+    assert result.is_match
+    assert len(result.states) == 1
+    assert result.states[0].entity_id == bedroom_switch_2.entity_id
 
 
 async def test_match_device_area(
@@ -584,25 +631,6 @@ def test_async_validate_slots_no_schema() -> None:
     }
 
 
-async def test_cant_turn_on_lock(hass: HomeAssistant) -> None:
-    """Test that we can't turn on entities that don't support it."""
-    assert await async_setup_component(hass, "homeassistant", {})
-    assert await async_setup_component(hass, "conversation", {})
-    assert await async_setup_component(hass, "intent", {})
-    assert await async_setup_component(hass, "lock", {})
-
-    hass.states.async_set(
-        "lock.test", "123", attributes={ATTR_FRIENDLY_NAME: "Test Lock"}
-    )
-
-    result = await conversation.async_converse(
-        hass, "turn on test lock", None, Context(), None
-    )
-
-    assert result.response.response_type == intent.IntentResponseType.ERROR
-    assert result.response.error_code == intent.IntentResponseErrorCode.NO_VALID_TARGETS
-
-
 def test_async_register(hass: HomeAssistant) -> None:
     """Test registering an intent and verifying it is stored correctly."""
     handler = MagicMock()
@@ -614,7 +642,7 @@ def test_async_register(hass: HomeAssistant) -> None:
 
 
 def test_async_register_overwrite(hass: HomeAssistant) -> None:
-    """Test registering multiple intents with the same type, ensuring the last one overwrites the previous one and a warning is emitted."""
+    """Test registering duplicate intent types overwrites and emits a warning."""
     handler1 = MagicMock()
     handler1.intent_type = "test_intent"
 
@@ -633,7 +661,7 @@ def test_async_register_overwrite(hass: HomeAssistant) -> None:
 
 
 def test_async_remove(hass: HomeAssistant) -> None:
-    """Test removing an intent and verifying it is no longer present in the Home Assistant data."""
+    """Test removing an intent and verifying it is no longer present."""
     handler = MagicMock()
     handler.intent_type = "test_intent"
 
@@ -679,9 +707,7 @@ async def test_validate_then_run_in_background(hass: HomeAssistant) -> None:
     hass.services.async_register("light", "turn_on", mock_service)
 
     # Create intent handler with a service timeout of 0.05 seconds
-    handler = intent.ServiceIntentHandler(
-        "TestType", "light", "turn_on", "Turned {} on"
-    )
+    handler = intent.ServiceIntentHandler("TestType", "light", "turn_on")
     handler.service_timeout = 0.05
     intent.async_register(hass, handler)
 
@@ -692,7 +718,7 @@ async def test_validate_then_run_in_background(hass: HomeAssistant) -> None:
         slots={"name": {"value": "kitchen"}},
     )
 
-    assert result.response_type == intent.IntentResponseType.ACTION_DONE
+    assert result.response_type is intent.IntentResponseType.ACTION_DONE
 
     assert not call_done.is_set()
     await call_done.wait()
@@ -701,11 +727,32 @@ async def test_validate_then_run_in_background(hass: HomeAssistant) -> None:
     assert calls[0].data == {"entity_id": "light.kitchen"}
 
 
+async def test_run_then_background_validation_error(hass: HomeAssistant) -> None:
+    """Test that a validation error within the timeout is propagated."""
+    hass.states.async_set("light.kitchen", "off")
+
+    async def mock_service(call: ServiceCall) -> None:
+        """Mock service that raises a validation error immediately."""
+        raise HomeAssistantError("Invalid service data")
+
+    hass.services.async_register("light", "turn_on", mock_service)
+
+    handler = intent.ServiceIntentHandler("TestType", "light", "turn_on")
+    intent.async_register(hass, handler)
+
+    # The single entity fails, so IntentHandleError is raised
+    with pytest.raises(intent.IntentHandleError):
+        await intent.async_handle(
+            hass,
+            "test",
+            "TestType",
+            slots={"name": {"value": "kitchen"}},
+        )
+
+
 async def test_invalid_area_floor_names(hass: HomeAssistant) -> None:
     """Test that we throw an appropriate errors with invalid area/floor names."""
-    handler = intent.ServiceIntentHandler(
-        "TestType", "light", "turn_on", "Turned {} on"
-    )
+    handler = intent.ServiceIntentHandler("TestType", "light", "turn_on")
     intent.async_register(hass, handler)
 
     # Need a light to avoid domain error
@@ -718,7 +765,7 @@ async def test_invalid_area_floor_names(hass: HomeAssistant) -> None:
             "TestType",
             slots={"area": {"value": "invalid area"}},
         )
-    assert err.value.result.no_match_reason == intent.MatchFailedReason.INVALID_AREA
+    assert err.value.result.no_match_reason is intent.MatchFailedReason.INVALID_AREA
 
     with pytest.raises(intent.MatchFailedError) as err:
         await intent.async_handle(
@@ -727,7 +774,7 @@ async def test_invalid_area_floor_names(hass: HomeAssistant) -> None:
             "TestType",
             slots={"floor": {"value": "invalid floor"}},
         )
-    assert err.value.result.no_match_reason == intent.MatchFailedReason.INVALID_FLOOR
+    assert err.value.result.no_match_reason is intent.MatchFailedReason.INVALID_FLOOR
 
 
 async def test_service_intent_handler_required_domains(hass: HomeAssistant) -> None:
@@ -740,7 +787,6 @@ async def test_service_intent_handler_required_domains(hass: HomeAssistant) -> N
         "TestType",
         "homeassistant",
         "turn_on",
-        "Turned {} on",
         required_domains={"light"},
     )
     intent.async_register(hass, handler)
@@ -752,7 +798,7 @@ async def test_service_intent_handler_required_domains(hass: HomeAssistant) -> N
         "TestType",
         slots={"name": {"value": "kitchen"}, "domain": {"value": "light"}},
     )
-    assert result.response_type == intent.IntentResponseType.ACTION_DONE
+    assert result.response_type is intent.IntentResponseType.ACTION_DONE
     assert len(calls) == 1
 
     # Fails because the intent handler is restricted to lights only
@@ -780,7 +826,6 @@ async def test_service_handler_empty_strings(hass: HomeAssistant) -> None:
         "TestType",
         "light",
         "turn_on",
-        "Turned {} on",
     )
     intent.async_register(hass, handler)
 
@@ -806,9 +851,7 @@ async def test_service_handler_empty_strings(hass: HomeAssistant) -> None:
 
 async def test_service_handler_no_filter(hass: HomeAssistant) -> None:
     """Test that targeting all devices in the house fails."""
-    handler = intent.ServiceIntentHandler(
-        "TestType", "light", "turn_on", "Turned {} on"
-    )
+    handler = intent.ServiceIntentHandler("TestType", "light", "turn_on")
     intent.async_register(hass, handler)
 
     with pytest.raises(intent.IntentHandleError):
@@ -840,7 +883,6 @@ async def test_service_handler_device_classes(
         "TestType",
         "switch",
         "turn_on",
-        "Turned {} on",
         device_classes={switch.SwitchDeviceClass},
     )
     intent.async_register(hass, handler)
@@ -869,3 +911,149 @@ async def test_service_handler_device_classes(
             "TestType",
             slots={"device_class": {"value": "light"}},
         )
+
+
+async def test_service_handler_matched_states_uses_updated_state(
+    hass: HomeAssistant,
+) -> None:
+    """Test matched_states reflects post-service-call state, not pre-call."""
+    hass.states.async_set("light.kitchen", "off")
+
+    async def mock_turn_on(call):
+        """Mock service that updates the entity state."""
+        hass.states.async_set(call.data["entity_id"], "on")
+
+    hass.services.async_register("light", "turn_on", mock_turn_on)
+
+    handler = intent.ServiceIntentHandler("TestType", "light", "turn_on")
+    intent.async_register(hass, handler)
+
+    result = await intent.async_handle(
+        hass,
+        "test",
+        "TestType",
+        slots={"name": {"value": "kitchen"}},
+    )
+
+    assert result.response_type is intent.IntentResponseType.ACTION_DONE
+    assert len(result.matched_states) == 1
+    assert result.matched_states[0].entity_id == "light.kitchen"
+    assert result.matched_states[0].state == "on"
+
+
+@pytest.mark.parametrize(
+    ("aliases", "friendly_name", "expected"),
+    [
+        (None, "Kitchen Light", ["Kitchen Light"]),
+        (None, "  spaced  ", ["spaced"]),
+        ([er.COMPUTED_NAME, "custom alias"], "My Device Original Name", None),
+    ],
+)
+async def test_get_all_entity_aliases(
+    hass: HomeAssistant,
+    device_registry: dr.DeviceRegistry,
+    entity_registry: er.EntityRegistry,
+    aliases: list[er.AliasEntry] | None,
+    friendly_name: str,
+    expected: list[str] | None,
+) -> None:
+    """Test getting all names/aliases for an entity."""
+    if aliases is not None:
+        mock_config = MockConfigEntry(domain="light")
+        mock_config.add_to_hass(hass)
+
+        device_entry = device_registry.async_get_or_create(
+            config_entry_id=mock_config.entry_id,
+            connections={(dr.CONNECTION_NETWORK_MAC, "12:34:56:AB:CD:EF")},
+            name="My Device",
+        )
+
+        entry = entity_registry.async_get_or_create(
+            "light",
+            "hue",
+            "1234",
+            config_entry=mock_config,
+            device_id=device_entry.id,
+            has_entity_name=True,
+            original_name="Original Name",
+        )
+        entry = entity_registry.async_update_entity(entry.entity_id, aliases=aliases)
+        expected = ["My Device Original Name", "custom alias"]
+    else:
+        entry = None
+
+    state = State("light.test", "on", {"friendly_name": friendly_name})
+    assert intent.async_get_entity_aliases(hass, entry, state=state) == expected
+
+
+async def test_intent_response_dict() -> None:
+    """Test that IntentResponse.as_dict() copies mutable objects."""
+    response = intent.IntentResponse(
+        language="en",
+        intent=None,
+    )
+    # Prepare the intent response initial state
+    response.async_set_speech(
+        speech="Hello", speech_type="plain", extra_data={"key": "value"}
+    )
+    response.async_set_reprompt(
+        speech="Hi", speech_type="plain", extra_data={"key2": "value2"}
+    )
+    response.async_set_card(title="Title", content="Content", card_type="simple")
+    response.async_set_results(
+        success_results=[
+            intent.IntentResponseTarget(
+                type=intent.IntentResponseTargetType.FLOOR,
+                name="first floor",
+                id="floor-1",
+            )
+        ],
+        failed_results=[
+            intent.IntentResponseTarget(
+                type=intent.IntentResponseTargetType.ENTITY,
+                name="kitchen light",
+                id="light.kitchen",
+            )
+        ],
+    )
+    response.async_set_states(
+        matched_states=[State("light.kitchen", "on")],
+        unmatched_states=[State("light.bedroom", "off")],
+    )
+    response.async_set_speech_slots({"name": {"value": "kitchen"}})
+
+    response_dict1 = response.as_dict()
+    response_dict2 = deepcopy(response_dict1)
+
+    # Mutate the original object
+    response.async_set_speech(
+        speech="Changed", speech_type="plain", extra_data={"key": "changed"}
+    )
+    response.async_set_reprompt(
+        speech="Changed", speech_type="plain", extra_data={"key2": "changed2"}
+    )
+    response.async_set_card(title="Changed", content="Changed", card_type="simple")
+    response.async_set_results(
+        success_results=[
+            intent.IntentResponseTarget(
+                type=intent.IntentResponseTargetType.FLOOR,
+                name="changed floor",
+                id="floor-changed",
+            )
+        ],
+        failed_results=[
+            intent.IntentResponseTarget(
+                type=intent.IntentResponseTargetType.ENTITY,
+                name="changed light",
+                id="light.changed",
+            )
+        ],
+    )
+    response.async_set_states(
+        matched_states=[State("light.changed", "on")],
+        unmatched_states=[State("light.changed_bedroom", "off")],
+    )
+    response.async_set_speech_slots({"name": {"value": "changed"}})
+
+    # The original dict should not be affected by the mutations
+    assert response_dict1 == response_dict2

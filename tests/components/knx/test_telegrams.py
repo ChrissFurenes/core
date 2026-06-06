@@ -6,8 +6,10 @@ from typing import Any
 
 import pytest
 
-from homeassistant.components.knx import DOMAIN
-from homeassistant.components.knx.const import CONF_KNX_TELEGRAM_LOG_SIZE
+from homeassistant.components.knx.const import (
+    CONF_KNX_TELEGRAM_LOG_SIZE,
+    KNX_MODULE_KEY,
+)
 from homeassistant.components.knx.telegrams import TelegramDict
 from homeassistant.core import HomeAssistant
 
@@ -16,6 +18,9 @@ from .conftest import KNXTestKit
 MOCK_TIMESTAMP = "2023-07-02T14:51:24.045162-07:00"
 MOCK_TELEGRAMS = [
     {
+        # None since CEMIHandler is mocked away and doesn't
+        # set it to False
+        "data_secure": None,
         "destination": "1/3/4",
         "destination_name": "",
         "direction": "Incoming",
@@ -31,6 +36,7 @@ MOCK_TELEGRAMS = [
         "value": None,
     },
     {
+        "data_secure": None,
         "destination": "2/2/2",
         "destination_name": "",
         "direction": "Outgoing",
@@ -39,7 +45,7 @@ MOCK_TELEGRAMS = [
         "dpt_name": None,
         "payload": [1, 2, 3, 4],
         "source": "0.0.0",
-        "source_name": "",
+        "source_name": "Home Assistant",
         "telegramtype": "GroupValueWrite",
         "timestamp": MOCK_TIMESTAMP,
         "unit": None,
@@ -49,7 +55,7 @@ MOCK_TELEGRAMS = [
 
 
 def assert_telegram_history(telegrams: list[TelegramDict]) -> bool:
-    """Assert that the mock telegrams are equal to the given telegrams. Omitting timestamp."""
+    """Assert mock telegrams equal the given telegrams, omitting timestamp."""
     assert len(telegrams) == len(MOCK_TELEGRAMS)
     for index, value in enumerate(telegrams):
         test_telegram = copy(value)  # don't modify the original
@@ -68,7 +74,7 @@ async def test_store_telegam_history(
     hass_storage: dict[str, Any],
 ) -> None:
     """Test storing telegram history."""
-    await knx.setup_integration({})
+    await knx.setup_integration()
 
     await knx.receive_write("1/3/4", True)
     await hass.services.async_call(
@@ -76,7 +82,7 @@ async def test_store_telegam_history(
     )
     await knx.assert_write("2/2/2", (1, 2, 3, 4))
 
-    assert len(hass.data[DOMAIN].telegrams.recent_telegrams) == 2
+    assert len(hass.data[KNX_MODULE_KEY].telegrams.recent_telegrams) == 2
     with pytest.raises(KeyError):
         hass_storage["knx/telegrams_history.json"]
 
@@ -92,8 +98,8 @@ async def test_load_telegam_history(
 ) -> None:
     """Test telegram history restoration."""
     hass_storage["knx/telegrams_history.json"] = {"version": 1, "data": MOCK_TELEGRAMS}
-    await knx.setup_integration({})
-    loaded_telegrams = hass.data[DOMAIN].telegrams.recent_telegrams
+    await knx.setup_integration()
+    loaded_telegrams = hass.data[KNX_MODULE_KEY].telegrams.recent_telegrams
     assert assert_telegram_history(loaded_telegrams)
     # TelegramDict "payload" is a tuple, this shall be restored when loading from JSON
     assert isinstance(loaded_telegrams[1]["payload"], tuple)
@@ -111,7 +117,7 @@ async def test_remove_telegam_history(
         knx.mock_config_entry,
         data=knx.mock_config_entry.data | {CONF_KNX_TELEGRAM_LOG_SIZE: 0},
     )
-    await knx.setup_integration({}, add_entry_to_hass=False)
+    await knx.setup_integration(add_entry_to_hass=False)
     # Store.async_remove() is mocked by hass_storage - check that data was removed.
     assert "knx/telegrams_history.json" not in hass_storage
-    assert not hass.data[DOMAIN].telegrams.recent_telegrams
+    assert not hass.data[KNX_MODULE_KEY].telegrams.recent_telegrams

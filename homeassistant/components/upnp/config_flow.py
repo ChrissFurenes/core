@@ -1,7 +1,5 @@
 """Config flow for UPNP."""
 
-from __future__ import annotations
-
 from collections.abc import Mapping
 from typing import Any, cast
 from urllib.parse import urlparse
@@ -9,16 +7,20 @@ from urllib.parse import urlparse
 import voluptuous as vol
 
 from homeassistant.components import ssdp
-from homeassistant.components.ssdp import SsdpServiceInfo
 from homeassistant.config_entries import (
     SOURCE_IGNORE,
     ConfigEntry,
     ConfigFlow,
     ConfigFlowResult,
     OptionsFlow,
-    OptionsFlowWithConfigEntry,
 )
 from homeassistant.core import HomeAssistant, callback
+from homeassistant.helpers.service_info.ssdp import (
+    ATTR_UPNP_DEVICE_TYPE,
+    ATTR_UPNP_FRIENDLY_NAME,
+    ATTR_UPNP_MODEL_NAME,
+    SsdpServiceInfo,
+)
 
 from .const import (
     CONFIG_ENTRY_FORCE_POLL,
@@ -38,17 +40,17 @@ from .const import (
 from .device import async_get_mac_address_from_host, get_preferred_location
 
 
-def _friendly_name_from_discovery(discovery_info: ssdp.SsdpServiceInfo) -> str:
+def _friendly_name_from_discovery(discovery_info: SsdpServiceInfo) -> str:
     """Extract user-friendly name from discovery."""
     return cast(
         str,
-        discovery_info.upnp.get(ssdp.ATTR_UPNP_FRIENDLY_NAME)
-        or discovery_info.upnp.get(ssdp.ATTR_UPNP_MODEL_NAME)
+        discovery_info.upnp.get(ATTR_UPNP_FRIENDLY_NAME)
+        or discovery_info.upnp.get(ATTR_UPNP_MODEL_NAME)
         or discovery_info.ssdp_headers.get("_host", ""),
     )
 
 
-def _is_complete_discovery(discovery_info: ssdp.SsdpServiceInfo) -> bool:
+def _is_complete_discovery(discovery_info: SsdpServiceInfo) -> bool:
     """Test if discovery is complete and usable."""
     return bool(
         discovery_info.ssdp_udn
@@ -60,7 +62,7 @@ def _is_complete_discovery(discovery_info: ssdp.SsdpServiceInfo) -> bool:
 
 async def _async_discovered_igd_devices(
     hass: HomeAssistant,
-) -> list[ssdp.SsdpServiceInfo]:
+) -> list[SsdpServiceInfo]:
     """Discovery IGD devices."""
     return await ssdp.async_get_discovery_info_by_st(
         hass, ST_IGD_V1
@@ -77,10 +79,10 @@ async def _async_mac_address_from_discovery(
     return await async_get_mac_address_from_host(hass, host)
 
 
-def _is_igd_device(discovery_info: ssdp.SsdpServiceInfo) -> bool:
+def _is_igd_device(discovery_info: SsdpServiceInfo) -> bool:
     """Test if discovery is a complete IGD device."""
     root_device_info = discovery_info.upnp
-    return root_device_info.get(ssdp.ATTR_UPNP_DEVICE_TYPE) in {ST_IGD_V1, ST_IGD_V2}
+    return root_device_info.get(ATTR_UPNP_DEVICE_TYPE) in {ST_IGD_V1, ST_IGD_V2}
 
 
 class UpnpFlowHandler(ConfigFlow, domain=DOMAIN):
@@ -89,14 +91,17 @@ class UpnpFlowHandler(ConfigFlow, domain=DOMAIN):
     VERSION = 1
 
     # Paths:
-    # 1: ssdp(discovery_info) --> ssdp_confirm(None) --> ssdp_confirm({}) --> create_entry()
+    # 1: ssdp(discovery_info) --> ssdp_confirm(None)
+    #    --> ssdp_confirm({}) --> create_entry()
     # 2: user(None): scan --> user({...}) --> create_entry()
 
     @staticmethod
     @callback
-    def async_get_options_flow(config_entry: ConfigEntry) -> OptionsFlow:
+    def async_get_options_flow(
+        config_entry: ConfigEntry,
+    ) -> UpnpOptionsFlowHandler:
         """Get the options flow for this handler."""
-        return UpnpOptionsFlowHandler(config_entry)
+        return UpnpOptionsFlowHandler()
 
     @property
     def _discoveries(self) -> dict[str, SsdpServiceInfo]:
@@ -166,7 +171,7 @@ class UpnpFlowHandler(ConfigFlow, domain=DOMAIN):
         )
 
     async def async_step_ssdp(
-        self, discovery_info: ssdp.SsdpServiceInfo
+        self, discovery_info: SsdpServiceInfo
     ) -> ConfigFlowResult:
         """Handle a discovered UPnP/IGD device.
 
@@ -299,7 +304,7 @@ class UpnpFlowHandler(ConfigFlow, domain=DOMAIN):
         return self.async_create_entry(title=title, data=data, options=options)
 
 
-class UpnpOptionsFlowHandler(OptionsFlowWithConfigEntry):
+class UpnpOptionsFlowHandler(OptionsFlow):
     """Handle an options flow."""
 
     async def async_step_init(
@@ -313,7 +318,7 @@ class UpnpOptionsFlowHandler(OptionsFlowWithConfigEntry):
             {
                 vol.Optional(
                     CONFIG_ENTRY_FORCE_POLL,
-                    default=self.options.get(
+                    default=self.config_entry.options.get(
                         CONFIG_ENTRY_FORCE_POLL, DEFAULT_CONFIG_ENTRY_FORCE_POLL
                     ),
                 ): bool,

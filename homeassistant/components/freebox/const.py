@@ -1,14 +1,11 @@
 """Freebox component constants."""
 
-from __future__ import annotations
-
 import enum
 import socket
 
 from homeassistant.const import Platform
 
 DOMAIN = "freebox"
-SERVICE_REBOOT = "reboot"
 
 APP_DESC = {
     "app_id": "hass",

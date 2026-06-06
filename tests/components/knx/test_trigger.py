@@ -18,9 +18,10 @@ async def test_telegram_trigger(
     knx: KNXTestKit,
 ) -> None:
     """Test telegram triggers firing."""
-    await knx.setup_integration({})
+    await knx.setup_integration()
 
-    # "id" field added to action to test if `trigger_data` passed correctly in `async_attach_trigger`
+    # "id" field added to action to test if `trigger_data` passed
+    # correctly in `async_attach_trigger`
     assert await async_setup_component(
         hass,
         automation.DOMAIN,
@@ -105,7 +106,7 @@ async def test_telegram_trigger_dpt_option(
     expected_unit: str | None,
 ) -> None:
     """Test telegram trigger type option."""
-    await knx.setup_integration({})
+    await knx.setup_integration()
     assert await async_setup_component(
         hass,
         automation.DOMAIN,
@@ -190,7 +191,7 @@ async def test_telegram_trigger_options(
     direction_options: dict[str, bool],
 ) -> None:
     """Test telegram trigger options."""
-    await knx.setup_integration({})
+    await knx.setup_integration()
     assert await async_setup_component(
         hass,
         automation.DOMAIN,
@@ -266,7 +267,7 @@ async def test_remove_telegram_trigger(
 ) -> None:
     """Test for removed callback when telegram trigger not used."""
     automation_name = "telegram_trigger_automation"
-    await knx.setup_integration({})
+    await knx.setup_integration()
 
     assert await async_setup_component(
         hass,
@@ -311,7 +312,7 @@ async def test_invalid_trigger(
     caplog: pytest.LogCaptureFixture,
 ) -> None:
     """Test invalid telegram trigger configuration."""
-    await knx.setup_integration({})
+    await knx.setup_integration()
     caplog.clear()
     with caplog.at_level(logging.ERROR):
         assert await async_setup_component(

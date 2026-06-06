@@ -1,7 +1,5 @@
 """Support for Bizkaibus, Biscay (Basque Country, Spain) Bus service."""
 
-from __future__ import annotations
-
 from contextlib import suppress
 
 from bizkaibus.bizkaibus import BizkaibusData
@@ -13,7 +11,7 @@ from homeassistant.components.sensor import (
 )
 from homeassistant.const import CONF_NAME, UnitOfTime
 from homeassistant.core import HomeAssistant
-import homeassistant.helpers.config_validation as cv
+from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
 

@@ -37,7 +37,7 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import ATTR_COMMAND, STATE_OFF
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers import config_validation as cv
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 from homeassistant.helpers.restore_state import RestoreEntity
 from homeassistant.helpers.storage import Store
 from homeassistant.util import dt as dt_util
@@ -92,9 +92,11 @@ SERVICE_DELETE_SCHEMA = COMMAND_SCHEMA.extend(
 async def async_setup_entry(
     hass: HomeAssistant,
     config_entry: ConfigEntry,
-    async_add_entities: AddEntitiesCallback,
+    async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up a Broadlink remote."""
+    # Uses legacy hass.data[DOMAIN] pattern
+    # pylint: disable-next=home-assistant-use-runtime-data
     device = hass.data[DOMAIN].devices[config_entry.entry_id]
     remote = BroadlinkRemote(
         device,
@@ -249,6 +251,7 @@ class BroadlinkRemote(BroadlinkEntity, RemoteEntity, RestoreEntity):
 
             try:
                 await device.async_request(device.api.send_data, code)
+            # pylint: disable-next=home-assistant-action-swallowed-exception
             except (BroadlinkException, OSError) as err:
                 _LOGGER.error("Error during %s: %s", service, err)
                 break
@@ -299,6 +302,7 @@ class BroadlinkRemote(BroadlinkEntity, RemoteEntity, RestoreEntity):
                     if toggle:
                         code = [code, await learn_command(command)]
 
+                # pylint: disable-next=home-assistant-action-swallowed-exception
                 except (AuthorizationError, NetworkTimeoutError, OSError) as err:
                     _LOGGER.error("Failed to learn '%s': %s", command, err)
                     break
@@ -337,7 +341,7 @@ class BroadlinkRemote(BroadlinkEntity, RemoteEntity, RestoreEntity):
                 await asyncio.sleep(1)
                 try:
                     code = await device.async_request(device.api.check_data)
-                except (ReadError, StorageError):
+                except ReadError, StorageError:
                     continue
                 return b64encode(code).decode("utf8")
 
@@ -377,7 +381,7 @@ class BroadlinkRemote(BroadlinkEntity, RemoteEntity, RestoreEntity):
                     device.api.check_frequency
                 )
                 if is_found:
-                    _LOGGER.info("Radiofrequency detected: %s MHz", frequency)
+                    _LOGGER.debug("Radiofrequency detected: %s MHz", frequency)
                     break
             else:
                 await device.async_request(device.api.cancel_sweep_frequency)
@@ -413,7 +417,7 @@ class BroadlinkRemote(BroadlinkEntity, RemoteEntity, RestoreEntity):
                 await asyncio.sleep(1)
                 try:
                     code = await device.async_request(device.api.check_data)
-                except (ReadError, StorageError):
+                except ReadError, StorageError:
                     continue
                 return b64encode(code).decode("utf8")
 

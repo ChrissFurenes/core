@@ -7,7 +7,6 @@ from unittest.mock import patch
 import pytest
 
 from homeassistant import setup
-from homeassistant.components import zeroconf
 from homeassistant.components.smappee.const import (
     CONF_SERIALNUMBER,
     DOMAIN,
@@ -20,6 +19,7 @@ from homeassistant.const import CONF_CLIENT_ID, CONF_CLIENT_SECRET
 from homeassistant.core import HomeAssistant
 from homeassistant.data_entry_flow import FlowResultType
 from homeassistant.helpers import config_entry_oauth2_flow
+from homeassistant.helpers.service_info.zeroconf import ZeroconfServiceInfo
 
 from tests.common import MockConfigEntry
 from tests.test_util.aiohttp import AiohttpClientMocker
@@ -63,7 +63,7 @@ async def test_show_zeroconf_connection_error_form(hass: HomeAssistant) -> None:
         result = await hass.config_entries.flow.async_init(
             DOMAIN,
             context={"source": SOURCE_ZEROCONF},
-            data=zeroconf.ZeroconfServiceInfo(
+            data=ZeroconfServiceInfo(
                 ip_address=ip_address("1.2.3.4"),
                 ip_addresses=[ip_address("1.2.3.4")],
                 port=22,
@@ -95,7 +95,7 @@ async def test_show_zeroconf_connection_error_form_next_generation(
         result = await hass.config_entries.flow.async_init(
             DOMAIN,
             context={"source": SOURCE_ZEROCONF},
-            data=zeroconf.ZeroconfServiceInfo(
+            data=ZeroconfServiceInfo(
                 ip_address=ip_address("1.2.3.4"),
                 ip_addresses=[ip_address("1.2.3.4")],
                 port=22,
@@ -146,7 +146,7 @@ async def test_connection_error(hass: HomeAssistant) -> None:
 
 
 async def test_user_local_connection_error(hass: HomeAssistant) -> None:
-    """Test we show user form on Smappee connection error in local next generation option."""
+    """Test user form on Smappee local connection error."""
     with (
         patch("pysmappee.api.SmappeeLocalApi.logon", return_value=None),
         patch("pysmappee.mqtt.SmappeeLocalMqtt.start_attempt", return_value=True),
@@ -179,7 +179,7 @@ async def test_zeroconf_wrong_mdns(hass: HomeAssistant) -> None:
     result = await hass.config_entries.flow.async_init(
         DOMAIN,
         context={"source": SOURCE_ZEROCONF},
-        data=zeroconf.ZeroconfServiceInfo(
+        data=ZeroconfServiceInfo(
             ip_address=ip_address("1.2.3.4"),
             ip_addresses=[ip_address("1.2.3.4")],
             port=22,
@@ -305,7 +305,7 @@ async def test_zeroconf_device_exists_abort(hass: HomeAssistant) -> None:
         result = await hass.config_entries.flow.async_init(
             DOMAIN,
             context={"source": SOURCE_ZEROCONF},
-            data=zeroconf.ZeroconfServiceInfo(
+            data=ZeroconfServiceInfo(
                 ip_address=ip_address("1.2.3.4"),
                 ip_addresses=[ip_address("1.2.3.4")],
                 port=22,
@@ -355,7 +355,7 @@ async def test_zeroconf_abort_if_cloud_device_exists(hass: HomeAssistant) -> Non
     result = await hass.config_entries.flow.async_init(
         DOMAIN,
         context={"source": SOURCE_ZEROCONF},
-        data=zeroconf.ZeroconfServiceInfo(
+        data=ZeroconfServiceInfo(
             ip_address=ip_address("1.2.3.4"),
             ip_addresses=[ip_address("1.2.3.4")],
             port=22,
@@ -373,11 +373,11 @@ async def test_zeroconf_abort_if_cloud_device_exists(hass: HomeAssistant) -> Non
 async def test_zeroconf_confirm_abort_if_cloud_device_exists(
     hass: HomeAssistant,
 ) -> None:
-    """Test we abort zeroconf confirm flow if Smappee Cloud device already configured."""
+    """Test zeroconf abort if Cloud device already configured."""
     result = await hass.config_entries.flow.async_init(
         DOMAIN,
         context={"source": SOURCE_ZEROCONF},
-        data=zeroconf.ZeroconfServiceInfo(
+        data=ZeroconfServiceInfo(
             ip_address=ip_address("1.2.3.4"),
             ip_addresses=[ip_address("1.2.3.4")],
             port=22,
@@ -504,7 +504,7 @@ async def test_full_zeroconf_flow(hass: HomeAssistant) -> None:
         result = await hass.config_entries.flow.async_init(
             DOMAIN,
             context={"source": SOURCE_ZEROCONF},
-            data=zeroconf.ZeroconfServiceInfo(
+            data=ZeroconfServiceInfo(
                 ip_address=ip_address("1.2.3.4"),
                 ip_addresses=[ip_address("1.2.3.4")],
                 port=22,
@@ -589,7 +589,7 @@ async def test_full_zeroconf_flow_next_generation(hass: HomeAssistant) -> None:
         result = await hass.config_entries.flow.async_init(
             DOMAIN,
             context={"source": SOURCE_ZEROCONF},
-            data=zeroconf.ZeroconfServiceInfo(
+            data=ZeroconfServiceInfo(
                 ip_address=ip_address("1.2.3.4"),
                 ip_addresses=[ip_address("1.2.3.4")],
                 port=22,

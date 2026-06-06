@@ -7,8 +7,8 @@ import pytest
 from homeassistant.components.media_player.browse_media import (
     async_process_play_media_url,
 )
-from homeassistant.config import async_process_ha_core_config
 from homeassistant.core import HomeAssistant
+from homeassistant.core_config import async_process_ha_core_config
 from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.network import NoURLAvailableError
 
@@ -84,10 +84,20 @@ async def test_process_play_media_url(hass: HomeAssistant, mock_sign_path) -> No
         == "http://example.local:8123/api/tts_proxy/bla"
     )
     assert (
+        async_process_play_media_url(hass, "/local/bla")
+        == "http://example.local:8123/local/bla"
+    )
+    assert (
         async_process_play_media_url(
             hass, "http://example.local:8123/api/tts_proxy/bla"
         )
         == "http://example.local:8123/api/tts_proxy/bla"
+    )
+    assert (
+        async_process_play_media_url(
+            hass, "http://example.local:8123/api/assist_satellite/static/bla"
+        )
+        == "http://example.local:8123/api/assist_satellite/static/bla"
     )
 
     # Not changing a URL which is not absolute and does not start with /
